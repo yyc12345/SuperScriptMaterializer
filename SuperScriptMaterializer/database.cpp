@@ -10,7 +10,11 @@ void dbDataStructHelper::init(CKParameterManager* paramManager) {
 	_db_pOut = new db_pOut();
 	_db_bIn = new db_bIn();
 	_db_bOut = new db_bOut();
-	_db_bLlink = new db_bLlink();
+	_db_bLink = new db_bLink();
+	_db_pLocal = new db_pLocal();
+	_db_pLink = new db_pLink();
+	_db_pLocalData = new db_pLocalData();
+	_db_pOper = new db_pOper();
 	_parameterManager = paramManager;
 }
 
@@ -22,7 +26,11 @@ void dbDataStructHelper::dispose() {
 	delete _db_pOut;
 	delete _db_bIn;
 	delete _db_bOut;
-	delete _db_bLlink;
+	delete _db_bLink;
+	delete _db_pLocalData;
+	delete _db_pLink;
+	delete _db_pLocal;
+	delete _db_pOper;
 	_parameterManager = NULL;
 }
 
@@ -50,19 +58,19 @@ void database::open(const char* file) {
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE behavior('thisobj' INTEGER, 'name' TEXT, 'type' INTEGER, 'proto_name' TEXT, 'proto_guid' INTEGER, 'flags' INTEGER, 'priority' INTEGER, 'version' INTEGER, 'parent' INTEGER);",
+		"CREATE TABLE behavior('thisobj' INTEGER, 'name' TEXT, 'type' INTEGER, 'proto_name' TEXT, 'proto_guid' TEXT, 'flags' INTEGER, 'priority' INTEGER, 'version' INTEGER, 'parent' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pTarget('thisobj' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' INTEGER, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
+		"CREATE TABLE pTarget('thisobj' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pIn('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' INTEGER, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
+		"CREATE TABLE pIn('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pOut('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' INTEGER, 'belong_to' INTEGER);",
+		"CREATE TABLE pOut('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
@@ -77,6 +85,23 @@ void database::open(const char* file) {
 		"CREATE TABLE bLink('input' INTEGER, 'output' INTEGER, 'delay' INTEGER, 'belong_to' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
+	result = sqlite3_exec(db,
+		"CREATE TABLE pLocal('thisobj' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'is_setting' INTEGER, 'belong_to' INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) goto fail;
+	result = sqlite3_exec(db,
+		"CREATE TABLE pLocalData('field' TEXT, 'data' TEXT, 'belong_to' INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) goto fail;
+	result = sqlite3_exec(db,
+		"CREATE TABLE pLink('input' INTEGER, 'output' INTEGER, 'belong_to' INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) goto fail;
+	result = sqlite3_exec(db,
+		"CREATE TABLE pOper('thisobj' INTEGER, 'op' TEXT, 'op_guid' TEXT, 'belong_to' INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) goto fail;
+
 
 	//start job
 	sqlite3_exec(db, "begin;", NULL, NULL, &errmsg);
@@ -108,12 +133,13 @@ void database::close() {
 void database::write_CKBehavior(dbCKBehavior* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO behavior VALUES (%d, '%s', %d, '%s', %d, %d, %d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO behavior VALUES (%d, '%s', %d, '%s', '%d, %d', %d, %d, %d, %d);",
 		data->thisobj,
 		data->name,
 		data->type,
 		data->proto_name,
-		data->proto_guid,
+		data->proto_guid[0],
+		data->proto_guid[1],
 		data->flags,
 		data->priority,
 		data->version,
@@ -137,11 +163,12 @@ void database::write_CKScript(dbCKScript* data) {
 void database::write_pTarget(db_pTarget* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO pTarget VALUES (%d, '%s', '%s', %d, %d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO pTarget VALUES (%d, '%s', '%s', '%d, %d', %d, %d, %d);",
 		data->thisobj,
 		data->name,
 		data->type,
-		data->type_guid,
+		data->type_guid[0],
+		data->type_guid[1],
 		data->belong_to,
 		data->direct_source,
 		data->shared_source);
@@ -152,12 +179,13 @@ void database::write_pTarget(db_pTarget* data) {
 void database::write_pIn(db_pIn* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO pIn VALUES (%d, %d, '%s', '%s', %d, %d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO pIn VALUES (%d, %d, '%s', '%s', '%d, %d', %d, %d, %d);",
 		data->thisobj,
 		data->index,
 		data->name,
 		data->type,
-		data->type_guid,
+		data->type_guid[0],
+		data->type_guid[1],
 		data->belong_to,
 		data->direct_source,
 		data->shared_source);
@@ -168,12 +196,13 @@ void database::write_pIn(db_pIn* data) {
 void database::write_pOut(db_pOut* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO pOut VALUES (%d, %d, '%s', '%s', %d, %d);",
+	sprintf(commandStr, "INSERT INTO pOut VALUES (%d, %d, '%s', '%s', '%d, %d', %d);",
 		data->thisobj,
 		data->index,
 		data->name,
 		data->type,
-		data->type_guid,
+		data->type_guid[0],
+		data->type_guid[1],
 		data->belong_to);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
@@ -203,7 +232,7 @@ void database::write_bOut(db_bOut* data) {
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
 }
 
-void database::write_bLink(db_bLlink* data) {
+void database::write_bLink(db_bLink* data) {
 	if (db == NULL) return;
 
 	sprintf(commandStr, "INSERT INTO bLink VALUES (%d, %d, %d, %d);",
@@ -214,5 +243,56 @@ void database::write_bLink(db_bLlink* data) {
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
 }
+
+void database::write_pLocal(db_pLocal* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO pLocal VALUES (%d, '%s', '%s', '%d, %d', %d, %d);",
+		data->thisobj,
+		data->name,
+		data->type,
+		data->type_guid[0],
+		data->type_guid[1],
+		data->is_setting,
+		data->belong_to);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void database::write_pLink(db_pLink* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO pLink VALUES (%d, %d, %d);",
+		data->input,
+		data->output,
+		data->belong_to);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void database::write_pLocalData(db_pLocalData* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO pLocalData VALUES ('%s', '%s', %d);",
+		data->field,
+		data->data,
+		data->belong_to);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void database::write_pOper(db_pOper* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO pOper VALUES (%d, '%s', '%d, %d', %d);",
+		data->thisobj,
+		data->op,
+		data->op_guid[0],
+		data->op_guid[1],
+		data->belong_to);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
 
 #pragma endregion

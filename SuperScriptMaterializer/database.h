@@ -13,7 +13,7 @@ typedef struct dbCKBehavior {
 	char name[1024];
 	CK_BEHAVIOR_TYPE type;
 	char proto_name[1024];
-	CKDWORD proto_guid;
+	CKDWORD proto_guid[2];
 	CK_BEHAVIOR_FLAGS flags;
 	int priority;
 	CKDWORD version;
@@ -31,7 +31,7 @@ typedef struct db_pTarget {
 	EXPAND_CK_ID thisobj;
 	char name[1024];
 	char type[1024];
-	CKDWORD type_guid;
+	CKDWORD type_guid[2];
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
@@ -42,7 +42,7 @@ typedef struct db_pIn {
 	int index;
 	char name[1024];
 	char type[1024];
-	CKDWORD type_guid;
+	CKDWORD type_guid[2];
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
@@ -53,7 +53,7 @@ typedef struct db_pOut {
 	int index;
 	char name[1024];
 	char type[1024];
-	CKDWORD type_guid;
+	CKDWORD type_guid[2];
 	EXPAND_CK_ID belong_to;
 };
 
@@ -66,10 +66,38 @@ typedef struct db_bIO {
 typedef db_bIO db_bIn;
 typedef db_bIO db_bOut;
 
-typedef struct db_bLlink {
+typedef struct db_bLink {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
 	int delay;
+	EXPAND_CK_ID belong_to;
+};
+
+typedef struct db_pLocal {
+	EXPAND_CK_ID thisobj;
+	char name[1024];
+	char type[1024];
+	CKDWORD type_guid[2];
+	BOOL is_setting;
+	EXPAND_CK_ID belong_to;
+};
+
+typedef struct db_pLocalData {
+	char field[1024];
+	char data[1024];
+	EXPAND_CK_ID belong_to;
+};
+
+typedef struct db_pLink {
+	EXPAND_CK_ID input;
+	EXPAND_CK_ID output;
+	EXPAND_CK_ID belong_to;
+};
+
+typedef struct db_pOper {
+	EXPAND_CK_ID thisobj;
+	char op[1024];
+	CKDWORD op_guid[2];
 	EXPAND_CK_ID belong_to;
 };
 
@@ -88,9 +116,11 @@ class dbDataStructHelper {
 	db_pOut* _db_pOut;
 	db_bIn* _db_bIn;
 	db_bOut* _db_bOut;
-	db_bLlink* _db_bLlink;
-
-
+	db_bLink* _db_bLink;
+	db_pLocal* _db_pLocal;
+	db_pLink* _db_pLink;
+	db_pLocalData* _db_pLocalData;
+	db_pOper* _db_pOper;
 };
 
 class database {
@@ -105,7 +135,11 @@ class database {
 	void write_pOut(db_pOut* data);
 	void write_bIn(db_bIn* data);
 	void write_bOut(db_bOut* data);
-	void write_bLink(db_bLlink* data);
+	void write_bLink(db_bLink* data);
+	void write_pLocal(db_pLocal* data);
+	void write_pLink(db_pLink* data);
+	void write_pLocalData(db_pLocalData* data);
+	void write_pOper(db_pOper* data);
 
 	private:
 	sqlite3* db;
