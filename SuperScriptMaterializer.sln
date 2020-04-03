@@ -5,28 +5,36 @@ VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SuperScriptMaterializer", "SuperScriptMaterializer\SuperScriptMaterializer.vcxproj", "{4D941003-020F-47FD-9FA2-FFC989E306B8}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SuperScriptViewer", "SuperScriptViewer\SuperScriptViewer.pyproj", "{6D751BF5-87D6-4123-94B3-34721938CF04}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-		VT5|x64 = VT5|x64
-		VT5|x86 = VT5|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|Any CPU.ActiveCfg = VT5|Win32
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|Any CPU.Build.0 = VT5|Win32
 		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|x64.ActiveCfg = VT5|x64
 		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|x64.Build.0 = VT5|x64
 		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|x86.ActiveCfg = VT35|Win32
 		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Debug|x86.Build.0 = VT35|Win32
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x64.ActiveCfg = VT35|x64
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x64.Build.0 = VT35|x64
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x86.ActiveCfg = VT35|Win32
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x86.Build.0 = VT35|Win32
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.VT5|x64.ActiveCfg = VT5|x64
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.VT5|x64.Build.0 = VT5|x64
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.VT5|x86.ActiveCfg = VT5|Win32
-		{4D941003-020F-47FD-9FA2-FFC989E306B8}.VT5|x86.Build.0 = VT5|Win32
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|Any CPU.ActiveCfg = VT5|Win32
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|Any CPU.Build.0 = VT5|Win32
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x64.ActiveCfg = VT5|x64
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x64.Build.0 = VT5|x64
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x86.ActiveCfg = VT5|Win32
+		{4D941003-020F-47FD-9FA2-FFC989E306B8}.Release|x86.Build.0 = VT5|Win32
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Release|x64.ActiveCfg = Release|Any CPU
+		{6D751BF5-87D6-4123-94B3-34721938CF04}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
