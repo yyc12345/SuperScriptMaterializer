@@ -186,6 +186,12 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 	helper->_dbCKBehavior->priority = bhv->GetPriority();
 	helper->_dbCKBehavior->version = bhv->GetVersion();
 	helper->_dbCKBehavior->parent = parents;
+	sprintf(helper->_dbCKBehavior->pin_count, "%d, %d, %d, %d, %d",
+		(bhv->IsUsingTarget() ? 1 : 0),
+		bhv->GetInputParameterCount(),
+		bhv->GetOutputParameterCount(),
+		bhv->GetInputCount(),
+		bhv->GetOutputCount());
 	db->write_CKBehavior(helper->_dbCKBehavior);
 
 	//write target
@@ -222,7 +228,7 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 }
 
 void IteratepLocalData(CKParameterLocal* p, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
-	CKGUID t = p->GetGUID(); 
+	CKGUID t = p->GetGUID();
 	BOOL unknowType = FALSE;
 
 	if (t.d1 & t.d2) unknowType = TRUE;
@@ -324,20 +330,51 @@ void IteratepLocalData(CKParameterLocal* p, database* db, dbDataStructHelper* he
 		}
 		return;
 	}
+	if (t == CKPGUID_STRING) {
+		char* cptr = (char*)p->GetReadDataPtr(false);
+		int cc = p->GetDataSize();
+		for (int i = 0; i < cc; i++)
+			helper->_db_pLocalData->data[i] = cptr[i];
+		helper->_db_pLocalData->data[cc] = '\0';
+		strcpy(helper->_db_pLocalData->field, "str");
+		helper->_db_pLocalData->belong_to = p->GetID();
+		db->write_pLocalData(helper->_db_pLocalData);
+		return;
+	}
 
 	unknowType = TRUE;
 	//if it gets here, we have no idea what it really is. so simply dump it.
 	//buffer-like
-	if (unknowType || t == CKPGUID_VOIDBUF || t == CKPGUID_STRING || t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS) {
-		char* cptr = (char*)p->GetReadDataPtr(false);
-		int cc = p->GetDataSize();
-		for (int i = 0; i < cc; i++) 
-			helper->_db_pLocalData->data[i] = cptr[i];
-		helper->_db_pLocalData->data[cc] = '\0';
-		strcpy(helper->_db_pLocalData->field, "dump-data");
+	if (unknowType || t == CKPGUID_VOIDBUF || t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS) {
+		//dump data
+		unsigned char* cptr = (unsigned char*)p->GetReadDataPtr(false);
+		char temp[4];
+		int cc = 0, rcc = 0, pos = 0;
+		rcc = cc = p->GetDataSize();
+		if (rcc > 200) rcc = 200;
+
+		for (int i = 0; i < rcc; i++) {
+			sprintf(temp, "%02X", cptr[i]);
+			helper->_db_pLocalData->data[pos++] = '0';
+			helper->_db_pLocalData->data[pos++] = 'x';
+			helper->_db_pLocalData->data[pos++] = temp[0];
+			helper->_db_pLocalData->data[pos++] = temp[1];
+			helper->_db_pLocalData->data[pos++] = ',';
+		}
+		if (pos)
+			helper->_db_pLocalData->data[--pos] = '\0';
+		else
+			helper->_db_pLocalData->data[0] = '\0';
+
+		if (rcc == cc)
+			strcpy(helper->_db_pLocalData->field, "dump.data");
+		else
+			strcpy(helper->_db_pLocalData->field, "dump.partial_data");
 		helper->_db_pLocalData->belong_to = p->GetID();
 		db->write_pLocalData(helper->_db_pLocalData);
 
+		//dump data length
+		helper_pLocalDataExport("dump.length", (long)cc, db, helper, parents);
 		return;
 	}
 }

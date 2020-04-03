@@ -58,7 +58,7 @@ void database::open(const char* file) {
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE behavior('thisobj' INTEGER, 'name' TEXT, 'type' INTEGER, 'proto_name' TEXT, 'proto_guid' TEXT, 'flags' INTEGER, 'priority' INTEGER, 'version' INTEGER, 'parent' INTEGER);",
+		"CREATE TABLE behavior('thisobj' INTEGER, 'name' TEXT, 'type' INTEGER, 'proto_name' TEXT, 'proto_guid' TEXT, 'flags' INTEGER, 'priority' INTEGER, 'version' INTEGER, 'pin_count' TEXT, 'parent' INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
@@ -133,7 +133,7 @@ void database::close() {
 void database::write_CKBehavior(dbCKBehavior* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO behavior VALUES (%d, '%s', %d, '%s', '%d, %d', %d, %d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO behavior VALUES (%d, '%s', %d, '%s', '%d, %d', %d, %d, %d, '%s', %d);",
 		data->thisobj,
 		data->name,
 		data->type,
@@ -143,6 +143,7 @@ void database::write_CKBehavior(dbCKBehavior* data) {
 		data->flags,
 		data->priority,
 		data->version,
+		data->pin_count,
 		data->parent);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);

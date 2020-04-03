@@ -17,6 +17,8 @@ typedef struct dbCKBehavior {
 	CK_BEHAVIOR_FLAGS flags;
 	int priority;
 	CKDWORD version;
+	//pTarget, pIn, pOut, bIn, bOut
+	char pin_count[128];
 	EXPAND_CK_ID parent;
 };
 
