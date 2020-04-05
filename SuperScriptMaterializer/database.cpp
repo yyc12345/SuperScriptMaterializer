@@ -118,6 +118,14 @@ void database::close() {
 	//stop job
 	sqlite3_exec(db, "commit;", NULL, NULL, &errmsg);
 
+	//create index for quick select in following app
+	sqlite3_exec(db, "begin;", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX 'quick_where1' ON bIn (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX 'quick_where2' ON bOut (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX 'quick_where3' ON pIn (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX 'quick_where4' ON pOut (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "commit;", NULL, NULL, &errmsg);
+
 	//release res
 	sqlite3_close(db);
 	db = NULL;

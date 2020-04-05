@@ -186,7 +186,7 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 	helper->_dbCKBehavior->priority = bhv->GetPriority();
 	helper->_dbCKBehavior->version = bhv->GetVersion();
 	helper->_dbCKBehavior->parent = parents;
-	sprintf(helper->_dbCKBehavior->pin_count, "%d, %d, %d, %d, %d",
+	sprintf(helper->_dbCKBehavior->pin_count, "%d,%d,%d,%d,%d",
 		(bhv->IsUsingTarget() ? 1 : 0),
 		bhv->GetInputParameterCount(),
 		bhv->GetOutputParameterCount(),

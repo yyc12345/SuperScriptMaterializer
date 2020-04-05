@@ -21,6 +21,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DecoratorConstValue.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DecoratorCore.py">
       <SubType>Code</SubType>
     </Compile>
