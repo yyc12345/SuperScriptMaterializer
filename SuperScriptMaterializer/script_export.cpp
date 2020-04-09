@@ -166,11 +166,15 @@ inline void proc_bOut(CKBehaviorIO* cache, database* db, dbDataStructHelper* hel
 
 inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKBehaviorIO* io = cache->GetInBehaviorIO();
+	CKBehavior* beh = io->GetOwner();
 	helper->_db_bLink->input = io->GetID();
+	helper->_db_bLink->input_obj = beh->GetID();
 	helper->_db_bLink->input_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
 	helper->_db_bLink->input_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 	io = cache->GetOutBehaviorIO();
+	beh = io->GetOwner();
 	helper->_db_bLink->output = io->GetID();
+	helper->_db_bLink->output_obj = beh->GetID();
 	helper->_db_bLink->output_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
 	helper->_db_bLink->output_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 
