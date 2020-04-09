@@ -52,7 +52,7 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 			helper->_db_pLink->input_obj = ds_Owner->GetID();
 			helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
 			//WARNING: untested doe to GetClassID() may have chance to return Attributes or CKDataArray accoring to document
-			if (helper->_db_pLink->input_index = (ds_Owner->GetClassID() != CKCID_PARAMETEROPERATION)) {
+			if (helper->_db_pLink->input_is_bb = (ds_Owner->GetClassID() != CKCID_PARAMETEROPERATION)) {
 				//bb
 				helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
 
