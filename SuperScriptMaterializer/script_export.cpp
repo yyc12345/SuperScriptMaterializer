@@ -1,4 +1,6 @@
 #include "script_export.h"
+//disable shit tip
+#pragma warning(disable:26812)
 
 #define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
 
@@ -17,7 +19,7 @@ inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper*
 	db->write_pTarget(helper->_db_pTarget);
 }
 
-inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index) {
+inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	strcpy(helper->_db_pIn->name, cache->GetName());
@@ -31,18 +33,72 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 	db->write_pIn(helper->_db_pIn);
 
 	//=========try generate pLink
-	EXPAND_CK_ID origin = -1;
-	if (cache->GetDirectSource()) origin = cache->GetDirectSource()->GetID();
-	if (cache->GetSharedSource()) origin = cache->GetSharedSource()->GetID();
-	if (origin == -1) return;
-	helper->_db_pLink->input = origin;
-	helper->_db_pLink->output = cache->GetID();
-	helper->_db_pLink->belong_to = grandparents;
+	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
+	CKParameter* directSource = NULL;
+	CKObject* ds_Owner = NULL;
+	CKParameterIn* sharedSource = NULL;
+	CKBehavior* ss_Owner = NULL;
+	if (directSource = cache->GetDirectSource()) {
+		helper->_db_pLink->input = directSource->GetID();
+		if (directSource->GetClassID() == CKCID_PARAMETERLOCAL) {
+			//pLocal
+			helper->_db_pLink->input_obj = directSource->GetID();
+			helper->_db_pLink->input_type = pLinkInputOutputType_PLOCAL;
+			helper->_db_pLink->input_is_bb = FALSE;
+			helper->_db_pLink->input_index = -1;
+		} else {
+			//pOut
+			ds_Owner = directSource->GetOwner();
+			helper->_db_pLink->input_obj = ds_Owner->GetID();
+			helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
+			//WARNING: untested doe to GetClassID() may have chance to return Attributes or CKDataArray accoring to document
+			if (helper->_db_pLink->input_index = (ds_Owner->GetClassID() != CKCID_PARAMETEROPERATION)) {
+				//bb
+				helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
 
-	db->write_pLink(helper->_db_pLink);
+			} else {
+				//pOper
+				helper->_db_pLink->input_index = 0;
+
+			}
+		}
+	}
+	if (sharedSource = cache->GetSharedSource()) {
+		//pIn from BB
+		helper->_db_pLink->input = sharedSource->GetID();
+		ss_Owner = (CKBehavior*)sharedSource->GetOwner();
+		helper->_db_pLink->input_obj = ss_Owner->GetID();
+
+		if (ss_Owner->IsUsingTarget() && (ss_Owner->GetTargetParameter() == sharedSource)) {
+			//pTarget
+			helper->_db_pLink->input_type = pLinkInputOutputType_PTARGET;
+			helper->_db_pLink->input_is_bb = TRUE;
+			helper->_db_pLink->input_index = -1;
+
+		} else {
+			//pIn
+			helper->_db_pLink->input_type = pLinkInputOutputType_PIN;
+			helper->_db_pLink->input_is_bb = TRUE;
+			helper->_db_pLink->input_index = ss_Owner->GetInputParameterPosition(sharedSource);
+		}
+
+
+	}
+
+	if (sharedSource != NULL || directSource != NULL) {
+		helper->_db_pLink->output = cache->GetID();
+		helper->_db_pLink->output_obj = parents;
+		helper->_db_pLink->output_type = pLinkInputOutputType_PIN;
+		helper->_db_pLink->output_is_bb = executedFromBB;
+		helper->_db_pLink->output_index = index;
+		helper->_db_pLink->belong_to = grandparents;
+
+		db->write_pLink(helper->_db_pLink);
+	}
+
 }
 
-inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index) {
+inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	strcpy(helper->_db_pOut->name, cache->GetName());
@@ -55,11 +111,35 @@ inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* h
 
 	//=========try generate pLink
 	CKParameter* cache_Dest = NULL;
+	CKObject* cache_DestOwner = NULL;
 	for (int j = 0, jCount = cache->GetDestinationCount(); j < jCount; j++) {
 		cache_Dest = cache->GetDestination(j);
 
 		helper->_db_pLink->input = cache->GetID();
+		helper->_db_pLink->input_obj = parents;
+		helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
+		helper->_db_pLink->input_is_bb = executedFromBB;
+		helper->_db_pLink->input_index = index;
+
 		helper->_db_pLink->output = cache_Dest->GetID();
+		if (cache_Dest->GetClassID() == CKCID_PARAMETERLOCAL) {
+			//pLocal
+			helper->_db_pLink->output_obj = cache_Dest->GetID();
+			helper->_db_pLink->output_type = pLinkInputOutputType_PLOCAL;
+			helper->_db_pLink->output_is_bb = FALSE;
+			helper->_db_pLink->output_index = -1;
+
+		} else {
+			//pOut, it must belong to a BB
+
+			cache_DestOwner = cache_Dest->GetOwner();
+			helper->_db_pLink->output_obj = cache_DestOwner->GetID();
+			helper->_db_pLink->output_type = pLinkInputOutputType_POUT;
+			helper->_db_pLink->output_is_bb = TRUE;
+			helper->_db_pLink->output_index = ((CKBehavior*)cache_DestOwner)->GetOutputParameterPosition((CKParameterOut*)cache_Dest);
+
+		}
+
 		helper->_db_pLink->belong_to = grandparents;
 
 		db->write_pLink(helper->_db_pLink);
@@ -85,8 +165,15 @@ inline void proc_bOut(CKBehaviorIO* cache, database* db, dbDataStructHelper* hel
 }
 
 inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
-	helper->_db_bLink->input = cache->GetInBehaviorIO()->GetID();
-	helper->_db_bLink->output = cache->GetOutBehaviorIO()->GetID();
+	CKBehaviorIO* io = cache->GetInBehaviorIO();
+	helper->_db_bLink->input = io->GetID();
+	helper->_db_bLink->input_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+	helper->_db_bLink->input_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
+	io = cache->GetOutBehaviorIO();
+	helper->_db_bLink->output = io->GetID();
+	helper->_db_bLink->output_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+	helper->_db_bLink->output_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
+
 	helper->_db_bLink->delay = cache->GetActivationDelay();
 	helper->_db_bLink->belong_to = parents;
 
@@ -118,9 +205,9 @@ inline void proc_pOper(CKParameterOperation* cache, database* db, dbDataStructHe
 	db->write_pOper(helper->_db_pOper);
 
 	//export 2 input param and 1 output param
-	proc_pIn(cache->GetInParameter1(), db, helper, cache->GetID(), parents, 0);
-	proc_pIn(cache->GetInParameter2(), db, helper, cache->GetID(), parents, 1);
-	proc_pOut(cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0);
+	proc_pIn(cache->GetInParameter1(), db, helper, cache->GetID(), parents, 0, FALSE);
+	proc_pIn(cache->GetInParameter2(), db, helper, cache->GetID(), parents, 1, FALSE);
+	proc_pOut(cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0, FALSE);
 }
 
 
@@ -201,10 +288,10 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 	int count = 0, i = 0;
 	//pIn
 	for (i = 0, count = bhv->GetInputParameterCount(); i < count; i++)
-		proc_pIn(bhv->GetInputParameter(i), db, helper, bhv->GetID(), parents, i);
+		proc_pIn(bhv->GetInputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
 	//pOut
 	for (i = 0, count = bhv->GetOutputParameterCount(); i < count; i++)
-		proc_pOut(bhv->GetOutputParameter(i), db, helper, bhv->GetID(), parents, i);
+		proc_pOut(bhv->GetOutputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
 	//bIn
 	for (i = 0, count = bhv->GetInputCount(); i < count; i++)
 		proc_bIn(bhv->GetInput(i), db, helper, bhv->GetID(), i);

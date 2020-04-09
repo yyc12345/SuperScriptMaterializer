@@ -5,8 +5,8 @@
 #include "database.h"
 
 inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents);
-inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index);
-inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index);
+inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB);
+inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB);
 inline void proc_bIn(CKBehaviorIO* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, int index);
 inline void proc_bOut(CKBehaviorIO* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, int index);
 inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents);

@@ -1,0 +1,26 @@
+p.hamburger {
+    margin: 0 5px 0 5px; 
+    padding: 0;
+}
+
+div.block-b {
+    position: absolute;
+    background: yellow;
+}
+
+div.block-p {
+    position: absolute;
+    background: blue;
+}
+
+p.block-text {
+    position: absolute; 
+    margin: 0; 
+    padding: 0;
+}
+
+div.block-body {
+    position: absolute;
+    background: #8f8f8f;
+    border: 1px solid #cfcfcf;
+}

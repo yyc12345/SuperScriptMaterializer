@@ -54,51 +54,51 @@ void database::open(const char* file) {
 
 	//init table
 	result = sqlite3_exec(db,
-		"CREATE TABLE script('thisobj' INTEGER, 'name' TEXT, 'index' INTEGER, 'behavior' INTEGER);",
+		"CREATE TABLE script([thisobj] INTEGER, [name] TEXT, [index] INTEGER, [behavior] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE behavior('thisobj' INTEGER, 'name' TEXT, 'type' INTEGER, 'proto_name' TEXT, 'proto_guid' TEXT, 'flags' INTEGER, 'priority' INTEGER, 'version' INTEGER, 'pin_count' TEXT, 'parent' INTEGER);",
+		"CREATE TABLE behavior([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] TEXT, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count] TEXT, [parent] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pTarget('thisobj' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
+		"CREATE TABLE pTarget([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pIn('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER, 'direct_source' INTEGER, 'shard_source' INTEGER);",
+		"CREATE TABLE pIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pOut('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'belong_to' INTEGER);",
+		"CREATE TABLE pOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE bIn('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'belong_to' INTEGER);",
+		"CREATE TABLE bIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE bOut('thisobj' INTEGER, 'index' INTEGER, 'name' TEXT, 'belong_to' INTEGER);",
+		"CREATE TABLE bOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE bLink('input' INTEGER, 'output' INTEGER, 'delay' INTEGER, 'belong_to' INTEGER);",
+		"CREATE TABLE bLink([input] INTEGER, [output] INTEGER, [delay] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pLocal('thisobj' INTEGER, 'name' TEXT, 'type' TEXT, 'type_guid' TEXT, 'is_setting' INTEGER, 'belong_to' INTEGER);",
+		"CREATE TABLE pLocal([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [is_setting] INTEGER, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pLocalData('field' TEXT, 'data' TEXT, 'belong_to' INTEGER);",
+		"CREATE TABLE pLocalData([field] TEXT, [data] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pLink('input' INTEGER, 'output' INTEGER, 'belong_to' INTEGER);",
+		"CREATE TABLE pLink([input] INTEGER, [output] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_is_bb] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_is_bb] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pOper('thisobj' INTEGER, 'op' TEXT, 'op_guid' TEXT, 'belong_to' INTEGER);",
+		"CREATE TABLE pOper([thisobj] INTEGER, [op] TEXT, [op_guid] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 
@@ -119,12 +119,12 @@ void database::close() {
 	sqlite3_exec(db, "commit;", NULL, NULL, &errmsg);
 
 	//create index for quick select in following app
-	sqlite3_exec(db, "begin;", NULL, NULL, &errmsg);
-	sqlite3_exec(db, "CREATE INDEX 'quick_where1' ON bIn (thisobj)", NULL, NULL, &errmsg);
-	sqlite3_exec(db, "CREATE INDEX 'quick_where2' ON bOut (thisobj)", NULL, NULL, &errmsg);
-	sqlite3_exec(db, "CREATE INDEX 'quick_where3' ON pIn (thisobj)", NULL, NULL, &errmsg);
-	sqlite3_exec(db, "CREATE INDEX 'quick_where4' ON pOut (thisobj)", NULL, NULL, &errmsg);
-	sqlite3_exec(db, "commit;", NULL, NULL, &errmsg);
+	/*sqlite3_exec(db, "begin;", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX [quick_where1] ON bIn (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX [quick_where2] ON bOut (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX [quick_where3] ON pIn (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "CREATE INDEX [quick_where4] ON pOut (thisobj)", NULL, NULL, &errmsg);
+	sqlite3_exec(db, "commit;", NULL, NULL, &errmsg);*/
 
 	//release res
 	sqlite3_close(db);
@@ -244,10 +244,16 @@ void database::write_bOut(db_bOut* data) {
 void database::write_bLink(db_bLink* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO bLink VALUES (%d, %d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO bLink VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d);",
 		data->input,
 		data->output,
 		data->delay,
+		data->input_obj,
+		data->input_type,
+		data->input_index,
+		data->output_obj,
+		data->output_type,
+		data->output_index,
 		data->belong_to);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
@@ -271,9 +277,17 @@ void database::write_pLocal(db_pLocal* data) {
 void database::write_pLink(db_pLink* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO pLink VALUES (%d, %d, %d);",
+	sprintf(commandStr, "INSERT INTO pLink VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);",
 		data->input,
 		data->output,
+		data->input_obj,
+		data->input_type,
+		data->input_is_bb,
+		data->input_index,
+		data->output_obj,
+		data->output_type,
+		data->output_is_bb,
+		data->output_index,
 		data->belong_to);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);

@@ -11,27 +11,14 @@
 <p>Choose a script to read it.</p>
 <br />
 <br />
-<h2>MfObj</h2>
+{% for key, value in scripts.items() %}
+<h2>{{ key|e }}</h2>
 <ol>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
+    {% for i in value %}
+    <li><a href="{{ "./%s"|format(i.id) }}">{{ i.name }}</a></li>
+    {% endfor %}
 </ol>
-<h2>MfObj</h2>
-<ol>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-</ol>
-<h2>MfObj</h2>
-<ol>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-    <li><a href="">shit</a></li>
-</ol>
+{% endfor %}
 
 </body>
 

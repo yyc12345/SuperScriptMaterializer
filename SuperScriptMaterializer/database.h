@@ -7,6 +7,16 @@
 #pragma region data struct define
 
 typedef long EXPAND_CK_ID;
+enum bLinkInputOutputType {
+	bLinkInputOutputType_INPUT,
+	bLinkInputOutputType_OUTPUT
+};
+enum pLinkInputOutputType {
+	pLinkInputOutputType_PIN,
+	pLinkInputOutputType_POUT,
+	pLinkInputOutputType_PLOCAL, //when using pLocal, omit [index] and [input_is_bb]
+	pLinkInputOutputType_PTARGET //when using pTarget, omit [index] and [input_is_bb]
+};
 
 typedef struct dbCKBehavior {
 	EXPAND_CK_ID thisobj;
@@ -73,6 +83,14 @@ typedef struct db_bLink {
 	EXPAND_CK_ID output;
 	int delay;
 	EXPAND_CK_ID belong_to;
+
+	//additional field
+	EXPAND_CK_ID input_obj;
+	bLinkInputOutputType input_type;
+	int input_index;
+	EXPAND_CK_ID output_obj;
+	bLinkInputOutputType output_type;
+	int output_index;
 };
 
 typedef struct db_pLocal {
@@ -94,6 +112,16 @@ typedef struct db_pLink {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
 	EXPAND_CK_ID belong_to;
+
+	//additional field
+	EXPAND_CK_ID input_obj;
+	pLinkInputOutputType input_type;
+	BOOL input_is_bb;
+	int input_index;
+	EXPAND_CK_ID output_obj;
+	pLinkInputOutputType output_type;
+	BOOL output_is_bb;
+	int output_index;
 };
 
 typedef struct db_pOper {
