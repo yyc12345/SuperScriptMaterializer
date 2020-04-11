@@ -16,7 +16,7 @@
 
             {% for i in hamburgerHistory %}
             <p class="hamburger">&gt;&gt;</p>
-            <p class="hamburger"><a href="{{ "../" * loop.revindex }}">{{ i|e }}</a></p>
+            <p class="hamburger"><a href="{{ i.path }}">{{ i.name|e }}</a></p>
             {% endfor %}
 
             <p class="hamburger">&gt;&gt;</p>
@@ -24,36 +24,40 @@
 
         </div>
         <div style="width: 100px;">
-            <button style="width: 100px; height: 50px;">SAVE !!</button>
+            <button style="width: 100px; height: 50px;">LEGEND</button>
         </div>
     </div>
     <div style="background: #7f7f7f; width: 100%; height: 100%; overflow: scroll; position: relative;">
         <div>
-            {% for i in blocks %}
-            <div class="block-body" style="height: {{ i[11] }}px; width: {{ i[10] }}px; top: {{ i[9] }}px; left: {{ i[8] }}px;">
-                {% for pin in range(i[4]) %}
-                <div class="block-p" style="height: 6px; width: 6px; top: 0; left: {{ 20 + pin * ( 6 + 20) }}px;"></div>
-                {% endfor %}
-                {% for pout in range(i[5]) %}
-                <div class="block-p" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + pout * ( 6 + 20) }}px;"></div>
-                {% endfor %}
-                {% for bin in range(i[6]) %}
-                <div class="block-b" style="height: 6px; width: 6px; top: {{ 10 + bin * ( 6 + 20) }}px; left: 0;"></div>
-                {% endfor %}
-                {% for bout in range(i[6]) %}
-                <div class="block-b" style="height: 6px; width: 6px; top: {{ 10 + bout * ( 6 + 20) }}px; right: 0;"></div>
-                {% endfor %}
-
-                <p class="block-text" style="top: 10px; left: 20px;">{{ i[2]|e }}</p>
-                <p class="block-text" style="top: 24px; left: 20px;"><i>{{ i[3]|e }}</i></p>
-            </div>
-            {% endfor %}
             <svg version="1.1" width="5000px" height="5000px" style="position: absolute; top: 0; left: 0;">
                 <line x1="502" y1="210" x2="100" y2="100" stroke="black" stroke-width="1px"></line>
                 <line x1="320" y1="200" x2="100" y2="100" stroke="blue" stroke-width="1px" stroke-dasharray="10, 5">
                 </line>
                 <text x="200" y="155" fill="black">0</text>
             </svg>
+            {% for i in blocks %}
+            <div class="block-body" style="height: {{ i[11] }}px; width: {{ i[10] }}px; top: {{ i[9] }}px; left: {{ i[8] }}px;">
+                {% for pin in pinDecoder(i[4]) %}
+                <div class="block-p" title="{{ pin|e }}" style="height: 6px; width: 6px; top: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+                {% endfor %}
+                {% for pout in pinDecoder(i[5]) %}
+                <div class="block-p" title="{{ pout|e }}" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+                {% endfor %}
+                {% for bin in pinDecoder(i[6]) %}
+                <div class="block-b" title="{{ bin|e }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; left: 0;"></div>
+                {% endfor %}
+                {% for bout in pinDecoder(i[6]) %}
+                <div class="block-b" title="{{ bout|e }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; right: 0;"></div>
+                {% endfor %}
+
+                {% if i[12] != -1 %}
+                <p class="block-expandable-text" style="top: 10px; left: 20px;"><a href="{{ "/%s/%s"|format(currentPath, i[12]) }}">{{ i[2]|e }}</a></p>
+                {% else %}
+                <p class="block-text" style="top: 10px; left: 20px;">{{ i[2]|e }}</p>
+                {% endif %}
+                <p class="block-asstext" style="top: 24px; left: 20px;">{{ i[3]|e }}</p>
+            </div>
+            {% endfor %}
         </div>
 
     </div>
