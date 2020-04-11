@@ -19,6 +19,15 @@ CELL_HEIGHT = 5
 GRAPH_CONTENTOFFSET_X = 40
 GRAPH_CONTENTOFFSET_Y = 40
 
+class dbPLinkInputOutputType(object):
+    PIN = 0
+    POUT = 1
+    PLOCAL = 2
+    PTARGET = 3
+
+class dbBLinkInputOutputType(object):
+    INPUT = 0
+    OUTPUT = 1
 
 class LinkType(object):
     PLOCAL = 0
@@ -37,9 +46,13 @@ class BBResult(object):
         self.name = name
         self.assistName = assistName
         self.pin = int(pin)
+        self.pinData = []
         self.pout = int(pout)
+        self.poutData = []
         self.bin = int(bin)
+        self.binData = []
         self.bout = int(bout)
+        self.boutData = []
         self.x = 0.0
         self.y = 0.0
         self.width = 0.0

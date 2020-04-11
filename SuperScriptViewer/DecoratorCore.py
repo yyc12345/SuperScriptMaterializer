@@ -19,7 +19,7 @@ def run():
 
     # decorate each graph
     for i in graphList:
-        (plocal_layer, bbMap, operMap) = buildBB(exportCur, decorateCur, i)
+        (plocal_layer, bbMap, operMap) = buildBlock(exportCur, decorateCur, i)
 
     # give up all change of eexport.db (because no change)
     exportDb.close()
@@ -30,7 +30,7 @@ def initDecorateDb(cur):
     cur.execute("CREATE TABLE graph([graph] INTEGER, [graph_name] TEXT, [width] INTEGER, [height] INTEGER, [index] INTEGER, [belong_to] TEXT);")
     cur.execute("CREATE TABLE info([target] INTEGER, [field] TEXT, [data] TEXT);")
 
-    cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-pin] INTEGER, [pin-pout] INTEGER, [pin-bin] INTEGER, [pin-bout] INTEGER, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
+    cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
     cur.execute("CREATE TABLE cell([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [x] REAL, [y] REAL, [type] INTEGER);")
     cur.execute("CREATE TABLE link([belong_to_graph] INETGER, [thisobj] INTEGER, [delay] INTEGER, [startobj] INTEGER, [endobj] INTEGER, [start_index] INTEGER, [end_index] INTEGER, [x1] REAL, [y1] REAL, [x2] REAL, [y2] REAL);")
 
@@ -62,13 +62,13 @@ def decorateGraph(exCur, deCur, graph):
             # sub bb
             deCur.execute("INSERT INTO graph VALUES(?, ?, 0, 0, -1, '')", (lines[0], lines[2]))
 
-def buildBB(exCur, deCur, target):
+def buildBlock(exCur, deCur, target):
     # sort inner bb
     # use current graph input as the start point
     treeRoot = dcv.BBTreeNode(target, -1)
     processedBB = set()
     # layer start from 2, 0 is occupied for pLocal, 1 is occupied for pOper
-    arrangedLayer = recursiveBuildBBTree(treeRoot, exCur, deCur, processedBB, 2, 0, target)
+    arrangedLayer = recursiveBuildBBTree(treeRoot, exCur, processedBB, 2, 0, target)
     
     # get no linked bb and place them. linked bb position will be computed following
     # calc each bb's x postion, as for y, calc later
@@ -128,48 +128,27 @@ def buildBB(exCur, deCur, target):
     # write to database and return
     for i in bbResult.keys():
         cache = bbResult[i]
-        deCur.execute('INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (target, i, cache.name, cache.assistName, cache.pin, cache.pout, cache.bin, cache.bout, cache.x, cache.y, cache.width, cache.height, cache.expandable))
+        deCur.execute('INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                      (target, i, cache.name, cache.assistName, cache.pin, cache.pout, cache.bin, cache.bout, cache.x, cache.y, cache.width, cache.height, cache.expandable))
     for i in operResult.keys():
         cache = operResult[i]
-        deCur.execute("INSERT INTO block VALUES (?, ?, ?, '', 2, 1, 0, 0, ?, ?, ?, ?, -1)", (target, i, cache.name, cache.x, cache.y, cache.width, cache.height))
+        deCur.execute("INSERT INTO block VALUES (?, ?, ?, '', 2, 1, 0, 0, ?, ?, ?, ?, -1)",
+                      (target, i, cache.name, cache.x, cache.y, cache.width, cache.height))
     
     return (layer_y[0] - dcv.CELL_HEIGHT, bbResult, operResult)
 
-def recursiveBuildBBTree(node, exCur, deCur, processedBB, layer, depth, graphId):
-    cache = []
-    if depth == 0:
-        # find bIn
-        exCur.execute('SELECT [thisobj] FROM bIn WHERE [belong_to] == ?;', (node.bb,))
-    else:
-        # find bOut
-        exCur.execute('SELECT [thisobj] FROM bOut WHERE [belong_to] == ?;', (node.bb,))
-
-    for i in exCur.fetchall():
-        cache.append(i[0])
-
-    if (len(cache) == 0):
-        return layer
-
+def recursiveBuildBBTree(node, exCur, processedBB, layer, depth, graphId):
+    realLinkedBB = set()
     # find links
-    exCur.execute("SELECT [output] FROM bLink WHERE ([belong_to] == ? AND ([input] IN ({})));".format(','.join(map(lambda x:str(x), cache))), (graphId,))
-    cache.clear()
+    exCur.execute("SELECT [output_obj] FROM bLink WHERE ([input_obj] == ? AND [input_type] == ? AND [belong_to] = ?) ORDER BY [input_index] ASC;",
+                  (node.bb, (dcv.dbBLinkInputOutputType.INPUT if depth == 0 else dcv.dbBLinkInputOutputType.OUTPUT), graphId))
     for i in exCur.fetchall():
-        cache.append(i[0])
-
-    if (len(cache) == 0):
-        return layer
-
-    #find bIn (find in bIn list to omit the line linked to current bb's output)
-    exCur.execute("SELECT [belong_to] FROM bIn WHERE [thisobj] IN ({});".format(','.join(map(lambda x:str(x), cache))))
-    cache.clear()
-    for i in exCur.fetchall():
-        cache.append(i[0])
+        realLinkedBB.add(i[0])
 
     if (len(cache) == 0):
         return layer
 
     # ignore duplicated bb
-    realLinkedBB = set(cache)
     # calc need processed bb first
     # and register all gotten bb. for preventing infinity resursive func and keep bb tree structure
     realLinkedBB = realLinkedBB - processedBB
