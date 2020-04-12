@@ -24,8 +24,13 @@ def close_connection(exception):
         db.close()
 
 @app.template_global(name = 'pinDecoder')
-def block_pin_filter(target):
+def block_pin_decoder(target):
     return json.loads(target)
+
+@app.template_global(name = 'pinDecoder2')
+def block_pin_decoder2(target):
+    vab = json.loads(target)
+    return [vab['name'], vab['type']]
 
 @app.route('/', methods=['GET'])
 def indexHandle():

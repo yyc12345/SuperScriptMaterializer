@@ -33,7 +33,7 @@ def initDecorateDb(db):
     cur.execute("CREATE TABLE graph([graph] INTEGER, [graph_name] TEXT, [width] INTEGER, [height] INTEGER, [index] INTEGER, [belong_to] TEXT);")
     cur.execute("CREATE TABLE info([target] INTEGER, [field] TEXT, [data] TEXT);")
 
-    cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
+    cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-ptarget] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
     cur.execute("CREATE TABLE cell([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [x] REAL, [y] REAL, [type] INTEGER);")
     cur.execute("CREATE TABLE link([belong_to_graph] INETGER, [thisobj] INTEGER, [delay] INTEGER, [startobj] INTEGER, [endobj] INTEGER, [start_index] INTEGER, [end_index] INTEGER, [x1] REAL, [y1] REAL, [x2] REAL, [y2] REAL);")
 
@@ -141,7 +141,7 @@ def buildBlock(exDb, deDb, target, currentGraphBlockCell):
             layer_height[curLayer] = max(layer_height.get(curLayer, 0), bbResult[i].height)
     layer_height[arrangedLayer] = layer_height.get(arrangedLayer, 0) # make sure misc bb height exist
     for i in occupiedLayerCountForSpecificBB.keys():   # add oper occipation
-        layer_height[i] += occupiedLayerCountForSpecificBB[i] * dcv.GRAPH_SPAN_BB_POPER
+        layer_height[i] += (occupiedLayerCountForSpecificBB[i] + 1) * dcv.GRAPH_SPAN_BB_POPER
 
     # calc bb Y
     baseY = dcv.GRAPH_CONTENTOFFSET_Y
@@ -190,7 +190,7 @@ def buildBlock(exDb, deDb, target, currentGraphBlockCell):
         exCur.execute("SELECT [thisobj], [name], [type] FROM pTarget WHERE [belong_to] == ?;", (i,))
         temp = exCur.fetchone()
         if temp == None:
-            cache.ptargetData = ''
+            cache.ptargetData = '{}'
         else:
             cache.ptargetData = json.dumps(dcv.PinInformation(temp[0], temp[1], temp[2]), cls = dcv.JsonCustomEncoder)
 
@@ -244,12 +244,12 @@ def buildBlock(exDb, deDb, target, currentGraphBlockCell):
     for i in bbResult.keys():
         cache = bbResult[i]
         currentGraphBlockCell[i] = dcv.BlockCellItem(cache.x, cache.y, cache.width, cache.height)
-        deCur.execute('INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                      (target, i, cache.name, cache.assistName, cache.pinData, cache.poutData, cache.binData, cache.boutData, cache.x, cache.y, cache.width, cache.height, cache.expandable))
+        deCur.execute('INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                      (target, i, cache.name, cache.assistName, cache.ptargetData, cache.pinData, cache.poutData, cache.binData, cache.boutData, cache.x, cache.y, cache.width, cache.height, cache.expandable))
     for i in operResult.keys():
         cache = operResult[i]
         currentGraphBlockCell[i] = dcv.BlockCellItem(cache.x, cache.y, cache.width, cache.height)
-        deCur.execute("INSERT INTO block VALUES (?, ?, ?, '', ?, ?, '[]', '[]', ?, ?, ?, ?, -1)",
+        deCur.execute("INSERT INTO block VALUES (?, ?, ?, '', '{}', ?, ?, '[]', '[]', ?, ?, ?, ?, -1)",
                       (target, i, cache.name, cache.pinData, cache.poutData, cache.x, cache.y, cache.width, cache.height))
 
 def recursiveBuildBBTree(node, exCur, processedBB, layer, depth, graphId):

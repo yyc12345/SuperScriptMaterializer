@@ -3,6 +3,11 @@ p.hamburger {
     padding: 0;
 }
 
+div.block-target {
+    position: absolute;
+    background: green;
+}
+
 div.block-b {
     position: absolute;
     background: yellow;
@@ -34,7 +39,7 @@ p.block-asstext {
     margin: 0; 
     padding: 0;
     font-size: 9px;
-    color: white
+    color: white;
 }
 
 div.block-body {
@@ -45,7 +50,7 @@ div.block-body {
 
 div.cell-ptarget {
     position: absolute;
-    background: green
+    background: green;
     border: 1px solid #cfcfcf;
 }
 
@@ -57,18 +62,18 @@ div.cell-plocal {
 
 div.cell-shortcut {
     position: absolute;
-    background: purple
+    background: purple;
     border: 1px solid #cfcfcf;
 }
 
 div.cell-pio {
     position: absolute;
-    background: blue
+    background: blue;
     border: 1px solid #cfcfcf;
 }
 
 div.cell-bio {
     position: absolute;
-    background: yellow
+    background: yellow;
     border: 1px solid #cfcfcf;
 }

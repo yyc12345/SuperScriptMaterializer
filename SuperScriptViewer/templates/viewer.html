@@ -37,22 +37,25 @@
             </svg>
             {# blocks content #}
             {% for i in blocks %}
-            <div class="block-body" style="height: {{ i[11] }}px; width: {{ i[10] }}px; top: {{ i[9] }}px; left: {{ i[8] }}px;">
-                {% for pin in pinDecoder(i[4]) %}
-                <div class="block-p" title="{{ "Name: %s &#13;Type: %s"|format(pin.name, pin.type) }}" style="height: 6px; width: 6px; top: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+            <div class="block-body" style="height: {{ i[12] }}px; width: {{ i[11] }}px; top: {{ i[10] }}px; left: {{ i[9] }}px;">
+                {% if i[4] != '{}' %}
+                <div class="block-target" title="{{ "Name: %s\nType: %s"|format(*pinDecoder2(i[4])) }}" style="height: 6px; width: 6px; top: 0; left: 0;"></div>
+                {% endif %}
+                {% for pin in pinDecoder(i[5]) %}
+                <div class="block-p" title="{{ "Name: %s\nType: %s"|format(pin.name, pin.type) }}" style="height: 6px; width: 6px; top: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
                 {% endfor %}
-                {% for pout in pinDecoder(i[5]) %}
-                <div class="block-p" title="{{ "Name: %s &#13;Type: %s"|format(pout.name, pout.type) }}" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+                {% for pout in pinDecoder(i[6]) %}
+                <div class="block-p" title="{{ "Name: %s\nType: %s"|format(pout.name, pout.type) }}" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
                 {% endfor %}
-                {% for bin in pinDecoder(i[6]) %}
-                <div class="block-b" title="{{ "Name: %s &#13;Type: %s"|format(bin.name, bin.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; left: 0;"></div>
+                {% for bin in pinDecoder(i[7]) %}
+                <div class="block-b" title="{{ "Name: %s\nType: %s"|format(bin.name, bin.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; left: 0;"></div>
                 {% endfor %}
-                {% for bout in pinDecoder(i[7]) %}
-                <div class="block-b" title="{{ "Name: %s &#13;Type: %s"|format(bout.name, bout.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; right: 0;"></div>
+                {% for bout in pinDecoder(i[8]) %}
+                <div class="block-b" title="{{ "Name: %s\nType: %s"|format(bout.name, bout.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; right: 0;"></div>
                 {% endfor %}
 
-                {% if i[12] != -1 %}
-                <p class="block-expandable-text" style="top: 10px; left: 20px;"><a href="{{ "/%s/%s"|format(currentPath, i[12]) }}">{{ i[2]|e }}</a></p>
+                {% if i[13] != -1 %}
+                <p class="block-expandable-text" style="top: 10px; left: 20px;"><a href="{{ "/%s/%s"|format(currentPath, i[13]) }}">{{ i[2]|e }}</a></p>
                 {% else %}
                 <p class="block-text" style="top: 10px; left: 20px;">{{ i[2]|e }}</p>
                 {% endif %}
@@ -62,9 +65,9 @@
 
             {# cells content #}
             {% for i in cells %}
-            <div class="{% if i[6] == 0 %}cell-plocal{% elif i[6] == 1 %}cell-shortcut{% elif i[6] == 2 %}cell-pio{% elif i[6] == 3 %}bio{% else %}cell-ptarget{% endif %}"
-            style="height: 5px; width: 15px; top: {{ i[5] }}px; left: {{ i[4] }}px;"
-            title="{{ "Name: %s &#13;Type: %s"|format(i[2], i[3]) }}"></div>
+            <div class="{% if i[6] == 0 %}cell-plocal{% elif i[6] == 1 %}cell-shortcut{% elif i[6] == 2 %}cell-pio{% elif i[6] == 3 %}cell-bio{% else %}cell-ptarget{% endif %}"
+            style="height: {% if i[6] == 2 or i[6] == 3 %}6{% else %}5{% endif %}px; width: {% if i[6] == 2 or i[6] == 3 %}6{% else %}15{% endif %}px; top: {{ i[5] }}px; left: {{ i[4] }}px;"
+            title="{{ "Name: %s\nType: %s"|format(i[2], i[3]) }}"></div>
             {% endfor %}
         </div>
 
