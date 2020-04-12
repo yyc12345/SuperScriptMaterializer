@@ -77,3 +77,8 @@ div.cell-bio {
     background: yellow;
     border: 1px solid #cfcfcf;
 }
+
+text.link-delay {
+    font-size: 12px;
+    color: black;
+}

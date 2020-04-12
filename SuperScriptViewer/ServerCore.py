@@ -67,15 +67,16 @@ def scriptHandle(scriptPath):
     height = cache[1]
 
     # get blocks
-    cur.execute('SELECT * FROM block WHERE [belong_to_graph] = ?', (pathSlice[-1], ))
+    cur.execute('SELECT * FROM block WHERE [belong_to_graph] == ?', (pathSlice[-1], ))
     dbBlocks = cur.fetchall()
 
     # get cells
-    cur.execute("SELECT * FROM cell WHERE [belong_to_graph] = ?", (pathSlice[-1], ))
+    cur.execute("SELECT * FROM cell WHERE [belong_to_graph] == ?", (pathSlice[-1], ))
     dbCells = cur.fetchall()
 
     # get links
-    # todo:xxxx
+    cur.execute("SELECT * FROM link WHERE [belong_to_graph] == ?", (pathSlice[-1], ))
+    dbLinks = cur.fetchall()
 
     # render
     return render_template('viewer.html',
@@ -87,7 +88,8 @@ def scriptHandle(scriptPath):
                     static_js = url_for('static', filename='site.js'),
                     hamburgerCurrent = currentHamburger,
                     blocks = dbBlocks,
-                    cells = dbCells)
+                    cells = dbCells,
+                    links = dbLinks)
 
 def run():
     app.run()

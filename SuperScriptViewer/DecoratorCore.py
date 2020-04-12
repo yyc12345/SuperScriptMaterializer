@@ -20,7 +20,8 @@ def run():
     for i in graphList:
         currentGraphBlockCell.clear()
         buildBlock(exportDb, decorateDb, i, currentGraphBlockCell)
-        buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
+        (gWidth, gHeight) = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
+        buildLink(exportDb, decorateDb, i, currentGraphBlockCell, gWidth, gHeight)
         
 
     # give up all change of eexport.db (because no change)
@@ -35,7 +36,7 @@ def initDecorateDb(db):
 
     cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-ptarget] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
     cur.execute("CREATE TABLE cell([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [x] REAL, [y] REAL, [type] INTEGER);")
-    cur.execute("CREATE TABLE link([belong_to_graph] INETGER, [thisobj] INTEGER, [delay] INTEGER, [startobj] INTEGER, [endobj] INTEGER, [start_index] INTEGER, [end_index] INTEGER, [x1] REAL, [y1] REAL, [x2] REAL, [y2] REAL);")
+    cur.execute("CREATE TABLE link([belong_to_graph] INETGER, [delay] INTEGER, [startobj] INTEGER, [endobj] INTEGER, [start_type] INTEGER, [end_type] INTEGER, [start_index] INTEGER, [end_index] INTEGER, [x1] REAL, [y1] REAL, [x2] REAL, [y2] REAL);")
 
 def decorateGraph(exDb, deDb, graph):
     exCur = exDb.cursor()
@@ -347,27 +348,27 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     exCur.execute("SELECT [thisobj], [name], [index] FROM bIn WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         x = 0
-        y = dcv.GRAPH_BOFFSET + i[2] * dcv.GRAPH_BSPAN
+        y = dcv.GRAPH_BOFFSET + i[2] * (dcv. BB_PBSIZE + dcv.GRAPH_BSPAN)
         currentGraphBlockCell[i[0]] = dcv.BlockCellItem(x, y, dcv.BB_PBSIZE, dcv.BB_PBSIZE)
         deCur.execute("INSERT INTO cell VALUES (?, ?, ?, '', ?, ?, ?)", (target, i[0], i[1], x, y, dcv.CellType.BIO))
     exCur.execute("SELECT [thisobj], [name], [index] FROM bOut WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         x = 0
-        y = dcv.GRAPH_BOFFSET + i[2] * dcv.GRAPH_BSPAN
+        y = dcv.GRAPH_BOFFSET + i[2] * (dcv. BB_PBSIZE + dcv.GRAPH_BSPAN)
         currentGraphBlockCell[i[0]] = dcv.BlockCellItem(x, y, dcv.BB_PBSIZE, dcv.BB_PBSIZE)
         deCur.execute("INSERT INTO cell VALUES (?, ?, ?, '', ?, ?, ?)", (target, i[0], i[1], x, y, dcv.CellType.BIO))
         boutx.add(i[0])
 
     exCur.execute("SELECT [thisobj], [name], [index], [type] FROM pIn WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
-        x = dcv.GRAPH_POFFSET + i[2] * dcv.GRAPH_PSPAN
+        x = dcv.GRAPH_POFFSET + i[2] * (dcv. BB_PBSIZE + dcv.GRAPH_PSPAN)
         y = 0
         currentGraphBlockCell[i[0]] = dcv.BlockCellItem(x, y, dcv.BB_PBSIZE, dcv.BB_PBSIZE)
         deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)", (target, i[0], i[1], i[3], x, y, dcv.CellType.PIO))
         graphPIO.add(i[0])
     exCur.execute("SELECT [thisobj], [name], [index], [type] FROM pOut WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
-        x = dcv.GRAPH_POFFSET + i[2] * dcv.GRAPH_PSPAN
+        x = dcv.GRAPH_POFFSET + i[2] * (dcv. BB_PBSIZE + dcv.GRAPH_PSPAN)
         y = 0
         currentGraphBlockCell[i[0]] = dcv.BlockCellItem(x, y, dcv.BB_PBSIZE, dcv.BB_PBSIZE)
         deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)", (target, i[0], i[1], i[3], x, y, dcv.CellType.PIO))
@@ -498,6 +499,8 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     for i in pouty:
         deCur.execute("UPDATE cell SET [y] = ? WHERE ([thisobj] == ? AND [belong_to_graph] == ?)", (graphY - dcv.BB_PBSIZE, i, target))
 
+    return (graphX, graphY)
+
 def computCellPosition(baseX, baseY, height, direction, index):
     if (index == -1):
         return (0, 0)
@@ -507,5 +510,29 @@ def computCellPosition(baseX, baseY, height, direction, index):
     else:
         return (baseX + dcv.BB_POFFSET + index * (dcv.BB_PBSIZE + dcv.BB_PSPAN), baseY + height + dcv.GRAPH_SPAN_BB_PLOCAL)
 
-def buildLink(exDb, deDb, target, currentGraphBlockCell):
-    pass
+def buildLink(exDb, deDb, target, currentGraphBlockCell, gWidth, gHeight):
+    exCur = exDb.cursor()
+    deCur = deDb.cursor()
+
+    # bLink
+    exCur.execute("SELECT * FROM bLink WHERE [belong_to] == ?", (target, ))
+    for i in exCur.fetchall():
+        (x1, y1) = computLinkBTerminal(i[3], i[4], i[5], currentGraphBlockCell, target, gWidth)
+        (x2, y2) = computLinkBTerminal(i[6], i[7], i[8], currentGraphBlockCell, target, gWidth)
+        deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                      (target, i[2], i[3], i[6], i[4], i[7], i[5], i[6], x1, y1, x2, y2))
+
+def computLinkBTerminal(obj, type, index, currentGraphBlockCell, target, maxWidth):
+    if (obj == target):
+        # connect to self
+        if (type == 0): # bIn
+            return (0, dcv.GRAPH_BOFFSET + index * (dcv.BB_PBSIZE + dcv.GRAPH_BSPAN))
+        else:           # bOut
+            return (maxWidth - dcv.BB_PBSIZE, dcv.GRAPH_BOFFSET + index * (dcv.BB_PBSIZE + dcv.GRAPH_BSPAN))
+    else:
+        # connect to specific obj
+        cache = currentGraphBlockCell[obj]
+        if (type == 0): # bIn
+            return (cache.x, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
+        else:           # bOut
+            return (cache.x + cache.w - dcv.BB_PBSIZE, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
