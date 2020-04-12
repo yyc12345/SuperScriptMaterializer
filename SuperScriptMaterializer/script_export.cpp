@@ -6,33 +6,7 @@
 
 #pragma region inline func
 
-inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
-	helper->_db_pTarget->thisobj = cache->GetID();
-	strcpy(helper->_db_pTarget->name, cache->GetName());
-	strcpy(helper->_db_pTarget->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
-	helper->_db_pTarget->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pTarget->type_guid[1] = cache->GetGUID().d2;
-	helper->_db_pTarget->belong_to = parents;
-	helper->_db_pTarget->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
-	helper->_db_pTarget->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
-
-	db->write_pTarget(helper->_db_pTarget);
-}
-
-inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
-	helper->_db_pIn->thisobj = cache->GetID();
-	helper->_db_pIn->index = index;
-	strcpy(helper->_db_pIn->name, cache->GetName());
-	strcpy(helper->_db_pIn->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
-	helper->_db_pIn->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pIn->type_guid[1] = cache->GetGUID().d2;
-	helper->_db_pIn->belong_to = parents;
-	helper->_db_pIn->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
-	helper->_db_pIn->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
-
-	db->write_pIn(helper->_db_pIn);
-
-	//=========try generate pLink
+inline void generate_pLink_in_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
 	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
 	CKParameter* directSource = NULL;
 	CKObject* ds_Owner = NULL;
@@ -59,7 +33,7 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 			} else {
 				//pOper
 				helper->_db_pLink->input_index = 0;
-
+				
 			}
 		}
 	}
@@ -88,13 +62,46 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 	if (sharedSource != NULL || directSource != NULL) {
 		helper->_db_pLink->output = cache->GetID();
 		helper->_db_pLink->output_obj = parents;
-		helper->_db_pLink->output_type = pLinkInputOutputType_PIN;
+		helper->_db_pLink->output_type = isTarget ? pLinkInputOutputType_PTARGET : pLinkInputOutputType_PIN;
 		helper->_db_pLink->output_is_bb = executedFromBB;
 		helper->_db_pLink->output_index = index;
 		helper->_db_pLink->belong_to = grandparents;
 
 		db->write_pLink(helper->_db_pLink);
 	}
+}
+
+inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
+	helper->_db_pTarget->thisobj = cache->GetID();
+	strcpy(helper->_db_pTarget->name, cache->GetName());
+	strcpy(helper->_db_pTarget->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
+	helper->_db_pTarget->type_guid[0] = cache->GetGUID().d1;
+	helper->_db_pTarget->type_guid[1] = cache->GetGUID().d2;
+	helper->_db_pTarget->belong_to = parents;
+	helper->_db_pTarget->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
+	helper->_db_pTarget->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
+
+	db->write_pTarget(helper->_db_pTarget);
+
+	//=========try generate pLink
+	generate_pLink_in_pIn(cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
+}
+
+inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+	helper->_db_pIn->thisobj = cache->GetID();
+	helper->_db_pIn->index = index;
+	strcpy(helper->_db_pIn->name, cache->GetName());
+	strcpy(helper->_db_pIn->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
+	helper->_db_pIn->type_guid[0] = cache->GetGUID().d1;
+	helper->_db_pIn->type_guid[1] = cache->GetGUID().d2;
+	helper->_db_pIn->belong_to = parents;
+	helper->_db_pIn->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
+	helper->_db_pIn->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
+
+	db->write_pIn(helper->_db_pIn);
+
+	//=========try generate pLink
+	generate_pLink_in_pIn(cache, db, helper, parents, grandparents, index, executedFromBB, FALSE);
 
 }
 
@@ -287,7 +294,7 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 
 	//write target
 	if (bhv->IsUsingTarget())
-		proc_pTarget(bhv->GetTargetParameter(), db, helper, bhv->GetID());
+		proc_pTarget(bhv->GetTargetParameter(), db, helper, bhv->GetID(), parents);
 
 	int count = 0, i = 0;
 	//pIn

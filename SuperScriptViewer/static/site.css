@@ -42,3 +42,33 @@ div.block-body {
     background: #8f8f8f;
     border: 1px solid #cfcfcf;
 }
+
+div.cell-ptarget {
+    position: absolute;
+    background: green
+    border: 1px solid #cfcfcf;
+}
+
+div.cell-plocal {
+    position: absolute;
+    background: #8f8f8f;
+    border: 1px solid #cfcfcf;
+}
+
+div.cell-shortcut {
+    position: absolute;
+    background: purple
+    border: 1px solid #cfcfcf;
+}
+
+div.cell-pio {
+    position: absolute;
+    background: blue
+    border: 1px solid #cfcfcf;
+}
+
+div.cell-bio {
+    position: absolute;
+    background: yellow
+    border: 1px solid #cfcfcf;
+}

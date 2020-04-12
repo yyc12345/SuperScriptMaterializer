@@ -4,7 +4,7 @@ import os
 import sys
 
 # debug use
-# os.remove('decorate.db')
+os.remove('decorate.db')
 
 print('Super Script View')
 if not os.path.isfile("decorate.db"):

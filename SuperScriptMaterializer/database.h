@@ -18,7 +18,7 @@ enum pLinkInputOutputType {
 	pLinkInputOutputType_PTARGET //when using pTarget, omit [index] and [input_is_bb]
 };
 
-typedef struct dbCKBehavior {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	char name[1024];
 	CK_BEHAVIOR_TYPE type;
@@ -30,16 +30,16 @@ typedef struct dbCKBehavior {
 	//pTarget, pIn, pOut, bIn, bOut
 	char pin_count[128];
 	EXPAND_CK_ID parent;
-};
+}dbCKBehavior;
 
-typedef struct dbCKScript {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	char host_name[1024];
 	int index;
 	EXPAND_CK_ID behavior;
-};
+}dbCKScript;
 
-typedef struct db_pTarget {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	char name[1024];
 	char type[1024];
@@ -47,9 +47,9 @@ typedef struct db_pTarget {
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
-};
+}db_pTarget;
 
-typedef struct db_pIn {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
 	char name[1024];
@@ -58,27 +58,27 @@ typedef struct db_pIn {
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
-};
+}db_pIn;
 
-typedef struct db_pOut {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
 	char name[1024];
 	char type[1024];
 	CKDWORD type_guid[2];
 	EXPAND_CK_ID belong_to;
-};
+}db_pOut;
 
-typedef struct db_bIO {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
 	char name[1024];
 	EXPAND_CK_ID belong_to;
-};
+}db_bIO;
 typedef db_bIO db_bIn;
 typedef db_bIO db_bOut;
 
-typedef struct db_bLink {
+typedef struct {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
 	int delay;
@@ -91,24 +91,24 @@ typedef struct db_bLink {
 	EXPAND_CK_ID output_obj;
 	bLinkInputOutputType output_type;
 	int output_index;
-};
+}db_bLink;
 
-typedef struct db_pLocal {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	char name[1024];
 	char type[1024];
 	CKDWORD type_guid[2];
 	BOOL is_setting;
 	EXPAND_CK_ID belong_to;
-};
+}db_pLocal;
 
-typedef struct db_pLocalData {
+typedef struct {
 	char field[1024];
 	char data[1024];
 	EXPAND_CK_ID belong_to;
-};
+}db_pLocalData;
 
-typedef struct db_pLink {
+typedef struct {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
 	EXPAND_CK_ID belong_to;
@@ -122,14 +122,14 @@ typedef struct db_pLink {
 	pLinkInputOutputType output_type;
 	BOOL output_is_bb;
 	int output_index;
-};
+}db_pLink;
 
-typedef struct db_pOper {
+typedef struct {
 	EXPAND_CK_ID thisobj;
 	char op[1024];
 	CKDWORD op_guid[2];
 	EXPAND_CK_ID belong_to;
-};
+}db_pOper;
 
 #pragma endregion
 

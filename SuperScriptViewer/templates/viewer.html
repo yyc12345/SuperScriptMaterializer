@@ -29,25 +29,26 @@
     </div>
     <div style="background: #7f7f7f; width: 100%; height: 100%; overflow: scroll; position: relative;">
         <div>
-            <svg version="1.1" width="5000px" height="5000px" style="position: absolute; top: 0; left: 0;">
+            <svg version="1.1" width="{{ gWidth }}px" height="{{ gHeight }}px" style="position: absolute; top: 0; left: 0;">
                 <line x1="502" y1="210" x2="100" y2="100" stroke="black" stroke-width="1px"></line>
                 <line x1="320" y1="200" x2="100" y2="100" stroke="blue" stroke-width="1px" stroke-dasharray="10, 5">
                 </line>
                 <text x="200" y="155" fill="black">0</text>
             </svg>
+            {# blocks content #}
             {% for i in blocks %}
             <div class="block-body" style="height: {{ i[11] }}px; width: {{ i[10] }}px; top: {{ i[9] }}px; left: {{ i[8] }}px;">
                 {% for pin in pinDecoder(i[4]) %}
-                <div class="block-p" title="{{ pin|e }}" style="height: 6px; width: 6px; top: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+                <div class="block-p" title="{{ "Name: %s &#13;Type: %s"|format(pin.name, pin.type) }}" style="height: 6px; width: 6px; top: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
                 {% endfor %}
                 {% for pout in pinDecoder(i[5]) %}
-                <div class="block-p" title="{{ pout|e }}" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
+                <div class="block-p" title="{{ "Name: %s &#13;Type: %s"|format(pout.name, pout.type) }}" style="height: 6px; width: 6px; bottom: 0; left: {{ 20 + loop.index0 * ( 6 + 20) }}px;"></div>
                 {% endfor %}
                 {% for bin in pinDecoder(i[6]) %}
-                <div class="block-b" title="{{ bin|e }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; left: 0;"></div>
+                <div class="block-b" title="{{ "Name: %s &#13;Type: %s"|format(bin.name, bin.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; left: 0;"></div>
                 {% endfor %}
-                {% for bout in pinDecoder(i[6]) %}
-                <div class="block-b" title="{{ bout|e }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; right: 0;"></div>
+                {% for bout in pinDecoder(i[7]) %}
+                <div class="block-b" title="{{ "Name: %s &#13;Type: %s"|format(bout.name, bout.type) }}" style="height: 6px; width: 6px; top: {{ 10 + loop.index0 * ( 6 + 20) }}px; right: 0;"></div>
                 {% endfor %}
 
                 {% if i[12] != -1 %}
@@ -57,6 +58,13 @@
                 {% endif %}
                 <p class="block-asstext" style="top: 24px; left: 20px;">{{ i[3]|e }}</p>
             </div>
+            {% endfor %}
+
+            {# cells content #}
+            {% for i in cells %}
+            <div class="{% if i[6] == 0 %}cell-plocal{% elif i[6] == 1 %}cell-shortcut{% elif i[6] == 2 %}cell-pio{% elif i[6] == 3 %}bio{% else %}cell-ptarget{% endif %}"
+            style="height: 5px; width: 15px; top: {{ i[5] }}px; left: {{ i[4] }}px;"
+            title="{{ "Name: %s &#13;Type: %s"|format(i[2], i[3]) }}"></div>
             {% endfor %}
         </div>
 

@@ -25,10 +25,7 @@ def close_connection(exception):
 
 @app.template_global(name = 'pinDecoder')
 def block_pin_filter(target):
-    if target == '':
-        return []
-    # return json.loads(target)
-    return target.split(',')
+    return json.loads(target)
 
 @app.route('/', methods=['GET'])
 def indexHandle():
@@ -58,20 +55,34 @@ def scriptHandle(scriptPath):
     for i in range(len(pathSlice) - 1):
         hamburger.append(ss.HamburgerItem(hamburgerMap[pathSlice[i]], reduce(lambda x,y: x + '/' + y, pathSlice[0:i + 1], '')))
 
+    # gei w/h
+    cur.execute('SELECT [width], [height] FROM graph WHERE [graph] == ?', (pathSlice[-1], ))
+    cache = cur.fetchone()
+    width = cache[0]
+    height = cache[1]
+
     # get blocks
     cur.execute('SELECT * FROM block WHERE [belong_to_graph] = ?', (pathSlice[-1], ))
     dbBlocks = cur.fetchall()
 
-    # todo:xxxxx
+    # get cells
+    cur.execute("SELECT * FROM cell WHERE [belong_to_graph] = ?", (pathSlice[-1], ))
+    dbCells = cur.fetchall()
+
+    # get links
+    # todo:xxxx
 
     # render
     return render_template('viewer.html',
                     currentPath = scriptPath,
+                    gWidth = width,
+                    gHeight = height,
                     hamburgerHistory = hamburger,
                     static_css = url_for('static', filename='site.css'),
                     static_js = url_for('static', filename='site.js'),
                     hamburgerCurrent = currentHamburger,
-                    blocks = dbBlocks)
+                    blocks = dbBlocks,
+                    cells = dbCells)
 
 def run():
     app.run()
