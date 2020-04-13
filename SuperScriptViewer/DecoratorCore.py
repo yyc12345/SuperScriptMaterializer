@@ -507,7 +507,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
 def computCellPosition(baseX, baseY, height, direction, index):
     if (index == -1):
-        return (0, 0)
+        return (baseX, baseY - dcv.GRAPH_SPAN_BB_PLOCAL)
 
     if (direction == 0):
         return (baseX + dcv.BB_POFFSET + index * (dcv.BB_PBSIZE + dcv.BB_PSPAN), baseY - dcv.GRAPH_SPAN_BB_PLOCAL)
