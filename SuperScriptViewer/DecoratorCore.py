@@ -23,6 +23,8 @@ def run():
         (gWidth, gHeight) = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
         buildLink(exportDb, decorateDb, i, currentGraphBlockCell, gWidth, gHeight)
         
+    # export information
+    buildInfo(exportDb, decorateDb)
 
     # give up all change of eexport.db (because no change)
     exportDb.close()
@@ -536,3 +538,12 @@ def computLinkBTerminal(obj, type, index, currentGraphBlockCell, target, maxWidt
             return (cache.x, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
         else:           # bOut
             return (cache.x + cache.w - dcv.BB_PBSIZE, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
+
+def buildInfo(exDb, deDb):
+    exCur = exDb.cursor()
+    deCur = deDb.cursor()
+
+    # export local data (including proto bb internal data)
+    exCur.execute("SELECT * FROM pLocalData;")
+    for i in exCur.fetchall():
+        deCur.execute("INSERT INTO info VALUES (?, ?, ?)", (i[2], i[0], i[1]))

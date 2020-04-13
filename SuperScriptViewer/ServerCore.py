@@ -91,6 +91,28 @@ def scriptHandle(scriptPath):
                     cells = dbCells,
                     links = dbLinks)
 
+@app.route('/<path:scriptPath>', methods=['POST'])
+def infoMoveHandle(scriptPath):
+    cache = request.form['operation']
+    if cache == "info":
+        return infoHandle(request.form['target'])
+    elif cache == "move":
+        return moveHandle(request.form['target'])
+    else:
+        abort(400)
+
+def infoHandle(target):
+    cur = get_db().cursor()
+    cur.execute("SELECT [field], [data] FROM info WHERE [target] == ?", (target, ))
+    data = {}
+    for i in cur.fetchall():
+        data[i[0]] = i[1]
+
+    return data
+
+def moveHandle(target):
+    return {}
+
 def run():
     app.run()
     

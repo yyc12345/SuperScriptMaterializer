@@ -29,3 +29,27 @@ function highlightLink(target) {
     //cancel event seperate
     event.stopPropagation();
 }
+
+function queryInfo(obj) {
+    $.post(window.location,
+        {
+            operation: "info",
+            target: obj
+        },
+        function(data, status) {
+            //set id
+            $("#propertyWindow-id").text(obj);
+
+            //set data
+            $("#propertyWindow-container").empty()
+            for (var key in data) {
+                $("#propertyWindow-container").append("<p><b>" + key + ":</b><br />" + data[key] +"</p>")
+            }
+
+            $("#propertyWindow-main").show();
+        });
+}
+
+function closePropertyWindow() {
+    $("#propertyWindow-main").hide();
+}
