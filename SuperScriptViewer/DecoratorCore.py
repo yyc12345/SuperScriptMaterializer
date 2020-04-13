@@ -145,13 +145,12 @@ def buildBlock(exDb, deDb, target, currentGraphBlockCell):
         else:
             layer_height[curLayer] = max(layer_height.get(curLayer, 0), bbResult[i].height)
     layer_height[arrangedLayer] = layer_height.get(arrangedLayer, 0) # make sure misc bb height exist
-    for i in occupiedLayerCountForSpecificBB.keys():   # add oper occipation
-        layer_height[i] += (occupiedLayerCountForSpecificBB[i] + 1) * dcv.GRAPH_SPAN_BB_POPER
 
     # calc bb Y
     baseY = dcv.GRAPH_CONTENTOFFSET_Y
     for i in range(arrangedLayer + 1):
         baseY += layer_height[i] + dcv.GRAPH_LAYER_SPAN
+        baseY += occupiedLayerCountForSpecificBB.get(i, 0) * dcv.GRAPH_SPAN_BB_POPER    # add oper occipation
         layer_y[i] = baseY
     for i in bbResult.keys():
         cache = bbResult[i]
