@@ -145,6 +145,7 @@ def buildBlock(exDb, deDb, target, currentGraphBlockCell):
         else:
             layer_height[curLayer] = max(layer_height.get(curLayer, 0), bbResult[i].height)
     layer_height[arrangedLayer] = layer_height.get(arrangedLayer, 0) # make sure misc bb height exist
+    layer_height[2] = layer_height.get(2, 0)    # make sure at least have a bb layer (when there are no bb in a map)
 
     # calc bb Y
     baseY = dcv.GRAPH_CONTENTOFFSET_Y

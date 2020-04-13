@@ -91,7 +91,9 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	strcpy(helper->_db_pIn->name, cache->GetName());
-	strcpy(helper->_db_pIn->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
+	CKParameterType vaildTypeChecker = cache->GetType();
+	if (vaildTypeChecker != -1) strcpy(helper->_db_pIn->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
+	else strcpy(helper->_db_pIn->type, "!!UNKNOW TYPE!!"); //unknow type
 	helper->_db_pIn->type_guid[0] = cache->GetGUID().d1;
 	helper->_db_pIn->type_guid[1] = cache->GetGUID().d2;
 	helper->_db_pIn->belong_to = parents;
@@ -109,7 +111,9 @@ inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* h
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	strcpy(helper->_db_pOut->name, cache->GetName());
-	strcpy(helper->_db_pOut->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
+	CKParameterType vaildTypeChecker = cache->GetType();
+	if (vaildTypeChecker != -1) strcpy(helper->_db_pOut->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
+	else strcpy(helper->_db_pOut->type, "!!UNKNOW TYPE!!"); //unknow type
 	helper->_db_pOut->type_guid[0] = cache->GetGUID().d1;
 	helper->_db_pOut->type_guid[1] = cache->GetGUID().d2;
 	helper->_db_pOut->belong_to = parents;
@@ -194,7 +198,9 @@ inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* 
 inline void proc_pLocal(CKParameterLocal* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
 	helper->_db_pLocal->thisobj = cache->GetID();
 	strcpy(helper->_db_pLocal->name, cache->GetName() ? cache->GetName() : "");
-	strcpy(helper->_db_pLocal->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
+	CKParameterType vaildTypeChecker = cache->GetType();
+	if (vaildTypeChecker != -1) strcpy(helper->_db_pLocal->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
+	else strcpy(helper->_db_pLocal->type, "!!UNKNOW TYPE!!"); //unknow type
 	helper->_db_pLocal->type_guid[0] = cache->GetGUID().d1;
 	helper->_db_pLocal->type_guid[1] = cache->GetGUID().d2;
 	helper->_db_pLocal->is_setting = is_setting;
