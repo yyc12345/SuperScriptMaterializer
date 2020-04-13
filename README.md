@@ -1,12 +1,14 @@
 # Super Script Materializer
 
-Advanced Virtools Script Materializer.
+[中文文档](./README_ZH.md)
 
-Export all script into a SQLite database file.
+Super Virtools Script Materializer.
 
-Some code come from [BearKidsTeam/Script-Materializer](https://github.com/BearKidsTeam/Script-Materializer) (this project export specific script into a JSON file)
+Export all script into a SQLite database file. And provide a web page to broswer graph.
 
-WIP
+Some code come from [BearKidsTeam/Script-Materializer](https://github.com/BearKidsTeam/Script-Materializer)(this project export specific script into a JSON file) and [BearKidsTeam/VirtoolsScriptDeobfuscation](https://github.com/BearKidsTeam/VirtoolsScriptDeobfuscation).
+
+WIP. It still lack some function and have some bugs, but it can be used for some normal deobfiscation.
 
 ## Install
 

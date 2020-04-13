@@ -15,17 +15,23 @@ function highlightLink(target) {
         });
     }
 
-    //apply new highlight
-    $(realTarget).each(function() {
-        if ($(this).hasClass("link-blink")) {
-            $(this).attr("stroke", "yellow")
-        }
-        if ($(this).hasClass("link-blinkDelay")) {
-            $(this).attr("fill", "yellow")
-        }
-    });
+    // double one-click, only cancel highlight and don't apply any hightlight
+    if (realTarget == previousHighlight) {
+        previousHighlight = "";
+    } else {
+        //apply new highlight
+        $(realTarget).each(function() {
+            if ($(this).hasClass("link-blink")) {
+                $(this).attr("stroke", "yellow")
+            }
+            if ($(this).hasClass("link-blinkDelay")) {
+                $(this).attr("fill", "yellow")
+            }
+        });
 
-    previousHighlight = realTarget
+        previousHighlight = realTarget
+    }
+
     //cancel event seperate
     event.stopPropagation();
 }

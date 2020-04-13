@@ -1,9 +1,11 @@
 import sqlite3
 import DecoratorConstValue as dcv
 import json
+import locale
 
 def run():
     exportDb = sqlite3.connect('export.db')
+    exportDb.text_factory = lambda x: x.decode(locale.getpreferredencoding())
     decorateDb = sqlite3.connect('decorate.db')
 
     # init table

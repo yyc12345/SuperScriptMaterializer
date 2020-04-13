@@ -3,6 +3,7 @@ from flask import g
 from flask import render_template
 from flask import url_for
 from flask import request
+from flask import abort
 
 from functools import reduce
 import sqlite3
@@ -47,6 +48,10 @@ def indexHandle():
 
 @app.route('/<path:scriptPath>', methods=['GET'])
 def scriptHandle(scriptPath):
+    # fuck favition.ico
+    if '.' in scriptPath:
+        abort(404)
+
     # comput hamburger
     pathSlice = scriptPath.split('/')
     cur = get_db().cursor()
