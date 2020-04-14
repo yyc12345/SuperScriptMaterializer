@@ -12,6 +12,12 @@ function highlightLink(target) {
             if ($(this).hasClass("link-blinkDelay")) {
                 $(this).attr("fill", "black")
             }
+            if ($(this).hasClass("link-plink")) {
+                $(this).attr("stroke", "blue")
+            }
+            if ($(this).hasClass("link-elink")) {
+                $(this).attr("stroke", "cyan")
+            }
         });
     }
 
@@ -26,6 +32,12 @@ function highlightLink(target) {
             }
             if ($(this).hasClass("link-blinkDelay")) {
                 $(this).attr("fill", "yellow")
+            }
+            if ($(this).hasClass("link-plink")) {
+                $(this).attr("stroke", "orange")
+            }
+            if ($(this).hasClass("link-elink")) {
+                $(this).attr("stroke", "orange")
             }
         });
 

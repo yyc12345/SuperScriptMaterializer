@@ -22,8 +22,8 @@ def run():
     for i in graphList:
         currentGraphBlockCell.clear()
         buildBlock(exportDb, decorateDb, i, currentGraphBlockCell)
-        (gWidth, gHeight) = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
-        buildLink(exportDb, decorateDb, i, currentGraphBlockCell, gWidth, gHeight)
+        graphPIO = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
+        buildLink(exportDb, decorateDb, i, currentGraphBlockCell, graphPIO)
         
     # export information
     buildInfo(exportDb, decorateDb)
@@ -395,11 +395,12 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
     # query all links(don't need to consider export pIO, due to it will not add
     # any shortcut)
+    # !! the same if framework in pLink generator function !! SHARED
     createdShortcut = set()
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         # check export pIO.
-        if (((i[2] == target) and (i[0] in graphPIO)) or ((i[6] == target) and (i[1] in graphPIO))):
+        if (((i[2] != target) and (i[0] in graphPIO)) or ((i[6] != target) and (i[1] in graphPIO))):
             # fuck export param
             continue
 
@@ -518,7 +519,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     for i in pouty:
         deCur.execute("UPDATE cell SET [y] = ? WHERE ([thisobj] == ? AND [belong_to_graph] == ?)", (graphY - dcv.BB_PBSIZE, i, target))
 
-    return (graphX, graphY)
+    return graphPIO
 
 def computCellPosition(baseX, baseY, height, direction, index):
     if (index == -1):
@@ -529,32 +530,99 @@ def computCellPosition(baseX, baseY, height, direction, index):
     else:
         return (baseX + dcv.BB_POFFSET + index * (dcv.BB_PBSIZE + dcv.BB_PSPAN), baseY + height + dcv.GRAPH_SPAN_BB_PLOCAL)
 
-def buildLink(exDb, deDb, target, currentGraphBlockCell, gWidth, gHeight):
+def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
     exCur = exDb.cursor()
     deCur = deDb.cursor()
 
     # bLink
     exCur.execute("SELECT * FROM bLink WHERE [belong_to] == ?", (target, ))
     for i in exCur.fetchall():
-        (x1, y1) = computLinkBTerminal(i[3], i[4], i[5], currentGraphBlockCell, target, gWidth)
-        (x2, y2) = computLinkBTerminal(i[6], i[7], i[8], currentGraphBlockCell, target, gWidth)
+        (x1, y1) = computLinkBTerminal(i[3] if i[3] != target else i[0],
+                                       i[4],
+                                       i[5] if i[3] != target else -1,
+                                       currentGraphBlockCell)
+        (x2, y2) = computLinkBTerminal(i[6] if i[6] != target else i[1],
+                                       i[7],
+                                       i[8] if i[6] != target else -1,
+                                       currentGraphBlockCell)
         deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                      (target, i[2], i[3], i[0], i[1], i[6], i[4], i[7], i[5], i[6], x1, y1, x2, y2))
+                      (target, i[2], i[0], i[1], i[3], i[6], i[4], i[7], i[5], i[8], x1, y1, x2, y2))
 
-def computLinkBTerminal(obj, type, index, currentGraphBlockCell, target, maxWidth):
-    if (obj == target):
-        # connect to self
-        if (type == 0): # bIn
-            return (0, dcv.GRAPH_BOFFSET + index * (dcv.BB_PBSIZE + dcv.GRAPH_BSPAN))
-        else:           # bOut
-            return (maxWidth - dcv.BB_PBSIZE, dcv.GRAPH_BOFFSET + index * (dcv.BB_PBSIZE + dcv.GRAPH_BSPAN))
-    else:
-        # connect to specific obj
-        cache = currentGraphBlockCell[obj]
-        if (type == 0): # bIn
-            return (cache.x, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
-        else:           # bOut
-            return (cache.x + cache.w - dcv.BB_PBSIZE, cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN))
+    # pLink
+    # !! the same if framework in cell generator function !! SHARED
+    exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
+    for i in exCur.fetchall():
+        # check export pIO.
+        if (i[2] != target) and (i[0] in graphPIO):
+            # fuck export param, create a export link. in this if, i[0] is a pOut and was plugged into graph. it is start point
+            (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
+            (x2, y2) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+            deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                            (target, -2, i[0], i[0], target, i[2], 0, 1, -1, i[5], x1, y1, x2, y2))
+            continue
+
+        if (i[6] != target) and (i[1] in graphPIO):
+            # fuck export param, create a export link. in this if, i[1] is a pIn/pTarget and was plugged into graph. it is end point
+            (x1, y1) = computLinkPTerminal(i[1], 0, -1, currentGraphBlockCell)
+            (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
+            deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                            (target, -2, i[1], i[1], target, i[6], 0, 0, -1, i[9], x1, y1, x2, y2))
+            continue
+
+        # analyse 5 chancee one by one
+        if (i[7] == dcv.dbPLinkInputOutputType.PTARGET or i[7] == dcv.dbPLinkInputOutputType.PIN):
+            if (i[3] == dcv.dbPLinkInputOutputType.PLOCAL):
+                (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
+                (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
+                deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                              (target, -1, i[0], i[1], i[2], i[6], 0, 0, -1, i[9], x1, y1, x2, y2))
+
+            elif (i[3] == dcv.dbPLinkInputOutputType.PIN):
+                (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
+                if i[2] == target:
+                    (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
+                    deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                                  (target, -1, i[0], i[1], i[0], i[6], 0, 0, -1, i[9], x1, y1, x2, y2))
+                else:
+                    (x1, y1) = computLinkPTerminal(i[2], 0, i[5], currentGraphBlockCell)
+                    deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                                  (target, -1, i[0], i[1], i[2], i[6], 0, 0, i[5], i[9], x1, y1, x2, y2))
+
+            else:
+                (x1, y1) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+                (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
+                deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                              (target, -1, i[0], i[1], i[2], i[6], 1, 0, i[5], i[9], x1, y1, x2, y2))
+
+        else:
+            if (i[7] == dcv.dbPLinkInputOutputType.PLOCAL):
+                (x1, y1) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+                (x2, y2) = computLinkPTerminal(i[1], 0, -1, currentGraphBlockCell)
+                deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                              (target, -1, i[0], i[1], i[2], i[6], 1, 0, i[5], -1, x1, y1, x2, y2))
+            else:
+                (x1, y1) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+                if i[6] == target:
+                    (x2, y2) = computLinkPTerminal(i[1], 0, -1, currentGraphBlockCell)
+                    deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                                  (target, -1, i[0], i[1], i[2], i[1], 1, 0, i[5], -1, x1, y1, x2, y2))
+                else:
+                    (x2, y2) = computLinkPTerminal(i[6], 1, i[9], currentGraphBlockCell)
+                    deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                                  (target, -1, i[0], i[1], i[2], i[6], 1, 1, i[5], i[9], x1, y1, x2, y2))
+
+
+def computLinkBTerminal(obj, xtype, index, currentGraphBlockCell):
+    # index = -1 mean no offset, it will connect to graph io
+    cache = currentGraphBlockCell[obj]
+    return (cache.x if xtype == 0 else cache.x + cache.w - dcv.BB_PBSIZE,
+            cache.y if index == -1 else (cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN)))
+
+def computLinkPTerminal(obj, ytype, index, currentGraphBlockCell):
+    # ytype is not database type. it have the same meaning of LinkBTerminal, indicating the position. 0 is keep origin position(for pIn and pTarget), 1 is consider height(for pOut)
+    cache = currentGraphBlockCell[obj]
+    return (cache.x if index == -1 else (cache.x + dcv.BB_POFFSET + index * (dcv.BB_PBSIZE + dcv.BB_PSPAN)), 
+            cache.y if ytype == 0 else (cache.y + cache.h - dcv.BB_PBSIZE))
 
 def buildInfo(exDb, deDb):
     exCur = exDb.cursor()
