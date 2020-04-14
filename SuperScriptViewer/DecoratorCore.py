@@ -395,21 +395,23 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
     # query all links(don't need to consider export pIO, due to it will not add
     # any shortcut)
+    createdShortcut = set()
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         # check export pIO.
-        if ((i[2] == target) and (i[0] in graphPIO) or (i[6] == target) and (i[1] in graphPIO)):
+        if (((i[2] == target) and (i[0] in graphPIO)) or ((i[6] == target) and (i[1] in graphPIO))):
             # fuck export param
             continue
 
         # analyse 5 chancee one by one
         if (i[7] == dcv.dbPLinkInputOutputType.PTARGET or i[7] == dcv.dbPLinkInputOutputType.PIN):
             if (i[3] == dcv.dbPLinkInputOutputType.PLOCAL):
-                if i[2] in allLocal:
+                if i[2] in allLocal or i[2] in createdShortcut:
                     cache = localUsageCounter[i[2]]
                 else:
                     cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PLOCAL)
                     localUsageCounter[i[2]] = cache
+                    createdShortcut.add(i[2])
 
                 cache.count += 1
                 cache.lastUse = i[6]
@@ -418,8 +420,12 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
             elif (i[3] == dcv.dbPLinkInputOutputType.PIN):
                 if i[2] not in blockSet:
-                    cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PIN)
-                    localUsageCounter[i[0]] = cache
+                    if i[0] not in createdShortcut:
+                        cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PIN)
+                        localUsageCounter[i[0]] = cache
+                        createdShortcut.add(i[0])
+                    else:
+                        cache = localUsageCounter[i[0]]
 
                     cache.count+=1
                     cache.lastUse = i[6]
@@ -427,8 +433,12 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                     cache.lastIndex = i[9]
             else:
                 if i[2] not in blockSet:
-                    cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
-                    localUsageCounter[i[0]] = cache
+                    if i[0] not in createdShortcut:
+                        cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
+                        localUsageCounter[i[0]] = cache
+                        createdShortcut.add(i[0])
+                    else:
+                        cache = localUsageCounter[i[0]]
 
                     cache.count+=1
                     cache.lastUse = i[6]
@@ -436,11 +446,12 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                     cache.lastIndex = i[9]
         else:
             if (i[7] == dcv.dbPLinkInputOutputType.PLOCAL):
-                if i[6] in allLocal:
+                if i[6] in allLocal or i[6] in createdShortcut:
                     cache = localUsageCounter[i[6]]
                 else:
                     cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PLOCAL)
                     localUsageCounter[i[6]] = cache
+                    createdShortcut.add(i[6])
 
                 cache.count += 1
                 cache.lastUse = i[2]
@@ -448,8 +459,12 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                 cache.lastIndex = i[5]
             else:
                 if i[6] not in blockSet:
-                    cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
-                    localUsageCounter[i[1]] = cache
+                    if i[1] not in createdShortcut:
+                        cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
+                        localUsageCounter[i[1]] = cache
+                        createdShortcut.add(i[1])
+                    else:
+                        cache = localUsageCounter[i[1]]
 
                     cache.count += 1
                     cache.lastUse = i[2]
