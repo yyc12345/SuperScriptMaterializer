@@ -401,7 +401,6 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     for i in exCur.fetchall():
         # check export pIO.
         if (((i[2] != target) and (i[0] in graphPIO)) or ((i[6] != target) and (i[1] in graphPIO))):
-            # fuck export param
             continue
 
         # analyse 5 chancee one by one
@@ -420,6 +419,8 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                 cache.lastIndex = i[9]
 
             elif (i[3] == dcv.dbPLinkInputOutputType.PIN):
+                if i[2] == target:
+                    continue    # ignore self pIn/pOut. it doesn't need any shortcut
                 if i[2] not in blockSet:
                     if i[0] not in createdShortcut:
                         cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PIN)
@@ -459,6 +460,8 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                 cache.lastDirection = 1
                 cache.lastIndex = i[5]
             else:
+                if i[6] == target:
+                    continue    # ignore self pIn/pOut. it doesn't need any shortcut
                 if i[6] not in blockSet:
                     if i[1] not in createdShortcut:
                         cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
@@ -502,7 +505,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
         deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)",
                       (target, i, temp[0], temp[1], x, y, (dcv.CellType.SHORTCUT if cache.isshortcut else dcv.CellType.PLOCAL)))
 
-    # comput size and update database
+    # comput size and update database and currentGraphBlockCell
     graphX = 0
     graphY = 0
     for key, values in currentGraphBlockCell.items():
@@ -516,8 +519,10 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     # update bOut.x and pOut.y data
     for i in boutx:
         deCur.execute("UPDATE cell SET [x] = ? WHERE ([thisobj] == ? AND [belong_to_graph] == ?)", (graphX - dcv.BB_PBSIZE, i, target))
+        currentGraphBlockCell[i].x = graphX - dcv.BB_PBSIZE
     for i in pouty:
         deCur.execute("UPDATE cell SET [y] = ? WHERE ([thisobj] == ? AND [belong_to_graph] == ?)", (graphY - dcv.BB_PBSIZE, i, target))
+        currentGraphBlockCell[i].y = graphY - dcv.BB_PBSIZE
 
     return graphPIO
 
@@ -537,16 +542,29 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
     # bLink
     exCur.execute("SELECT * FROM bLink WHERE [belong_to] == ?", (target, ))
     for i in exCur.fetchall():
-        (x1, y1) = computLinkBTerminal(i[3] if i[3] != target else i[0],
-                                       i[4],
-                                       i[5] if i[3] != target else -1,
-                                       currentGraphBlockCell)
-        (x2, y2) = computLinkBTerminal(i[6] if i[6] != target else i[1],
-                                       i[7],
-                                       i[8] if i[6] != target else -1,
-                                       currentGraphBlockCell)
+        if i[3] == target:
+            (x1, y1) = computLinkBTerminal(i[0], 0, -1 ,currentGraphBlockCell)
+            bStartObj = i[0]
+            bStartType = 0
+            bStartIndex = -1
+        else:
+            (x1, y1) = computLinkBTerminal(i[3], i[4], i[5], currentGraphBlockCell)
+            bStartObj = i[3]
+            bStartType = i[4]
+            bStartIndex = i[5]
+        if i[6] == target:
+            (x2, y2) = computLinkBTerminal(i[1], 0, -1,currentGraphBlockCell)
+            bEndObj = i[1]
+            bEndType = 0
+            bEndIndex = -1
+        else:
+            (x2, y2) = computLinkBTerminal(i[6], i[7], i[8],currentGraphBlockCell)
+            bEndObj = i[6]
+            bEndType = i[7]
+            bEndIndex = i[8]
+
         deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                      (target, i[2], i[0], i[1], i[3], i[6], i[4], i[7], i[5], i[8], x1, y1, x2, y2))
+                      (target, i[2], i[0], i[1], bStartObj, bEndObj, bStartType, bEndType, bStartIndex, bEndIndex, x1, y1, x2, y2))
 
     # pLink
     # !! the same if framework in cell generator function !! SHARED
