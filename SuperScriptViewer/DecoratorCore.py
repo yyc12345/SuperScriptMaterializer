@@ -399,9 +399,6 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
     createdShortcut = set()
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
-        # check export pIO.
-        if (((i[2] != target) and (i[0] in graphPIO)) or ((i[6] != target) and (i[1] in graphPIO))):
-            continue
 
         # analyse 5 chancee one by one
         if (i[7] == dcv.dbPLinkInputOutputType.PTARGET or i[7] == dcv.dbPLinkInputOutputType.PIN):
@@ -570,23 +567,6 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
     # !! the same if framework in cell generator function !! SHARED
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
-        # check export pIO.
-        if (i[2] != target) and (i[0] in graphPIO):
-            # fuck export param, create a export link. in this if, i[0] is a pOut and was plugged into graph. it is start point
-            (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
-            (x2, y2) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
-            deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                            (target, -2, i[0], i[0], target, i[2], 0, 1, -1, i[5], x1, y1, x2, y2))
-            continue
-
-        if (i[6] != target) and (i[1] in graphPIO):
-            # fuck export param, create a export link. in this if, i[1] is a pIn/pTarget and was plugged into graph. it is end point
-            (x1, y1) = computLinkPTerminal(i[1], 0, -1, currentGraphBlockCell)
-            (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
-            deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                            (target, -2, i[1], i[1], target, i[6], 0, 0, -1, i[9], x1, y1, x2, y2))
-            continue
-
         # analyse 5 chancee one by one
         if (i[7] == dcv.dbPLinkInputOutputType.PTARGET or i[7] == dcv.dbPLinkInputOutputType.PIN):
             if (i[3] == dcv.dbPLinkInputOutputType.PLOCAL):
@@ -629,6 +609,13 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
                     deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                                   (target, -1, i[0], i[1], i[2], i[6], 1, 1, i[5], i[9], x1, y1, x2, y2))
 
+    # eLink
+    exCur.execute("SELECT * FROM eLink WHERE [belong_to] == ?", (target,))
+    for i in exCur.fetchall():
+        (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
+        (x2, y2) = computLinkPTerminal(i[1], 0 if i[2] == 1 else 1, i[3], currentGraphBlockCell)
+        deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                        (target, -2, i[0], i[0], target, i[1], 0, 0 if i[2] == 1 else 1, -1, i[3], x1, y1, x2, y2))
 
 def computLinkBTerminal(obj, xtype, index, currentGraphBlockCell):
     # index = -1 mean no offset, it will connect to graph io

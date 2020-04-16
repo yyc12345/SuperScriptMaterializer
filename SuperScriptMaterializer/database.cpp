@@ -15,6 +15,7 @@ void dbDataStructHelper::init(CKParameterManager* paramManager) {
 	_db_pLink = new db_pLink();
 	_db_pLocalData = new db_pLocalData();
 	_db_pOper = new db_pOper();
+	_db_eLink = new db_eLink();
 	_parameterManager = paramManager;
 }
 
@@ -31,6 +32,7 @@ void dbDataStructHelper::dispose() {
 	delete _db_pLink;
 	delete _db_pLocal;
 	delete _db_pOper;
+	delete _db_eLink;
 	_parameterManager = NULL;
 }
 
@@ -99,6 +101,10 @@ void database::open(const char* file) {
 	if (result != SQLITE_OK) goto fail;
 	result = sqlite3_exec(db,
 		"CREATE TABLE pOper([thisobj] INTEGER, [op] TEXT, [op_guid] TEXT, [belong_to] INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) goto fail;
+	result = sqlite3_exec(db,
+		"CREATE TABLE eLink([export_obj] INTEGER, [internal_obj] INTEGER, [is_in] INTEGER, [index] INTEGER, [belong_to] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) goto fail;
 
@@ -317,5 +323,17 @@ void database::write_pOper(db_pOper* data) {
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
 }
 
+void database::write_eLink(db_eLink* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO eLink VALUES (%d, %d, %d, %d, %d);",
+		data->export_obj,
+		data->internal_obj,
+		data->is_in,
+		data->index,
+		data->belong_to);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
 
 #pragma endregion

@@ -131,6 +131,14 @@ typedef struct {
 	EXPAND_CK_ID belong_to;
 }db_pOper;
 
+typedef struct {
+	EXPAND_CK_ID export_obj;
+	EXPAND_CK_ID internal_obj;
+	BOOL is_in;
+	int index;
+	EXPAND_CK_ID belong_to;
+}db_eLink;
+
 #pragma endregion
 
 class dbDataStructHelper {
@@ -151,6 +159,7 @@ class dbDataStructHelper {
 	db_pLink* _db_pLink;
 	db_pLocalData* _db_pLocalData;
 	db_pOper* _db_pOper;
+	db_eLink* _db_eLink;
 };
 
 class database {
@@ -170,6 +179,7 @@ class database {
 	void write_pLink(db_pLink* data);
 	void write_pLocalData(db_pLocalData* data);
 	void write_pOper(db_pOper* data);
+	void write_eLink(db_eLink* data);
 
 	private:
 	sqlite3* db;

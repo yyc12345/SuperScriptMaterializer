@@ -6,7 +6,7 @@
 
 #pragma region inline func
 
-inline void generate_pLink_in_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
+inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
 	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
 	CKParameter* directSource = NULL;
 	CKObject* ds_Owner = NULL;
@@ -71,7 +71,7 @@ inline void generate_pLink_in_pIn(CKParameterIn* cache, database* db, dbDataStru
 	}
 }
 
-inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
+inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
 	helper->_db_pTarget->thisobj = cache->GetID();
 	strcpy(helper->_db_pTarget->name, cache->GetName());
 	strcpy(helper->_db_pTarget->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
@@ -84,10 +84,10 @@ inline void proc_pTarget(CKParameterIn* cache, database* db, dbDataStructHelper*
 	db->write_pTarget(helper->_db_pTarget);
 
 	//=========try generate pLink
-	generate_pLink_in_pIn(cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
+	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
 }
 
-inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	strcpy(helper->_db_pIn->name, cache->GetName());
@@ -102,12 +102,24 @@ inline void proc_pIn(CKParameterIn* cache, database* db, dbDataStructHelper* hel
 
 	db->write_pIn(helper->_db_pIn);
 
-	//=========try generate pLink
-	generate_pLink_in_pIn(cache, db, helper, parents, grandparents, index, executedFromBB, FALSE);
+	//judge whether expoer parameter and write database
+	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetInputParameterPosition(cache) != -1) {
+		helper->_db_eLink->export_obj = cache->GetID();
+		helper->_db_eLink->internal_obj = parents;
+		helper->_db_eLink->is_in = TRUE;
+		helper->_db_eLink->index = index;
+		helper->_db_eLink->belong_to = grandparents;
 
+		db->write_eLink(helper->_db_eLink);
+		return;
+	}
+
+	//=========try generate pLink
+	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, index, executedFromBB, FALSE);
+	
 }
 
-inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	strcpy(helper->_db_pOut->name, cache->GetName());
@@ -119,6 +131,18 @@ inline void proc_pOut(CKParameterOut* cache, database* db, dbDataStructHelper* h
 	helper->_db_pOut->belong_to = parents;
 
 	db->write_pOut(helper->_db_pOut);
+
+	//judge whether expoer parameter and write database
+	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetOutputParameterPosition(cache) != -1) {
+		helper->_db_eLink->export_obj = cache->GetID();
+		helper->_db_eLink->internal_obj = parents;
+		helper->_db_eLink->is_in = FALSE;
+		helper->_db_eLink->index = index;
+		helper->_db_eLink->belong_to = grandparents;
+
+		db->write_eLink(helper->_db_eLink);
+		return;
+	}
 
 	//=========try generate pLink
 	CKParameter* cache_Dest = NULL;
@@ -212,7 +236,7 @@ inline void proc_pLocal(CKParameterLocal* cache, database* db, dbDataStructHelpe
 	IteratepLocalData(cache, db, helper, cache->GetID());
 }
 
-inline void proc_pOper(CKParameterOperation* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pOper->thisobj = cache->GetID();
 	strcpy(helper->_db_pOper->op, helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid()));
 	helper->_db_pOper->op_guid[0] = cache->GetOperationGuid().d1;
@@ -222,9 +246,9 @@ inline void proc_pOper(CKParameterOperation* cache, database* db, dbDataStructHe
 	db->write_pOper(helper->_db_pOper);
 
 	//export 2 input param and 1 output param
-	proc_pIn(cache->GetInParameter1(), db, helper, cache->GetID(), parents, 0, FALSE);
-	proc_pIn(cache->GetInParameter2(), db, helper, cache->GetID(), parents, 1, FALSE);
-	proc_pOut(cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0, FALSE);
+	proc_pIn(ctx, cache->GetInParameter1(), db, helper, cache->GetID(), parents, 0, FALSE);
+	proc_pIn(ctx, cache->GetInParameter2(), db, helper, cache->GetID(), parents, 1, FALSE);
+	proc_pOut(ctx, cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0, FALSE);
 }
 
 
@@ -273,12 +297,12 @@ void IterateScript(CKContext* ctx, database* db, dbDataStructHelper* helper) {
 			db->write_CKScript(helper->_dbCKScript);
 
 			//iterate script
-			IterateBehavior(beh, db, helper, -1);
+			IterateBehavior(ctx, beh, db, helper, -1);
 		}
 	}
 }
 
-void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+void IterateBehavior(CKContext* ctx, CKBehavior* bhv, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
 	//write self data
 	helper->_dbCKBehavior->thisobj = bhv->GetID();
 	strcpy(helper->_dbCKBehavior->name, bhv->GetName());
@@ -300,15 +324,15 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 
 	//write target
 	if (bhv->IsUsingTarget())
-		proc_pTarget(bhv->GetTargetParameter(), db, helper, bhv->GetID(), parents);
+		proc_pTarget(ctx, bhv->GetTargetParameter(), db, helper, bhv->GetID(), parents);
 
 	int count = 0, i = 0;
 	//pIn
 	for (i = 0, count = bhv->GetInputParameterCount(); i < count; i++)
-		proc_pIn(bhv->GetInputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
+		proc_pIn(ctx, bhv->GetInputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
 	//pOut
 	for (i = 0, count = bhv->GetOutputParameterCount(); i < count; i++)
-		proc_pOut(bhv->GetOutputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
+		proc_pOut(ctx, bhv->GetOutputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
 	//bIn
 	for (i = 0, count = bhv->GetInputCount(); i < count; i++)
 		proc_bIn(bhv->GetInput(i), db, helper, bhv->GetID(), i);
@@ -322,13 +346,13 @@ void IterateBehavior(CKBehavior* bhv, database* db, dbDataStructHelper* helper, 
 	for (i = 0, count = bhv->GetLocalParameterCount(); i < count; i++)
 		proc_pLocal(bhv->GetLocalParameter(i), db, helper, bhv->GetID(),
 			bhv->IsLocalParameterSetting(i));
-	//bOper
+	//pOper
 	for (i = 0, count = bhv->GetParameterOperationCount(); i < count; i++)
-		proc_pOper(bhv->GetParameterOperation(i), db, helper, bhv->GetID());
+		proc_pOper(ctx, bhv->GetParameterOperation(i), db, helper, bhv->GetID());
 
 	//iterate sub bb
 	for (i = 0, count = bhv->GetSubBehaviorCount(); i < count; i++)
-		IterateBehavior(bhv->GetSubBehavior(i), db, helper, bhv->GetID());
+		IterateBehavior(ctx, bhv->GetSubBehavior(i), db, helper, bhv->GetID());
 }
 
 void IteratepLocalData(CKParameterLocal* p, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
