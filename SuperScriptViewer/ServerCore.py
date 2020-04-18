@@ -4,6 +4,7 @@ from flask import render_template
 from flask import url_for
 from flask import request
 from flask import abort
+from flask import redirect
 
 from functools import reduce
 import sqlite3
@@ -12,6 +13,7 @@ import ServerStruct as ss
 
 app = Flask(__name__)
 
+# =============================================database
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -24,6 +26,7 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
+# =============================================template func
 @app.template_global(name = 'pinDecoder')
 def block_pin_decoder(target):
     return json.loads(target)
@@ -33,7 +36,20 @@ def block_pin_decoder2(target):
     vab = json.loads(target)
     return [vab['name'], vab['type']]
 
+# =============================================route
 @app.route('/', methods=['GET'])
+def nospecHandle():
+    return redirect(url_for('indexHandle'))
+
+@app.route('/help', methods=['GET'])
+def helpHandle():
+    return render_template("help.html")
+
+@app.route('/about', methods=['GET'])
+def aboutHandle():
+    return render_template("about.html")
+
+@app.route('/index', methods=['GET'])
 def indexHandle():
     cur = get_db().cursor()
     cur.execute("SELECT [graph], [graph_name], [belong_to] FROM graph WHERE [index] != -1 ORDER BY [belong_to], [index] ASC;")
@@ -46,11 +62,8 @@ def indexHandle():
 
     return render_template('index.html', scripts = data)
 
-@app.route('/<path:scriptPath>', methods=['GET'])
-def scriptHandle(scriptPath):
-    # fuck favition.ico
-    if '.' in scriptPath:
-        abort(404)
+@app.route('/viewer/<path:scriptPath>', methods=['GET'])
+def viewerHandle(scriptPath):
 
     # comput hamburger
     pathSlice = scriptPath.split('/')
@@ -96,8 +109,8 @@ def scriptHandle(scriptPath):
                     cells = dbCells,
                     links = dbLinks)
 
-@app.route('/<path:scriptPath>', methods=['POST'])
-def infoMoveHandle(scriptPath):
+@app.route('/viewer/<path:scriptPath>', methods=['POST'])
+def actionHandle(scriptPath):
     cache = request.form['operation']
     if cache == "info":
         return infoHandle(request.form['target'])

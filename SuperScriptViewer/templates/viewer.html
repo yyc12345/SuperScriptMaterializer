@@ -13,11 +13,11 @@
     <div style="display: flex; flex-flow: column; height: 100%; width: 80%; margin: 0; padding: 0;">
         <div style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
 
-            <p class="hamburger"><a href="/"><b>Script Hierarchy</b></a></p>
+            <p class="hamburger"><a href="/index"><b>Script Hierarchy</b></a></p>
 
             {% for i in hamburgerHistory %}
             <p class="hamburger">&gt;&gt;</p>
-            <p class="hamburger"><a href="{{ i.path }}">{{ i.name|e }}</a></p>
+            <p class="hamburger"><a href="{{ "/viewer%s"|format(i.path) }}">{{ i.name|e }}</a></p>
             {% endfor %}
 
             <p class="hamburger">&gt;&gt;</p>
@@ -47,7 +47,7 @@
                     {% endfor %}
 
                     {% if i[13] != -1 %}
-                    <p class="block-expandable-text" style="top: 10px; left: 20px;"><a href="{{ "/%s/%s"|format(currentPath, i[13]) }}">{{ i[2]|e }}</a></p>
+                    <p class="block-expandable-text" style="top: 10px; left: 20px;"><a href="{{ "/viewer/%s/%s"|format(currentPath, i[13]) }}">{{ i[2]|e }}</a></p>
                     {% else %}
                     <p class="block-text" style="top: 10px; left: 20px;">{{ i[2]|e }}</p>
                     {% endif %}
@@ -94,12 +94,13 @@
 
         <div id="sidepanel-display" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
             <p style="margin: 5px;">Render:<br />
-                <input type="checkbox" id="sidepanel-display-plink" value="1">Show pLink and eLink</input>
+                <input type="checkbox" id="sidepanel-display-plink" value="1" onclick="settingChange(&quot;plink&quot;);">Show pLink and eLink</input>
             </p>
             <p style="margin: 5px;">Action:<br />
-                <input type="checkbox" id="sidepanel-display-property" value="1">Interactive property inspector</input><br />
-                <input type="checkbox" id="sidepanel-display-highlight" value="1">Highlight focused object</input><br />
-                <input type="checkbox" id="sidepanel-display-move" value="1">Move objects</input>
+                <input type="checkbox" id="sidepanel-display-properties" value="1" onclick="settingChange(&quot;properties&quot;);">Interactive property inspector</input><br />
+                <input type="checkbox" id="sidepanel-display-highlight" value="1" onclick="settingChange(&quot;highlight&quot;);">Highlight focused object</input><br />
+                <input type="checkbox" id="sidepanel-display-keyboard" value="1" onclick="settingChange(&quot;keyboard&quot;);">Use keyboard to move viewer</input><br />
+                <input type="checkbox" id="sidepanel-display-move" value="1" onclick="settingChange(&quot;move&quot;);">Move objects</input>
             </p>
         </div>
 
@@ -109,8 +110,8 @@
                 <button style="height: 30px; margin: 10px 0 10px 0;">Find</button>
             </p>
             <p style="margin: 5px;">Misc:<br />
-                <button style="height: 30px; margin: 10px 0 10px 0;">Help</button><br />
-                <button style="height: 30px; margin: 10px 0 10px 0;">About</button>
+                <button style="height: 30px; margin: 10px 0 10px 0;" onclick="window.open(&quot;/help&quot;);">Help</button><br />
+                <button style="height: 30px; margin: 10px 0 10px 0;" onclick="window.open(&quot;/about&quot;);">About</button>
             </p>
         </div>
     </div>
