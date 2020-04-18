@@ -6,7 +6,7 @@
 
 #pragma region inline func
 
-inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
+inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
 	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
 	CKParameter* directSource = NULL;
 	CKObject* ds_Owner = NULL;
@@ -71,7 +71,7 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, database
 	}
 }
 
-inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
+inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
 	helper->_db_pTarget->thisobj = cache->GetID();
 	strcpy(helper->_db_pTarget->name, cache->GetName());
 	strcpy(helper->_db_pTarget->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
@@ -87,7 +87,7 @@ inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, database* db, dbD
 	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
 }
 
-inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	strcpy(helper->_db_pIn->name, cache->GetName());
@@ -119,7 +119,7 @@ inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, database* db, dbDataS
 	
 }
 
-inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	strcpy(helper->_db_pOut->name, cache->GetName());
@@ -181,7 +181,7 @@ inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, database* db, dbDat
 	}
 }
 
-inline void proc_bIn(CKBehaviorIO* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+inline void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bIn->thisobj = cache->GetID();
 	helper->_db_bIn->index = index;
 	strcpy(helper->_db_bIn->name, cache->GetName());
@@ -190,7 +190,7 @@ inline void proc_bIn(CKBehaviorIO* cache, database* db, dbDataStructHelper* help
 	db->write_bIn(helper->_db_bIn);
 }
 
-inline void proc_bOut(CKBehaviorIO* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+inline void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bOut->thisobj = cache->GetID();
 	helper->_db_bOut->index = index;
 	strcpy(helper->_db_bOut->name, cache->GetName());
@@ -199,7 +199,7 @@ inline void proc_bOut(CKBehaviorIO* cache, database* db, dbDataStructHelper* hel
 	db->write_bOut(helper->_db_bOut);
 }
 
-inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKBehaviorIO* io = cache->GetInBehaviorIO();
 	CKBehavior* beh = io->GetOwner();
 	helper->_db_bLink->input = io->GetID();
@@ -219,7 +219,7 @@ inline void proc_bLink(CKBehaviorLink* cache, database* db, dbDataStructHelper* 
 	db->write_bLink(helper->_db_bLink);
 }
 
-inline void proc_pLocal(CKParameterLocal* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
+inline void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
 	helper->_db_pLocal->thisobj = cache->GetID();
 	strcpy(helper->_db_pLocal->name, cache->GetName() ? cache->GetName() : "");
 	CKParameterType vaildTypeChecker = cache->GetType();
@@ -236,7 +236,7 @@ inline void proc_pLocal(CKParameterLocal* cache, database* db, dbDataStructHelpe
 	IteratepLocalData(cache, db, helper, cache->GetID());
 }
 
-inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pOper->thisobj = cache->GetID();
 	strcpy(helper->_db_pOper->op, helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid()));
 	helper->_db_pOper->op_guid[0] = cache->GetOperationGuid().d1;
@@ -253,19 +253,19 @@ inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, database* db
 
 
 //============================helper for pLocal data export
-inline void helper_pLocalDataExport(const char* field, const char* data, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void helper_pLocalDataExport(const char* field, const char* data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	strcpy(helper->_db_pLocalData->field, field);
 	strcpy(helper->_db_pLocalData->data, data);
 	helper->_db_pLocalData->belong_to = parents;
 
 	db->write_pLocalData(helper->_db_pLocalData);
 }
-inline void helper_pLocalDataExport(const char* field, float data, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void helper_pLocalDataExport(const char* field, float data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	sprintf(str, "%f", data);
 	helper_pLocalDataExport(field, str, db, helper, parents);
 }
-inline void helper_pLocalDataExport(const char* field, long data, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+inline void helper_pLocalDataExport(const char* field, long data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	ltoa(data, str, 10);
 	helper_pLocalDataExport(field, str, db, helper, parents);
@@ -277,7 +277,7 @@ inline void helper_pLocalDataExport(const char* field, long data, database* db, 
 
 #pragma region normal func
 
-void IterateScript(CKContext* ctx, database* db, dbDataStructHelper* helper) {
+void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper* helper) {
 	CKBeObject* beobj = NULL;
 	CKBehavior* beh = NULL;
 	XObjectPointerArray objArray = ctx->GetObjectListByType(CKCID_BEOBJECT, TRUE);
@@ -302,7 +302,7 @@ void IterateScript(CKContext* ctx, database* db, dbDataStructHelper* helper) {
 	}
 }
 
-void IterateBehavior(CKContext* ctx, CKBehavior* bhv, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	//write self data
 	helper->_dbCKBehavior->thisobj = bhv->GetID();
 	strcpy(helper->_dbCKBehavior->name, bhv->GetName());
@@ -355,7 +355,7 @@ void IterateBehavior(CKContext* ctx, CKBehavior* bhv, database* db, dbDataStruct
 		IterateBehavior(ctx, bhv->GetSubBehavior(i), db, helper, bhv->GetID());
 }
 
-void IteratepLocalData(CKParameterLocal* p, database* db, dbDataStructHelper* helper, EXPAND_CK_ID parents) {
+void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKGUID t = p->GetGUID();
 	BOOL unknowType = FALSE;
 

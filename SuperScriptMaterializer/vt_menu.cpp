@@ -1,6 +1,7 @@
 #include "vt_menu.h"
 #include "database.h"
 #include "script_export.h"
+#include "env_export.h"
 
 extern PluginInterface* s_Plugininterface;
 CMenu* s_MainMenu = NULL;
@@ -45,6 +46,7 @@ void UpdateMenu() {
 	s_Plugininterface->ClearPluginMenu(s_MainMenu);		//clear menu
 
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Export all scripts");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 1, "Export environment");
 
 	//===========================freeze chirs241097 code for future expand
 	//s_Plugininterface->AddPluginMenuItem(s_MainMenu, -1, NULL, TRUE);
@@ -63,32 +65,32 @@ void UpdateMenu() {
 }
 
 void PluginMenuCallback(int commandID) {
-	switch (commandID) {
-		case 0:
-		{
-			AFX_MANAGE_STATE(AfxGetStaticModuleState());
-			CKContext* ctx = s_Plugininterface->GetCKContext();
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+	CKContext* ctx = s_Plugininterface->GetCKContext();
 
-			OPENFILENAME ofn;
-			char* file = (char*)malloc(1024 * sizeof(char));
-			ZeroMemory(&ofn, sizeof(OPENFILENAME));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.lpstrFile = file;
-			ofn.lpstrFile[0] = '\0';
-			ofn.nMaxFile = 1024;
-			ofn.lpstrFilter = "Database file(*.db)\0*.db\0All files(*.*)\0*.*";
-			ofn.lpstrFileTitle = NULL;
-			ofn.nMaxFileTitle = 0;
-			ofn.lpstrInitialDir = NULL;
-			ofn.Flags = OFN_EXPLORER;
+	OPENFILENAME ofn;
+	char* file = (char*)malloc(1024 * sizeof(char));
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFile = file;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = 1024;
+	ofn.lpstrFilter = "Database file(*.db)\0*.db\0All files(*.*)\0*.*\0";
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_EXPLORER;
+	if (GetSaveFileName(&ofn)) {
+		//make sure file is not exist
+		DeleteFile(file);
 
-			if (GetSaveFileName(&ofn)) {
-				//make sure file is not exist
-				DeleteFile(file);
-
+		//switch mode
+		switch (commandID) {
+			case 0:
+			{
 				//init resources
-				database* _db = new database();
-				dbDataStructHelper* _helper = new dbDataStructHelper();
+				scriptDatabase* _db = new scriptDatabase();
+				dbScriptDataStructHelper* _helper = new dbScriptDataStructHelper();
 				_db->open(file);
 				_helper->init(ctx->GetParameterManager());
 
@@ -100,11 +102,28 @@ void PluginMenuCallback(int commandID) {
 				_db->close();
 				delete _helper;
 				delete _db;
-
-				ctx->OutputToConsole("[Super Script Materializer] Done");
 			}
-			free(file);
+			break;
+			case 1:
+			{
+				//init
+				envDatabase* _db = new envDatabase();
+				dbEnvDataStructHelper* _helper = new dbEnvDataStructHelper();
+				_db->open(file);
+				_helper->init();
+
+				//iterate parameter operation
+				IterateParameterOperation(ctx->GetParameterManager(), _db, _helper);
+
+				//release all
+				_helper->dispose();
+				_db->close();
+				delete _helper;
+				delete _db;
+			}
+			break;
 		}
-		break;
+		ctx->OutputToConsole("[Super Script Materializer] Done");
 	}
+	free(file);
 }

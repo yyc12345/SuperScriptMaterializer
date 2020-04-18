@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="database.h" />
+    <ClInclude Include="env_export.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="script_export.h" />
     <ClInclude Include="vt_menu.h" />
@@ -100,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />
+    <ClCompile Include="env_export.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="script_export.cpp" />
     <ClCompile Include="vt_menu.cpp" />

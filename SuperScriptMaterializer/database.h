@@ -139,9 +139,21 @@ typedef struct {
 	EXPAND_CK_ID belong_to;
 }db_eLink;
 
+
+
+typedef struct {
+	CK_PARAMETEROPERATION funcPtr;
+	CKDWORD in1_guid[2];
+	CKDWORD in2_guid[2];
+	CKDWORD out_guid[2];
+	CKDWORD op_guid[2];
+	char op_name[1024];
+	CKOperationType op_code;
+}db_envOp;
+
 #pragma endregion
 
-class dbDataStructHelper {
+class dbScriptDataStructHelper {
 	public:
 	void init(CKParameterManager* paramManager);
 	void dispose();
@@ -162,11 +174,31 @@ class dbDataStructHelper {
 	db_eLink* _db_eLink;
 };
 
+class dbEnvDataStructHelper {
+	public:
+	void init();
+	void dispose();
+
+	db_envOp* _db_envOp;
+};
+
+
 class database {
 	public:
 	void open(const char* file);
 	void close();
 
+	protected:
+	virtual BOOL init() { return TRUE; }
+	virtual BOOL finalJob() { return TRUE; }
+
+	sqlite3* db;
+	char* errmsg;
+	char* commandStr;
+};
+
+class scriptDatabase : public database {
+	public:
 	void write_CKBehavior(dbCKBehavior* data);
 	void write_CKScript(dbCKScript* data);
 	void write_pTarget(db_pTarget* data);
@@ -181,10 +213,18 @@ class database {
 	void write_pOper(db_pOper* data);
 	void write_eLink(db_eLink* data);
 
-	private:
-	sqlite3* db;
-	char* errmsg;
-	char* commandStr;
+	protected:
+	BOOL init();
+	BOOL finalJob();
+};
+
+class envDatabase : public database {
+	public:
+	void write_envOp(db_envOp* data);
+
+	protected:
+	BOOL init();
+	BOOL finalJob();
 };
 
 #endif
