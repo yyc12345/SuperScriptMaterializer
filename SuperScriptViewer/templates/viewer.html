@@ -11,7 +11,7 @@
 
 <body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;">
     <div style="display: flex; flex-flow: column; height: 100%; width: 80%; margin: 0; padding: 0;">
-        <div style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
+        <div id="hamburgerMenu" style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
 
             <p class="hamburger"><a href="/index"><b>Script Hierarchy</b></a></p>
 
@@ -25,7 +25,7 @@
 
         </div>
 
-        <div style="background: #7f7f7f; width: 100%; height: 100%; overflow: scroll; position: relative;">
+        <div id="graphContainer" style="background: #7f7f7f; width: 100%; height: 100%; overflow: scroll; position: relative;">
             <div>
                 {# blocks content #}
                 {% for i in blocks %}
@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    <div style="display: flex; flex-flow: column; background: #cfcfcf; height: 100%; width: 20%; margin: 0; padding: 0; border-left: 1px solid black;">
+    <div id="sidepanelContainer" style="display: flex; flex-flow: column; background: #cfcfcf; height: 100%; width: 20%; margin: 0; padding: 0; border-left: 1px solid black;">
         <div style="display: flex; flex-flow: row; height: 30px; width: 100%; margin: 0; padding: 0; border-bottom: 1px solid black;">
             <div class="tabitem tabitem1 tabitem-activated" style="height: 100%; width: 33.33%; text-align: center;" onclick="sidePanelSwitcher(0);"><b style="margin: 0;" class="tabitem tabitem1 tabitem-activated">Properties</b></div>
             <div class="tabitem tabitem2 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="sidePanelSwitcher(1);"><b style="margin: 0;" class="tabitem tabitem2 tabitem-deactivated">Display</b></div>

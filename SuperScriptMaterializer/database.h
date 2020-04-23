@@ -151,6 +151,26 @@ typedef struct {
 	CKOperationType op_code;
 }db_envOp;
 
+typedef struct {
+	CKParameterType index;
+	CKDWORD guid[2];
+	CKDWORD derived_from[2];
+	char type_name[1024];
+	int default_size;
+	CK_PARAMETERCREATEDEFAULTFUNCTION func_CreateDefault;
+	CK_PARAMETERDELETEFUNCTION func_Delete;
+	CK_PARAMETERSAVELOADFUNCTION func_SaveLoad;
+	CK_PARAMETERCHECKFUNCTION func_Check;
+	CK_PARAMETERCOPYFUNCTION func_Copy;
+	CK_PARAMETERSTRINGFUNCTION func_String;
+	CK_PARAMETERUICREATORFUNCTION func_UICreator;
+	int creator_plugin_id;
+	CKDWORD dw_param;
+	CKDWORD dw_flags;
+	CKDWORD cid;
+	CKDWORD saver_manager[2];
+}db_envParam;
+
 #pragma endregion
 
 class dbScriptDataStructHelper {
@@ -180,6 +200,7 @@ class dbEnvDataStructHelper {
 	void dispose();
 
 	db_envOp* _db_envOp;
+	db_envParam* _db_envParam;
 };
 
 
@@ -221,6 +242,7 @@ class scriptDatabase : public database {
 class envDatabase : public database {
 	public:
 	void write_envOp(db_envOp* data);
+	void write_envParam(db_envParam* data);
 
 	protected:
 	BOOL init();

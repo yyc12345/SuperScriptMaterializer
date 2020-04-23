@@ -112,8 +112,9 @@ void PluginMenuCallback(int commandID) {
 				_db->open(file);
 				_helper->init();
 
-				//iterate parameter operation
+				//iterate parameter operation/param
 				IterateParameterOperation(ctx->GetParameterManager(), _db, _helper);
+				IterateParameter(ctx->GetParameterManager(), _db, _helper);
 
 				//release all
 				_helper->dispose();

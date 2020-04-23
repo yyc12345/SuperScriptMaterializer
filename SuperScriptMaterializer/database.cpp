@@ -38,10 +38,12 @@ void dbScriptDataStructHelper::dispose() {
 
 void dbEnvDataStructHelper::init() {
 	_db_envOp = new db_envOp;
+	_db_envParam = new db_envParam;
 }
 
 void dbEnvDataStructHelper::dispose() {
 	delete _db_envOp;
+	delete _db_envParam;
 }
 
 #pragma endregion
@@ -175,7 +177,11 @@ BOOL envDatabase::init() {
 	if (result != SQLITE_OK) return FALSE;
 
 	result = sqlite3_exec(db,
-		"CREATE TABLE op([funcptr] INTEGER, [in1_guid_1] INTEGER, [in1_guid_2] INTEGER, [in2_guid_1] INTEGER, [in2_guid_2] INTEGER, [out_guid_1] INTEGER, [out_guid_2] INTEGER, [op_guid_1] INTEGER, [op_guid_2] INTEGER, [op_name] TEXT, [op_code] INTEGER);",
+		"CREATE TABLE op([funcptr] INTEGER, [in1_guid] TEXT, [in2_guid] TEXT, [out_guid] TEXT, [op_guid] INTEGER, [op_name] TEXT, [op_code] INTEGER);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE param([index] INTEGER, [guid] TEXT, [derived_from] TEXT, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] INTEGER, [func_Delete] INTEGER, [func_SaveLoad] INTEGER, [func_Check] INTEGER, [func_Copy] INTEGER, [func_String] INTEGER, [func_UICreator] INTEGER, [creator_plugin_id] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] TEXT);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) return FALSE;
 
@@ -394,7 +400,7 @@ void scriptDatabase::write_eLink(db_eLink* data) {
 void envDatabase::write_envOp(db_envOp* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO op VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, '%s', %d);",
+	sprintf(commandStr, "INSERT INTO op VALUES (%d, '%d,%d', '%d,%d', '%d,%d', '%d,%d', '%s', %d);",
 		data->funcPtr,
 		data->in1_guid[0],
 		data->in1_guid[1],
@@ -406,6 +412,34 @@ void envDatabase::write_envOp(db_envOp* data) {
 		data->op_guid[1],
 		data->op_name,
 		data->op_code);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void envDatabase::write_envParam(db_envParam* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO param VALUES (%d, '%d,%d', '%d,%d', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '%d,%d');",
+		data->index,
+		data->guid[0],
+		data->guid[1],
+		data->derived_from[0],
+		data->derived_from[1],
+		data->type_name,
+		data->default_size,
+		data->func_CreateDefault,
+		data->func_Delete,
+		data->func_SaveLoad,
+		data->func_Check,
+		data->func_Copy,
+		data->func_String,
+		data->func_UICreator,
+		data->creator_plugin_id,
+		data->dw_param,
+		data->dw_flags,
+		data->cid,
+		data->saver_manager[0],
+		data->saver_manager[1]);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
 }
