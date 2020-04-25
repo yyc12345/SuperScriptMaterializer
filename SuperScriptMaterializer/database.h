@@ -4,8 +4,6 @@
 #include <sqlite3.h>
 #include "stdafx.h"
 
-#pragma region data struct define
-
 typedef long EXPAND_CK_ID;
 enum bLinkInputOutputType {
 	bLinkInputOutputType_INPUT,
@@ -17,6 +15,8 @@ enum pLinkInputOutputType {
 	pLinkInputOutputType_PLOCAL, //when using pLocal, omit [index] and [input_is_bb]
 	pLinkInputOutputType_PTARGET //when using pTarget, omit [index] and [input_is_bb]
 };
+
+#pragma region data struct define
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
@@ -164,12 +164,45 @@ typedef struct {
 	CK_PARAMETERCOPYFUNCTION func_Copy;
 	CK_PARAMETERSTRINGFUNCTION func_String;
 	CK_PARAMETERUICREATORFUNCTION func_UICreator;
-	int creator_plugin_id;
+	int creator_dll_index;
+	int creator_plugin_index;
 	CKDWORD dw_param;
 	CKDWORD dw_flags;
 	CKDWORD cid;
 	CKDWORD saver_manager[2];
 }db_envParam;
+
+typedef struct {
+	CKMessageType index;
+	char name[1024];
+}db_envMsg;
+
+typedef struct {
+	CKAttributeType index;
+	char name[1024];
+	CKAttributeCategory category_index;
+	char category_name[1024];
+	CK_ATTRIBUT_FLAGS flags;
+	CKParameterType param_index;
+	CK_CLASSID compatible_classid;
+	char default_value[1024];
+}db_envAttr;
+
+typedef struct {
+	int dll_index;
+	char dll_name[1024];
+	int plugin_index;
+	char category[1024];
+	CKBOOL active;
+	CKBOOL needed_by_file;
+	CKDWORD guid[2];
+	char desc[1024];
+	char author[1024];
+	char summary[1024];
+	DWORD version;
+	CK_INITINSTANCEFCT func_init;
+	CK_EXITINSTANCEFCT func_exit;
+}db_envPlugin;
 
 #pragma endregion
 
@@ -201,6 +234,9 @@ class dbEnvDataStructHelper {
 
 	db_envOp* _db_envOp;
 	db_envParam* _db_envParam;
+	db_envMsg* _db_envMsg;
+	db_envAttr* _db_envAttr;
+	db_envPlugin* _db_envPlugin;
 };
 
 
@@ -243,6 +279,9 @@ class envDatabase : public database {
 	public:
 	void write_envOp(db_envOp* data);
 	void write_envParam(db_envParam* data);
+	void write_envMsg(db_envMsg* data);
+	void write_envAttr(db_envAttr* data);
+	void write_envPlugin(db_envPlugin* data);
 
 	protected:
 	BOOL init();

@@ -8,5 +8,8 @@
 
 void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase* db, dbEnvDataStructHelper* helper);
 void IterateParameter(CKParameterManager* parameterManager, envDatabase* db, dbEnvDataStructHelper* helper);
+void IterateMessage(CKMessageManager* msgManager, envDatabase* db, dbEnvDataStructHelper* helper);
+void IterateAttribute(CKAttributeManager* attrManager, envDatabase* db, dbEnvDataStructHelper* helper);
+void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStructHelper* helper);
 
 #endif

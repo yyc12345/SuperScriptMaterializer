@@ -1,23 +1,25 @@
 import sqlite3
 import DecoratorConstValue as dcv
 import json
-import locale
+import CustomConfig
 
 def run():
-    exportDb = sqlite3.connect('export.db')
-    exportDb.text_factory = lambda x: x.decode(locale.getpreferredencoding())
-    decorateDb = sqlite3.connect('decorate.db')
+    exportDb = sqlite3.connect(CustomConfig.export_db)
+    exportDb.text_factory = lambda x: x.decode(CustomConfig.database_encoding)
+    decorateDb = sqlite3.connect(CustomConfig.decorated_db)
 
     # init table
-    print('Init decorate.dll')
+    print('Init decorate database...')
     initDecorateDb(decorateDb)
     decorateDb.commit()
 
     # decorate graph
+    print('Generating gragh list...')
     graphList = []
     decorateGraph(exportDb, decorateDb, graphList)
 
     # decorate each graph
+    print('Generating graph...')
     currentGraphBlockCell = {}
     for i in graphList:
         currentGraphBlockCell.clear()
@@ -26,6 +28,7 @@ def run():
         buildLink(exportDb, decorateDb, i, currentGraphBlockCell, graphPIO)
         
     # export information
+    print('Generating info...')
     buildInfo(exportDb, decorateDb)
 
     # give up all change of eexport.db (because no change)

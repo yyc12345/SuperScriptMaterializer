@@ -39,11 +39,17 @@ void dbScriptDataStructHelper::dispose() {
 void dbEnvDataStructHelper::init() {
 	_db_envOp = new db_envOp;
 	_db_envParam = new db_envParam;
+	_db_envMsg = new db_envMsg;
+	_db_envAttr = new db_envAttr;
+	_db_envPlugin = new db_envPlugin;
 }
 
 void dbEnvDataStructHelper::dispose() {
 	delete _db_envOp;
 	delete _db_envParam;
+	delete _db_envMsg;
+	delete _db_envAttr;
+	delete _db_envPlugin;
 }
 
 #pragma endregion
@@ -181,7 +187,19 @@ BOOL envDatabase::init() {
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
-		"CREATE TABLE param([index] INTEGER, [guid] TEXT, [derived_from] TEXT, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] INTEGER, [func_Delete] INTEGER, [func_SaveLoad] INTEGER, [func_Check] INTEGER, [func_Copy] INTEGER, [func_String] INTEGER, [func_UICreator] INTEGER, [creator_plugin_id] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] TEXT);",
+		"CREATE TABLE param([index] INTEGER, [guid] TEXT, [derived_from] TEXT, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] INTEGER, [func_Delete] INTEGER, [func_SaveLoad] INTEGER, [func_Check] INTEGER, [func_Copy] INTEGER, [func_String] INTEGER, [func_UICreator] INTEGER, [creator_dll_index] INTEGER, [creator_plugin_index] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] TEXT);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE msg([index] INTEGER, [name] TEXT);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE attr([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);",
+		NULL, NULL, &errmsg);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE plugin([dll_index] INTEGER, [dll_name] TEXT, [plugin_index] INTEGER, [category] TEXT, [active] INTEGER, [needed_by_file] INTEGER, [guid] TEXT, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [func_init] INTEGER, [func_exit] INTEGER);",
 		NULL, NULL, &errmsg);
 	if (result != SQLITE_OK) return FALSE;
 
@@ -419,7 +437,7 @@ void envDatabase::write_envOp(db_envOp* data) {
 void envDatabase::write_envParam(db_envParam* data) {
 	if (db == NULL) return;
 
-	sprintf(commandStr, "INSERT INTO param VALUES (%d, '%d,%d', '%d,%d', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '%d,%d');",
+	sprintf(commandStr, "INSERT INTO param VALUES (%d, '%d,%d', '%d,%d', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '%d,%d');",
 		data->index,
 		data->guid[0],
 		data->guid[1],
@@ -434,12 +452,61 @@ void envDatabase::write_envParam(db_envParam* data) {
 		data->func_Copy,
 		data->func_String,
 		data->func_UICreator,
-		data->creator_plugin_id,
+		data->creator_dll_index,
+		data->creator_plugin_index,
 		data->dw_param,
 		data->dw_flags,
 		data->cid,
 		data->saver_manager[0],
 		data->saver_manager[1]);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void envDatabase::write_envMsg(db_envMsg* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO msg VALUES (%d, '%s');",
+		data->index,
+		data->name);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void envDatabase::write_envAttr(db_envAttr* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO attr VALUES (%d, '%s', %d, '%s', %d, %d, %d, '%s');",
+		data->index,
+		data->name,
+		data->category_index,
+		data->category_name,
+		data->flags,
+		data->param_index,
+		data->compatible_classid,
+		data->default_value);
+
+	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
+}
+
+void envDatabase::write_envPlugin(db_envPlugin* data) {
+	if (db == NULL) return;
+
+	sprintf(commandStr, "INSERT INTO plugin VALUES (%d, '%s', %d, '%s', %d, %d, '%d,%d', '%s', '%s', '%s', %d, %d, %d);",
+		data->dll_index,
+		data->dll_name,
+		data->plugin_index,
+		data->category,
+		data->active,
+		data->needed_by_file,
+		data->guid[0],
+		data->guid[1],
+		data->desc,
+		data->author,
+		data->summary,
+		data->version,
+		data->func_init,
+		data->func_exit);
 
 	sqlite3_exec(db, commandStr, NULL, NULL, &errmsg);
 }

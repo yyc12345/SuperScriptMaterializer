@@ -1,3 +1,5 @@
+import CustomConfig
+
 from flask import Flask
 from flask import g
 from flask import render_template
@@ -17,7 +19,7 @@ app = Flask(__name__)
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect('decorate.db')
+        db = g._database = sqlite3.connect(CustomConfig.decorated_db)
     return db
 
 @app.teardown_appcontext
@@ -47,7 +49,7 @@ def helpHandle():
 
 @app.route('/about', methods=['GET'])
 def aboutHandle():
-    return render_template("about.html")
+    return render_template("about.html", static_icon = url_for('static', filename='icon.png'))
 
 @app.route('/index', methods=['GET'])
 def indexHandle():

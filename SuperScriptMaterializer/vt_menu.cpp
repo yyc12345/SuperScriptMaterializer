@@ -115,6 +115,9 @@ void PluginMenuCallback(int commandID) {
 				//iterate parameter operation/param
 				IterateParameterOperation(ctx->GetParameterManager(), _db, _helper);
 				IterateParameter(ctx->GetParameterManager(), _db, _helper);
+				IterateMessage(ctx->GetMessageManager(), _db, _helper);
+				IterateAttribute(ctx->GetAttributeManager(), _db, _helper);
+				IteratePlugin(CKGetPluginManager(), _db, _helper);
 
 				//release all
 				_helper->dispose();
