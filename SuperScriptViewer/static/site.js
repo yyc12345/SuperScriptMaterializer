@@ -3,7 +3,6 @@ currentSettings = {
     "plink": true,
     "properties": true,
     "highlight": true,
-    "keyboard": true,
     "move": true
 };
 $(document).ready(function () {
@@ -70,7 +69,8 @@ function highlightLink(target) {
     }
 
     // double one-click, only cancel highlight and don't apply any hightlight
-    if (realTarget == previousHighlight) {
+    // or user disable hightlight
+    if ((realTarget == previousHighlight) || !currentSettings["highlight"]) {
         previousHighlight = "";
     } else {
         //apply new highlight
@@ -97,6 +97,10 @@ function highlightLink(target) {
 }
 
 function queryInfo(obj) {
+    // confirm user enable this function
+    if (!currentSettings["properties"])
+        return;
+
     $.post(window.location,
         {
             operation: "info",

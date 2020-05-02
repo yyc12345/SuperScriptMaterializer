@@ -9,7 +9,7 @@
     <script src="{{static_js}}"></script>
 </head>
 
-<body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;">
+<body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;" onkeydown="keyboardNavigation(true);" onkeyup="keyboardNavigation(false);">
     <div style="display: flex; flex-flow: column; height: 100%; width: 80%; margin: 0; padding: 0;">
         <div id="hamburgerMenu" style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
 
@@ -99,8 +99,7 @@
             <p style="margin: 5px;">Action:<br />
                 <input type="checkbox" id="sidepanel-display-properties" value="1" onclick="settingChange(&quot;properties&quot;);">Interactive property inspector</input><br />
                 <input type="checkbox" id="sidepanel-display-highlight" value="1" onclick="settingChange(&quot;highlight&quot;);">Highlight focused object</input><br />
-                <input type="checkbox" id="sidepanel-display-keyboard" value="1" onclick="settingChange(&quot;keyboard&quot;);">Use keyboard to move viewer</input><br />
-                <input type="checkbox" id="sidepanel-display-move" value="1" onclick="settingChange(&quot;move&quot;);">Move objects</input>
+                <input type="checkbox" id="sidepanel-display-move" value="1" onclick="settingChange(&quot;move&quot;);" disabled="true">Move objects</input>
             </p>
         </div>
 
