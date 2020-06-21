@@ -28,7 +28,7 @@ def run():
     percentageNow = 0
     percentageCache = 0
     #debug
-    graphList=graphList[int(percentageAll*3/4):]
+    # graphList=graphList[int(percentageAll*3/4):]
     for i in graphList:
         sys.stdout.write('\r[{}{}]{}%'.format(int(percentageCache / 5) * '#',(20 - int(percentageCache / 5)) * '=', percentageCache))
         sys.stdout.flush()
