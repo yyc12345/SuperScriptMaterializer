@@ -9,11 +9,11 @@ try:
     opts, args = getopt.getopt(sys.argv, "hi:o:e:f")
 except getopt.GetoptError:
     print('Wrong arguments!')
-    print('test.py -i <export.db> -o <decorated.db> -e <env.db> -f')
+    print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -f')
     sys.exit(1)
 for opt, arg in opts:
     if opt == '-h':
-        print('test.py -i <export.db> -o <decorated.db> -e <env.db> -f')
+        print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -f')
         sys.exit(0)
     elif opt == '-i':
         CustomConfig.export_db = arg

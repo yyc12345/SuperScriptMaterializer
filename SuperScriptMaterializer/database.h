@@ -3,6 +3,10 @@
 
 #include <sqlite3.h>
 #include "stdafx.h"
+#include <string>
+#include <vector>
+
+#define STRINGCACHE_SIZE 25565
 
 typedef long EXPAND_CK_ID;
 enum bLinkInputOutputType {
@@ -20,30 +24,30 @@ enum pLinkInputOutputType {
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
-	char name[1024];
+	std::string name;
 	CK_BEHAVIOR_TYPE type;
-	char proto_name[1024];
-	CKDWORD proto_guid[2];
+	std::string proto_name;
+	std::string proto_guid;
 	CK_BEHAVIOR_FLAGS flags;
 	int priority;
 	CKDWORD version;
 	//pTarget, pIn, pOut, bIn, bOut
-	char pin_count[128];
+	std::string pin_count;
 	EXPAND_CK_ID parent;
 }dbCKBehavior;
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
-	char host_name[1024];
+	std::string host_name;
 	int index;
 	EXPAND_CK_ID behavior;
 }dbCKScript;
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
-	char name[1024];
-	char type[1024];
-	CKDWORD type_guid[2];
+	std::string name;
+	std::string type;
+	std::string type_guid;
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
@@ -52,9 +56,9 @@ typedef struct {
 typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
-	char name[1024];
-	char type[1024];
-	CKDWORD type_guid[2];
+	std::string name;
+	std::string type;
+	std::string type_guid;
 	EXPAND_CK_ID belong_to;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
@@ -63,16 +67,16 @@ typedef struct {
 typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
-	char name[1024];
-	char type[1024];
-	CKDWORD type_guid[2];
+	std::string name;
+	std::string type;
+	std::string type_guid;
 	EXPAND_CK_ID belong_to;
 }db_pOut;
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
 	int index;
-	char name[1024];
+	std::string name;
 	EXPAND_CK_ID belong_to;
 }db_bIO;
 typedef db_bIO db_bIn;
@@ -95,16 +99,16 @@ typedef struct {
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
-	char name[1024];
-	char type[1024];
-	CKDWORD type_guid[2];
+	std::string name;
+	std::string type;
+	std::string type_guid;
 	BOOL is_setting;
 	EXPAND_CK_ID belong_to;
 }db_pLocal;
 
 typedef struct {
-	char field[1024];
-	char data[1024];
+	std::string field;
+	std::string data;
 	EXPAND_CK_ID belong_to;
 }db_pLocalData;
 
@@ -126,8 +130,8 @@ typedef struct {
 
 typedef struct {
 	EXPAND_CK_ID thisobj;
-	char op[1024];
-	CKDWORD op_guid[2];
+	std::string op;
+	std::string op_guid;
 	EXPAND_CK_ID belong_to;
 }db_pOper;
 
@@ -143,19 +147,19 @@ typedef struct {
 
 typedef struct {
 	CK_PARAMETEROPERATION funcPtr;
-	CKDWORD in1_guid[2];
-	CKDWORD in2_guid[2];
-	CKDWORD out_guid[2];
-	CKDWORD op_guid[2];
-	char op_name[1024];
+	std::string in1_guid;
+	std::string in2_guid;
+	std::string out_guid;
+	std::string op_guid;
+	std::string op_name;
 	CKOperationType op_code;
 }db_envOp;
 
 typedef struct {
 	CKParameterType index;
-	CKDWORD guid[2];
-	CKDWORD derived_from[2];
-	char type_name[1024];
+	std::string guid;
+	std::string derived_from;
+	std::string type_name;
 	int default_size;
 	CK_PARAMETERCREATEDEFAULTFUNCTION func_CreateDefault;
 	CK_PARAMETERDELETEFUNCTION func_Delete;
@@ -169,36 +173,36 @@ typedef struct {
 	CKDWORD dw_param;
 	CKDWORD dw_flags;
 	CKDWORD cid;
-	CKDWORD saver_manager[2];
+	std::string saver_manager;
 }db_envParam;
 
 typedef struct {
 	CKMessageType index;
-	char name[1024];
+	std::string name;
 }db_envMsg;
 
 typedef struct {
 	CKAttributeType index;
-	char name[1024];
+	std::string name;
 	CKAttributeCategory category_index;
-	char category_name[1024];
+	std::string category_name;
 	CK_ATTRIBUT_FLAGS flags;
 	CKParameterType param_index;
 	CK_CLASSID compatible_classid;
-	char default_value[1024];
+	std::string default_value;
 }db_envAttr;
 
 typedef struct {
 	int dll_index;
-	char dll_name[1024];
+	std::string dll_name;
 	int plugin_index;
-	char category[1024];
+	std::string category;
 	CKBOOL active;
 	CKBOOL needed_by_file;
-	CKDWORD guid[2];
-	char desc[1024];
-	char author[1024];
-	char summary[1024];
+	std::string guid;
+	std::string desc;
+	std::string author;
+	std::string summary;
 	DWORD version;
 	CK_INITINSTANCEFCT func_init;
 	CK_EXITINSTANCEFCT func_exit;
@@ -211,6 +215,7 @@ class dbScriptDataStructHelper {
 	void init(CKParameterManager* paramManager);
 	void dispose();
 
+	char* _stringCache;
 	CKParameterManager* _parameterManager;
 	dbCKBehavior* _dbCKBehavior;
 	dbCKScript* _dbCKScript;
@@ -232,6 +237,7 @@ class dbEnvDataStructHelper {
 	void init();
 	void dispose();
 
+	char* _stringCache;
 	db_envOp* _db_envOp;
 	db_envParam* _db_envParam;
 	db_envMsg* _db_envMsg;
@@ -250,8 +256,7 @@ class database {
 	virtual BOOL finalJob() { return TRUE; }
 
 	sqlite3* db;
-	char* errmsg;
-	char* commandStr;
+	std::vector<sqlite3_stmt*>* stmtCache;
 };
 
 class scriptDatabase : public database {

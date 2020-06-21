@@ -2,6 +2,7 @@ import sqlite3
 import DecoratorConstValue as dcv
 import json
 import CustomConfig
+import sys
 
 def run():
     exportDb = sqlite3.connect(CustomConfig.export_db)
@@ -21,11 +22,24 @@ def run():
     # decorate each graph
     print('Generating graph...')
     currentGraphBlockCell = {}
+    percentageAll = len(graphList)
+    if percentageAll == 0:
+        percentageAll = 1
+    percentageNow = 0
+    percentageCache = 0
+    #debug
+    graphList=graphList[int(percentageAll*3/4):]
     for i in graphList:
+        sys.stdout.write('\r[{}{}]{}%'.format(int(percentageCache / 5) * '#',(20 - int(percentageCache / 5)) * '=', percentageCache))
+        sys.stdout.flush()
+
         currentGraphBlockCell.clear()
         buildBlock(exportDb, decorateDb, i, currentGraphBlockCell)
         graphPIO = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
         buildLink(exportDb, decorateDb, i, currentGraphBlockCell, graphPIO)
+
+        percentageNow += 1
+        percentageCache = int(100 * percentageNow / percentageAll)
         
     # export information
     print('Generating info...')
@@ -398,7 +412,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
     # query all links(don't need to consider export pIO, due to it will not add
     # any shortcut)
-    # !! the same if framework in pLink generator function !! SHARED
+    # !!  the same if framework in pLink generator function !!  SHARED
     createdShortcut = set()
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
@@ -420,7 +434,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
 
             elif (i[3] == dcv.dbPLinkInputOutputType.PIN):
                 if i[2] == target:
-                    continue    # ignore self pIn/pOut. it doesn't need any shortcut
+                    continue    # ignore self pIn/pOut.  it doesn't need any shortcut
                 if i[2] not in blockSet:
                     if i[0] not in createdShortcut:
                         cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PIN)
@@ -461,7 +475,7 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                 cache.lastIndex = i[5]
             else:
                 if i[6] == target:
-                    continue    # ignore self pIn/pOut. it doesn't need any shortcut
+                    continue    # ignore self pIn/pOut.  it doesn't need any shortcut
                 if i[6] not in blockSet:
                     if i[1] not in createdShortcut:
                         cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.POUT)
@@ -539,8 +553,13 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
     exCur = exDb.cursor()
     deCur = deDb.cursor()
 
+    # prepare block set
+    blockSet = set()
+    for i in currentGraphBlockCell.keys():
+        blockSet.add(i)
+
     # bLink
-    exCur.execute("SELECT * FROM bLink WHERE [belong_to] == ?", (target, ))
+    exCur.execute("SELECT * FROM bLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         if i[3] == target:
             (x1, y1) = computLinkBTerminal(i[0], 0, -1 ,currentGraphBlockCell)
@@ -567,7 +586,7 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
                       (target, i[2], i[0], i[1], bStartObj, bEndObj, bStartType, bEndType, bStartIndex, bEndIndex, x1, y1, x2, y2))
 
     # pLink
-    # !! the same if framework in cell generator function !! SHARED
+    # !!  the same if framework in cell generator function !!  SHARED
     exCur.execute("SELECT * FROM pLink WHERE [belong_to] == ?", (target,))
     for i in exCur.fetchall():
         # analyse 5 chancee one by one
@@ -590,7 +609,11 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
                                   (target, -1, i[0], i[1], i[2], i[6], 0, 0, i[5], i[9], x1, y1, x2, y2))
 
             else:
-                (x1, y1) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+                if i[2] in blockSet:    # process protencial pOut(shortcut) (because plocal input/input_obj
+                                        # output/output_obj is same, so don't need add for them)
+                    (x1, y1) = computLinkPTerminal(i[2], 1, i[5], currentGraphBlockCell)
+                else:
+                    (x1, y1) = computLinkPTerminal(i[0], 1, i[5], currentGraphBlockCell)
                 (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
                 deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                               (target, -1, i[0], i[1], i[2], i[6], 1, 0, i[5], i[9], x1, y1, x2, y2))
@@ -627,7 +650,9 @@ def computLinkBTerminal(obj, xtype, index, currentGraphBlockCell):
             cache.y if index == -1 else (cache.y + dcv.BB_BOFFSET + index * (dcv.BB_PBSIZE + dcv.BB_BSPAN)))
 
 def computLinkPTerminal(obj, ytype, index, currentGraphBlockCell):
-    # ytype is not database type. it have the same meaning of LinkBTerminal, indicating the position. 0 is keep origin position(for pIn and pTarget), 1 is consider height(for pOut)
+    # ytype is not database type.  it have the same meaning of LinkBTerminal,
+    # indicating the position.  0 is keep origin position(for pIn and pTarget),
+    # 1 is consider height(for pOut)
     cache = currentGraphBlockCell[obj]
     return (cache.x if index == -1 else (cache.x + dcv.BB_POFFSET + index * (dcv.BB_PBSIZE + dcv.BB_PSPAN)), 
             cache.y if ytype == 0 else (cache.y + cache.h - dcv.BB_PBSIZE))

@@ -3,6 +3,7 @@
 #pragma warning(disable:26812)
 
 #define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
+#define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
 
 #pragma region inline func
 
@@ -33,7 +34,7 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDa
 			} else {
 				//pOper
 				helper->_db_pLink->input_index = 0;
-				
+
 			}
 		}
 	}
@@ -73,15 +74,26 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDa
 
 inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
 	helper->_db_pTarget->thisobj = cache->GetID();
-	strcpy(helper->_db_pTarget->name, cache->GetName());
-	strcpy(helper->_db_pTarget->type, helper->_parameterManager->ParameterTypeToName(cache->GetType()));
-	helper->_db_pTarget->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pTarget->type_guid[1] = cache->GetGUID().d2;
+	helper->_db_pTarget->name = cache->GetName();
+	helper->_db_pTarget->type = helper->_parameterManager->ParameterTypeToName(cache->GetType());
+	copyGuid(cache->GetGUID(), helper->_db_pTarget->type_guid);
 	helper->_db_pTarget->belong_to = parents;
 	helper->_db_pTarget->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 	helper->_db_pTarget->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
 	db->write_pTarget(helper->_db_pTarget);
+
+	//judge whether expoer parameter and write database
+	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetInputParameterPosition(cache) != -1) {
+		helper->_db_eLink->export_obj = cache->GetID();
+		helper->_db_eLink->internal_obj = parents;
+		helper->_db_eLink->is_in = TRUE;
+		helper->_db_eLink->index = -1;
+		helper->_db_eLink->belong_to = grandparents;
+
+		db->write_eLink(helper->_db_eLink);
+		return;
+	}
 
 	//=========try generate pLink
 	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
@@ -90,12 +102,11 @@ inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* d
 inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
-	strcpy(helper->_db_pIn->name, cache->GetName());
+	helper->_db_pIn->name = cache->GetName();
 	CKParameterType vaildTypeChecker = cache->GetType();
-	if (vaildTypeChecker != -1) strcpy(helper->_db_pIn->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
-	else strcpy(helper->_db_pIn->type, "!!UNKNOW TYPE!!"); //unknow type
-	helper->_db_pIn->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pIn->type_guid[1] = cache->GetGUID().d2;
+	if (vaildTypeChecker != -1) helper->_db_pIn->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+	else helper->_db_pIn->type = "!!UNKNOW TYPE!!"; //unknow type
+	copyGuid(cache->GetGUID(), helper->_db_pIn->type_guid);
 	helper->_db_pIn->belong_to = parents;
 	helper->_db_pIn->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 	helper->_db_pIn->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
@@ -116,18 +127,17 @@ inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, d
 
 	//=========try generate pLink
 	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, index, executedFromBB, FALSE);
-	
+
 }
 
 inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
-	strcpy(helper->_db_pOut->name, cache->GetName());
+	helper->_db_pOut->name = cache->GetName();
 	CKParameterType vaildTypeChecker = cache->GetType();
-	if (vaildTypeChecker != -1) strcpy(helper->_db_pOut->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
-	else strcpy(helper->_db_pOut->type, "!!UNKNOW TYPE!!"); //unknow type
-	helper->_db_pOut->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pOut->type_guid[1] = cache->GetGUID().d2;
+	if (vaildTypeChecker != -1) helper->_db_pOut->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+	else helper->_db_pOut->type = "!!UNKNOW TYPE!!"; //unknow type
+	copyGuid(cache->GetGUID(), helper->_db_pOut->type_guid);
 	helper->_db_pOut->belong_to = parents;
 
 	db->write_pOut(helper->_db_pOut);
@@ -184,7 +194,7 @@ inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db,
 inline void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bIn->thisobj = cache->GetID();
 	helper->_db_bIn->index = index;
-	strcpy(helper->_db_bIn->name, cache->GetName());
+	helper->_db_bIn->name = cache->GetName();
 	helper->_db_bIn->belong_to = parents;
 
 	db->write_bIn(helper->_db_bIn);
@@ -193,7 +203,7 @@ inline void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStruct
 inline void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bOut->thisobj = cache->GetID();
 	helper->_db_bOut->index = index;
-	strcpy(helper->_db_bOut->name, cache->GetName());
+	helper->_db_bOut->name = cache->GetName();
 	helper->_db_bOut->belong_to = parents;
 
 	db->write_bOut(helper->_db_bOut);
@@ -221,12 +231,11 @@ inline void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataSt
 
 inline void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
 	helper->_db_pLocal->thisobj = cache->GetID();
-	strcpy(helper->_db_pLocal->name, cache->GetName() ? cache->GetName() : "");
+	helper->_db_pLocal->name = cache->GetName() ? cache->GetName() : "";
 	CKParameterType vaildTypeChecker = cache->GetType();
-	if (vaildTypeChecker != -1) strcpy(helper->_db_pLocal->type, helper->_parameterManager->ParameterTypeToName(cache->GetType())); //known types
-	else strcpy(helper->_db_pLocal->type, "!!UNKNOW TYPE!!"); //unknow type
-	helper->_db_pLocal->type_guid[0] = cache->GetGUID().d1;
-	helper->_db_pLocal->type_guid[1] = cache->GetGUID().d2;
+	if (vaildTypeChecker != -1) helper->_db_pLocal->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+	else helper->_db_pLocal->type = "!!UNKNOW TYPE!!"; //unknow type
+	copyGuid(cache->GetGUID(), helper->_db_pLocal->type_guid);
 	helper->_db_pLocal->is_setting = is_setting;
 	helper->_db_pLocal->belong_to = parents;
 
@@ -238,9 +247,8 @@ inline void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDat
 
 inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pOper->thisobj = cache->GetID();
-	strcpy(helper->_db_pOper->op, helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid()));
-	helper->_db_pOper->op_guid[0] = cache->GetOperationGuid().d1;
-	helper->_db_pOper->op_guid[1] = cache->GetOperationGuid().d2;
+	helper->_db_pOper->op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
+	copyGuid(cache->GetOperationGuid(), helper->_db_pOper->op_guid);
 	helper->_db_pOper->belong_to = parents;
 
 	db->write_pOper(helper->_db_pOper);
@@ -254,8 +262,8 @@ inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDataba
 
 //============================helper for pLocal data export
 inline void helper_pLocalDataExport(const char* field, const char* data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
-	strcpy(helper->_db_pLocalData->field, field);
-	strcpy(helper->_db_pLocalData->data, data);
+	helper->_db_pLocalData->field = field;
+	helper->_db_pLocalData->data = data;
 	helper->_db_pLocalData->belong_to = parents;
 
 	db->write_pLocalData(helper->_db_pLocalData);
@@ -291,7 +299,7 @@ void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper*
 			beh = beobj->GetScript(j);
 
 			helper->_dbCKScript->thisobj = beobj->GetID();
-			strcpy(helper->_dbCKScript->host_name, beobj->GetName());
+			helper->_dbCKScript->host_name = beobj->GetName();
 			helper->_dbCKScript->index = j;
 			helper->_dbCKScript->behavior = beh->GetID();
 			db->write_CKScript(helper->_dbCKScript);
@@ -305,21 +313,21 @@ void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper*
 void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	//write self data
 	helper->_dbCKBehavior->thisobj = bhv->GetID();
-	strcpy(helper->_dbCKBehavior->name, bhv->GetName());
+	helper->_dbCKBehavior->name = bhv->GetName();
 	helper->_dbCKBehavior->type = bhv->GetType();
-	strcpy(helper->_dbCKBehavior->proto_name, bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "");
-	helper->_dbCKBehavior->proto_guid[0] = bhv->GetPrototypeGuid().d1;
-	helper->_dbCKBehavior->proto_guid[1] = bhv->GetPrototypeGuid().d2;
+	helper->_dbCKBehavior->proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
+	copyGuid(bhv->GetPrototypeGuid(), helper->_dbCKBehavior->proto_guid);
 	helper->_dbCKBehavior->flags = bhv->GetFlags();
 	helper->_dbCKBehavior->priority = bhv->GetPriority();
 	helper->_dbCKBehavior->version = bhv->GetVersion();
 	helper->_dbCKBehavior->parent = parents;
-	sprintf(helper->_dbCKBehavior->pin_count, "%d,%d,%d,%d,%d",
+	sprintf(helper->_stringCache, "%d,%d,%d,%d,%d",
 		(bhv->IsUsingTarget() ? 1 : 0),
 		bhv->GetInputParameterCount(),
 		bhv->GetOutputParameterCount(),
 		bhv->GetInputCount(),
 		bhv->GetOutputCount());
+	helper->_dbCKBehavior->pin_count = helper->_stringCache;
 	db->write_CKBehavior(helper->_dbCKBehavior);
 
 	//write target
@@ -461,10 +469,10 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 	if (t == CKPGUID_STRING) {
 		char* cptr = (char*)p->GetReadDataPtr(false);
 		int cc = p->GetDataSize();
-		for (int i = 0; i < cc; i++)
-			helper->_db_pLocalData->data[i] = cptr[i];
-		helper->_db_pLocalData->data[cc] = '\0';
-		strcpy(helper->_db_pLocalData->field, "str");
+
+		helper->_db_pLocalData->data.clear();
+		helper->_db_pLocalData->data.insert(0, cptr, 0, cc);
+		helper->_db_pLocalData->field = "str";
 		helper->_db_pLocalData->belong_to = p->GetID();
 		db->write_pLocalData(helper->_db_pLocalData);
 		return;
@@ -479,25 +487,21 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 		char temp[4];
 		int cc = 0, rcc = 0, pos = 0;
 		rcc = cc = p->GetDataSize();
-		if (rcc > 200) rcc = 200;
+		if (rcc > 1024) rcc = 1024;
 
+		helper->_db_pLocalData->data.clear();
 		for (int i = 0; i < rcc; i++) {
 			sprintf(temp, "%02X", cptr[i]);
-			helper->_db_pLocalData->data[pos++] = '0';
-			helper->_db_pLocalData->data[pos++] = 'x';
-			helper->_db_pLocalData->data[pos++] = temp[0];
-			helper->_db_pLocalData->data[pos++] = temp[1];
-			helper->_db_pLocalData->data[pos++] = ',';
+
+			helper->_db_pLocalData->data += temp;
+			if (i != rcc - 1)
+				helper->_db_pLocalData->data += ", ";
 		}
-		if (pos)
-			helper->_db_pLocalData->data[--pos] = '\0';
-		else
-			helper->_db_pLocalData->data[0] = '\0';
 
 		if (rcc == cc)
-			strcpy(helper->_db_pLocalData->field, "dump.data");
+			helper->_db_pLocalData->field = "dump.data";
 		else
-			strcpy(helper->_db_pLocalData->field, "dump.partial_data");
+			helper->_db_pLocalData->field = "dump.partial_data";
 		helper->_db_pLocalData->belong_to = p->GetID();
 		db->write_pLocalData(helper->_db_pLocalData);
 
