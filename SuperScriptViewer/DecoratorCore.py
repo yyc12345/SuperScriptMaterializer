@@ -2,7 +2,7 @@ import sqlite3
 import DecoratorConstValue as dcv
 import json
 import CustomConfig
-import sys
+import Progressbar
 
 def run():
     exportDb = sqlite3.connect(CustomConfig.export_db)
@@ -22,25 +22,16 @@ def run():
     # decorate each graph
     print('Generating graph...')
     currentGraphBlockCell = {}
-    percentageAll = len(graphList)
-    if percentageAll == 0:
-        percentageAll = 1
-    percentageNow = 0
-    percentageCache = 0
-    #debug
-    # graphList=graphList[int(percentageAll*3/4):]
+    Progressbar.initProgressbar(len(graphList))
     for i in graphList:
-        sys.stdout.write('\r[{}{}]{}%'.format(int(percentageCache / 5) * '#',(20 - int(percentageCache / 5)) * '=', percentageCache))
-        sys.stdout.flush()
-
         currentGraphBlockCell.clear()
         buildBlock(exportDb, decorateDb, i, currentGraphBlockCell)
         graphPIO = buildCell(exportDb, decorateDb, i, currentGraphBlockCell)
         buildLink(exportDb, decorateDb, i, currentGraphBlockCell, graphPIO)
 
-        percentageNow += 1
-        percentageCache = int(100 * percentageNow / percentageAll)
-        
+        Progressbar.stepProgressbar()
+    Progressbar.finProgressbar()
+
     # export information
     print('Generating info...')
     buildInfo(exportDb, decorateDb)

@@ -484,14 +484,14 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 	if (unknowType || t == CKPGUID_VOIDBUF || t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS) {
 		//dump data
 		unsigned char* cptr = (unsigned char*)p->GetReadDataPtr(false);
-		char temp[4];
+		char temp[8];
 		int cc = 0, rcc = 0, pos = 0;
 		rcc = cc = p->GetDataSize();
 		if (rcc > 1024) rcc = 1024;
 
 		helper->_db_pLocalData->data.clear();
 		for (int i = 0; i < rcc; i++) {
-			sprintf(temp, "%02X", cptr[i]);
+			sprintf(temp, "0x%02X", cptr[i]);
 
 			helper->_db_pLocalData->data += temp;
 			if (i != rcc - 1)

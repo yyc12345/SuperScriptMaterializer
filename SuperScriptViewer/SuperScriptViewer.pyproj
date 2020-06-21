@@ -30,6 +30,9 @@
     <Compile Include="DecoratorCore.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Progressbar.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ServerCore.py">
       <SubType>Code</SubType>
     </Compile>

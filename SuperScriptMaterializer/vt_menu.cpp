@@ -75,7 +75,8 @@ void PluginMenuCallback(int commandID) {
 	ofn.lpstrFile = file;
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile = 1024;
-	ofn.lpstrFilter = "Database file(*.db)\0*.db\0All files(*.*)\0*.*\0";
+	ofn.lpstrFilter = "Database file(*.db)\0*.db\0";
+	ofn.lpstrDefExt = "db";
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = NULL;

@@ -176,12 +176,19 @@ BOOL scriptDatabase::finalJob() {
 	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
 
 	//create index for quick select in following app
-	/*sqlite3_exec(db, "begin;", NULL, NULL, NULL);
-	sqlite3_exec(db, "CREATE INDEX [quick_where1] ON bIn (thisobj)", NULL, NULL, NULL);
-	sqlite3_exec(db, "CREATE INDEX [quick_where2] ON bOut (thisobj)", NULL, NULL, NULL);
-	sqlite3_exec(db, "CREATE INDEX [quick_where3] ON pIn (thisobj)", NULL, NULL, NULL);
-	sqlite3_exec(db, "CREATE INDEX [quick_where4] ON pOut (thisobj)", NULL, NULL, NULL);
-	sqlite3_exec(db, "commit;", NULL, NULL, NULL);*/
+	sqlite3_exec(db, "begin;", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where1] ON behavior ([parent])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where2] ON pOper ([belong_to], [thisobj])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where3] ON pTarget ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where4] ON bIn ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where5] ON bOut ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where6] ON pIn ([belong_to], [thisobj])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where7] ON pOut ([belong_to], [thisobj])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where8] ON pLocal ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where9] ON pLink ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where10] ON bLink ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where11] ON elink ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
 
 	return TRUE;
 }
