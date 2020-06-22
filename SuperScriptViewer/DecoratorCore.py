@@ -505,10 +505,16 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
         exCur.execute("SELECT [name], [type] FROM {} WHERE [thisobj] == ?".format(tableName), (i,))
         temp = exCur.fetchone()
 
-        # submit to database and map
-        currentGraphBlockCell[i] = dcv.BlockCellItem(x, y, dcv.CELL_WIDTH, dcv.CELL_HEIGHT)
-        deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)",
-                      (target, i, temp[0], temp[1], x, y, (dcv.CellType.SHORTCUT if cache.isshortcut else dcv.CellType.PLOCAL)))
+        if temp is not None:
+            # submit to database and map
+            currentGraphBlockCell[i] = dcv.BlockCellItem(x, y, dcv.CELL_WIDTH, dcv.CELL_HEIGHT)
+            deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (target, i, temp[0], temp[1], x, y, (dcv.CellType.SHORTCUT if cache.isshortcut else dcv.CellType.PLOCAL)))
+        else:
+            # submit to database and map
+            currentGraphBlockCell[i] = dcv.BlockCellItem(x, y, dcv.CELL_WIDTH, dcv.CELL_HEIGHT)
+            deCur.execute("INSERT INTO cell VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (target, i, "UNKNOWN", "UNKNOWN", x, y, (dcv.CellType.SHORTCUT if cache.isshortcut else dcv.CellType.PLOCAL)))
 
     # comput size and update database and currentGraphBlockCell
     graphX = 0
