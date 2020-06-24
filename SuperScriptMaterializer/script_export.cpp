@@ -29,7 +29,15 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDa
 			//WARNING: untested doe to GetClassID() may have chance to return Attributes or CKDataArray accoring to document
 			if (helper->_db_pLink->input_is_bb = (ds_Owner->GetClassID() != CKCID_PARAMETEROPERATION)) {
 				//bb
-				helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
+				__try
+				{
+					helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
+				}
+				__except (EXCEPTION_EXECUTE_HANDLER)
+				{
+					//Default to 0
+					helper->_db_pLink->input_index = 0;
+				}
 
 			} else {
 				//pOper
