@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include <string>
 #include <vector>
+#include <set>
 
 #define STRINGCACHE_SIZE 25565
 
@@ -16,8 +17,9 @@ enum bLinkInputOutputType {
 enum pLinkInputOutputType {
 	pLinkInputOutputType_PIN,
 	pLinkInputOutputType_POUT,
-	pLinkInputOutputType_PLOCAL, //when using pLocal, omit [index] and [input_is_bb]
-	pLinkInputOutputType_PTARGET //when using pTarget, omit [index] and [input_is_bb]
+	pLinkInputOutputType_PLOCAL, //when using pLocal, omit [index] and [input_is_bb], [input_index] set -1
+	pLinkInputOutputType_PTARGET, //when using pTarget, omit [index] and [input_is_bb], [input_index] set -1
+	pLinkInputOutputType_PATTR //when using pAttr, omit [index] and [input_is_bb], [input_index] set -1
 };
 
 #pragma region data struct define
@@ -107,10 +109,17 @@ typedef struct {
 }db_pLocal;
 
 typedef struct {
+	EXPAND_CK_ID thisobj;
+	std::string name;
+	std::string type;
+	std::string type_guid;
+}db_pAttr;
+
+typedef struct {
 	std::string field;
 	std::string data;
 	EXPAND_CK_ID belong_to;
-}db_pLocalData;
+}db_pData;
 
 typedef struct {
 	EXPAND_CK_ID input;
@@ -226,8 +235,9 @@ class dbScriptDataStructHelper {
 	db_bOut* _db_bOut;
 	db_bLink* _db_bLink;
 	db_pLocal* _db_pLocal;
+	db_pAttr* _db_pAttr;
 	db_pLink* _db_pLink;
-	db_pLocalData* _db_pLocalData;
+	db_pData* _db_pData;
 	db_pOper* _db_pOper;
 	db_eLink* _db_eLink;
 };
@@ -271,13 +281,16 @@ class scriptDatabase : public database {
 	void write_bLink(db_bLink* data);
 	void write_pLocal(db_pLocal* data);
 	void write_pLink(db_pLink* data);
-	void write_pLocalData(db_pLocalData* data);
+	void write_pData(db_pData* data);
 	void write_pOper(db_pOper* data);
 	void write_eLink(db_eLink* data);
+	BOOL write_pAttr(db_pAttr* data);
 
 	protected:
 	BOOL init();
 	BOOL finalJob();
+
+	std::set<EXPAND_CK_ID>* pAttrUniqueEnsurance;
 };
 
 class envDatabase : public database {

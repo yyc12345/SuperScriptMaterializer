@@ -25,6 +25,7 @@ class dbPLinkInputOutputType(object):
     POUT = 1
     PLOCAL = 2
     PTARGET = 3
+    PATTR = 4
 
 class dbBLinkInputOutputType(object):
     INPUT = 0
@@ -41,6 +42,7 @@ class LocalUsageType(object):
     PIN = 0
     POUT = 1
     PLOCAL = 2
+    PATTR = 3
 
 class JsonCustomEncoder(json.JSONEncoder):
     def default(self, field): 

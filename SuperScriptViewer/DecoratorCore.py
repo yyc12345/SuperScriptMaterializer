@@ -438,6 +438,18 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
                     cache.lastUse = i[6]
                     cache.lastDirection = 0
                     cache.lastIndex = i[9]
+            elif (i[3] == dcv.dbPLinkInputOutputType.PATTR):    # for attribute using
+                if i[2] not in createdShortcut:
+                    cache = dcv.LocalUsageItem(0, True, dcv.LocalUsageType.PATTR)
+                    localUsageCounter[i[2]] = cache
+                    createdShortcut.add(i[2])
+                else:
+                    cache = localUsageCounter[i[2]]
+
+                    cache.count+=1
+                    cache.lastUse = i[6]
+                    cache.lastDirection = 0
+                    cache.lastIndex = i[9]
             else:
                 if i[2] not in blockSet:
                     if i[0] not in createdShortcut:
@@ -500,6 +512,8 @@ def buildCell(exDb, deDb, target, currentGraphBlockCell):
             tableName = 'pIn'
         elif (cache.internal_type == dcv.LocalUsageType.POUT):
             tableName = 'pOut'
+        elif (cache.internal_type == dcv.LocalUsageType.PATTR):
+            tableName = 'pAttr'
         else:
             tableName = 'pLocal'
         exCur.execute("SELECT [name], [type] FROM {} WHERE [thisobj] == ?".format(tableName), (i,))
@@ -598,7 +612,11 @@ def buildLink(exDb, deDb, target, currentGraphBlockCell, graphPIO):
                     (x1, y1) = computLinkPTerminal(i[2], 0, i[5], currentGraphBlockCell)
                     deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                                   (target, -1, i[0], i[1], i[2], i[6], 0, 0, i[5], i[9], x1, y1, x2, y2))
-
+            elif (i[3] == dcv.dbPLinkInputOutputType.PATTR):
+                (x1, y1) = computLinkPTerminal(i[0], 0, -1, currentGraphBlockCell)
+                (x2, y2) = computLinkPTerminal(i[6], 0, i[9], currentGraphBlockCell)
+                deCur.execute("INSERT INTO link VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                              (target, -1, i[0], i[1], i[2], i[6], 0, 0, -1, i[9], x1, y1, x2, y2))
             else:
                 if i[2] in blockSet:    # process protencial pOut(shortcut) (because plocal input/input_obj
                                         # output/output_obj is same, so don't need add for them)
@@ -653,6 +671,6 @@ def buildInfo(exDb, deDb):
     deCur = deDb.cursor()
 
     # export local data (including proto bb internal data)
-    exCur.execute("SELECT * FROM pLocalData;")
+    exCur.execute("SELECT * FROM pData;")
     for i in exCur.fetchall():
         deCur.execute("INSERT INTO info VALUES (?, ?, ?)", (i[2], i[0], i[1]))

@@ -9,6 +9,14 @@
       <Configuration>VT35</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="VT4|Win32">
+      <Configuration>VT4</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="VT4|x64">
+      <Configuration>VT4</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="VT5|Win32">
       <Configuration>VT5</Configuration>
       <Platform>Win32</Platform>
@@ -37,7 +45,16 @@
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT4|Win32'" Label="Configuration">
+    <PlatformToolset>v142</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='VT5|x64'">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT4|x64'" Label="Configuration">
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -51,7 +68,17 @@
     <LinkIncremental>true</LinkIncremental>
     <IntDir>Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT4|Win32'">
+    <OutDir>E:\Virtools\Virtools Dev 4.0\InterfacePlugins\</OutDir>
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>Temp\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT5|Win32'">
+    <ClCompile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT4|Win32'">
     <ClCompile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
@@ -61,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>D:\CppLib\SQLite\sqlite-amalgamation-3310100;E:\Virtools\Virtools Dev 5.0\Sdk\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;VX_MEM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;VIRTOOLS_5;VX_MEM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
@@ -76,7 +103,32 @@
       <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT4|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>D:\CppLib\SQLite\sqlite-amalgamation-3310100;E:\Virtools\Virtools Dev 4.0\Sdk\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;VIRTOOLS_4;VX_MEM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <OutputFile>E:\Virtools\Virtools Dev 4.0\InterfacePlugins\$(ProjectName).dll</OutputFile>
+    </Link>
+    <Link>
+      <AdditionalLibraryDirectories>D:\CppLib\SQLite\sqlite-dll-win32-x86-3310100;E:\Virtools\Virtools Dev 4.0\Sdk\Lib\Win32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>E:\Virtools\Virtools Dev 4.0\InterfacePlugins\$(ProjectName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT5|x64'">
+    <Link>
+      <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT4|x64'">
     <Link>
       <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
     </Link>
@@ -85,6 +137,9 @@
     <Link>
       <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>VIRTOOLS_35;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT35|x64'">
     <Link>

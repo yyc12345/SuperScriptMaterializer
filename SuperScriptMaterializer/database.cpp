@@ -12,8 +12,9 @@ void dbScriptDataStructHelper::init(CKParameterManager* paramManager) {
 	_db_bOut = new db_bOut();
 	_db_bLink = new db_bLink();
 	_db_pLocal = new db_pLocal();
+	_db_pAttr = new db_pAttr();
 	_db_pLink = new db_pLink();
-	_db_pLocalData = new db_pLocalData();
+	_db_pData = new db_pData();
 	_db_pOper = new db_pOper();
 	_db_eLink = new db_eLink();
 
@@ -32,9 +33,10 @@ void dbScriptDataStructHelper::dispose() {
 	delete _db_bIn;
 	delete _db_bOut;
 	delete _db_bLink;
-	delete _db_pLocalData;
+	delete _db_pData;
 	delete _db_pLink;
 	delete _db_pLocal;
+	delete _db_pAttr;
 	delete _db_pOper;
 	delete _db_eLink;
 
@@ -71,7 +73,7 @@ void dbEnvDataStructHelper::dispose() {
 
 void database::open(const char* file) {
 	db = NULL;
-	stmtCache = new std::vector<sqlite3_stmt*>(13, NULL);
+	stmtCache = new std::vector<sqlite3_stmt*>(15, NULL);
 
 	//open db
 	int result;
@@ -97,6 +99,8 @@ void database::close() {
 }
 
 BOOL scriptDatabase::init() {
+	pAttrUniqueEnsurance = new std::set<EXPAND_CK_ID>();
+
 	int result;
 	result = sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
@@ -142,7 +146,7 @@ BOOL scriptDatabase::init() {
 		NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
-		"CREATE TABLE pLocalData([field] TEXT, [data] TEXT, [belong_to] INTEGER);",
+		"CREATE TABLE pData([field] TEXT, [data] TEXT, [belong_to] INTEGER);",
 		NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
@@ -155,6 +159,10 @@ BOOL scriptDatabase::init() {
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
 		"CREATE TABLE eLink([export_obj] INTEGER, [internal_obj] INTEGER, [is_in] INTEGER, [index] INTEGER, [belong_to] INTEGER);",
+		NULL, NULL, NULL);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE pAttr([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT);",
 		NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 
@@ -188,8 +196,10 @@ BOOL scriptDatabase::finalJob() {
 	sqlite3_exec(db, "CREATE INDEX [quick_where9] ON pLink ([belong_to])", NULL, NULL, NULL);
 	sqlite3_exec(db, "CREATE INDEX [quick_where10] ON bLink ([belong_to])", NULL, NULL, NULL);
 	sqlite3_exec(db, "CREATE INDEX [quick_where11] ON elink ([belong_to])", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE INDEX [quick_where12] ON pAttr ([thisobj])", NULL, NULL, NULL);
 	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
 
+	delete pAttrUniqueEnsurance;
 	return TRUE;
 }
 
@@ -422,11 +432,11 @@ void scriptDatabase::write_pLink(db_pLink* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pLocalData(db_pLocalData* data) {
+void scriptDatabase::write_pData(db_pData* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
-	tryGetStmt(10, "INSERT INTO pLocalData VALUES (?, ?, ?)");
+	tryGetStmt(10, "INSERT INTO pData VALUES (?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_text(stmt, 1, data->field.c_str(), -1, SQLITE_TRANSIENT);
@@ -462,6 +472,26 @@ void scriptDatabase::write_eLink(db_eLink* data) {
 	sqlite3_bind_int(stmt, 4, data->index);
 	sqlite3_bind_int(stmt, 5, data->belong_to);
 	sqlite3_step(stmt);
+}
+
+BOOL scriptDatabase::write_pAttr(db_pAttr* data) {
+	if (db == NULL) return TRUE;
+
+	if (pAttrUniqueEnsurance->find(data->thisobj) != pAttrUniqueEnsurance->end())
+		return FALSE;	//existing item. skip it to make sure unique
+	pAttrUniqueEnsurance->insert(data->thisobj);	//add this item
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(13, "INSERT INTO pAttr VALUES (?, ?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data->thisobj);
+	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 3, data->type.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 4, data->type_guid.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_step(stmt);
+
+	return TRUE;
 }
 
 void envDatabase::write_envOp(db_envOp* data) {

@@ -4,10 +4,11 @@
 
 #define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
 #define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
+#define safeStringCopy(storage,str) storage=(str)?(str):"";
 
 #pragma region inline func
 
-inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
+void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
 	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
 	CKParameter* directSource = NULL;
 	CKObject* ds_Owner = NULL;
@@ -15,26 +16,45 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDa
 	CKBehavior* ss_Owner = NULL;
 	if (directSource = cache->GetDirectSource()) {
 		helper->_db_pLink->input = directSource->GetID();
-		if (directSource->GetClassID() == CKCID_PARAMETERLOCAL) {
+		if (directSource->GetClassID() == CKCID_PARAMETERLOCAL || directSource->GetClassID() == CKCID_PARAMETERVARIABLE) {
 			//pLocal
 			helper->_db_pLink->input_obj = directSource->GetID();
 			helper->_db_pLink->input_type = pLinkInputOutputType_PLOCAL;
 			helper->_db_pLink->input_is_bb = FALSE;
 			helper->_db_pLink->input_index = -1;
 		} else {
-			//pOut
+			//WARNING: when GetClassID() return CKDataArray there are untested code
+			//pParam from bb pOut / pOper pOut / object Attribute / CKDataArray
 			ds_Owner = directSource->GetOwner();
-			helper->_db_pLink->input_obj = ds_Owner->GetID();
-			helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
-			//WARNING: untested doe to GetClassID() may have chance to return Attributes or CKDataArray accoring to document
-			if (helper->_db_pLink->input_is_bb = (ds_Owner->GetClassID() != CKCID_PARAMETEROPERATION)) {
-				//bb
-				helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
-
-			} else {
-				//pOper
-				helper->_db_pLink->input_index = 0;
-
+			switch (ds_Owner->GetClassID()) {
+				case CKCID_BEHAVIOR:
+					helper->_db_pLink->input_obj = ds_Owner->GetID();
+					helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
+					helper->_db_pLink->input_is_bb = TRUE;
+					helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
+					break;
+				case CKCID_PARAMETEROPERATION:
+					helper->_db_pLink->input_obj = ds_Owner->GetID();
+					helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
+					helper->_db_pLink->input_is_bb = FALSE;
+					helper->_db_pLink->input_index = 0;
+					break;
+				case CKCID_DATAARRAY:
+					// dataarray, see as virtual bb pLocal shortcut
+					helper->_db_pLink->input_obj = directSource->GetID();
+					helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
+					helper->_db_pLink->input_is_bb = FALSE;
+					helper->_db_pLink->input_index = -1;
+					proc_pAttr(ctx, db, helper, directSource);
+					break;
+				default:
+					//normal object, see as virtual bb pLocal shortcut
+					helper->_db_pLink->input_obj = directSource->GetID();
+					helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
+					helper->_db_pLink->input_is_bb = FALSE;
+					helper->_db_pLink->input_index = -1;
+					proc_pAttr(ctx, db, helper, directSource);
+					break;
 			}
 		}
 	}
@@ -72,7 +92,7 @@ inline void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDa
 	}
 }
 
-inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
+void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
 	helper->_db_pTarget->thisobj = cache->GetID();
 	helper->_db_pTarget->name = cache->GetName();
 	helper->_db_pTarget->type = helper->_parameterManager->ParameterTypeToName(cache->GetType());
@@ -99,7 +119,7 @@ inline void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* d
 	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
 }
 
-inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	helper->_db_pIn->name = cache->GetName();
@@ -130,7 +150,7 @@ inline void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, d
 
 }
 
-inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	helper->_db_pOut->name = cache->GetName();
@@ -191,7 +211,7 @@ inline void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db,
 	}
 }
 
-inline void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bIn->thisobj = cache->GetID();
 	helper->_db_bIn->index = index;
 	helper->_db_bIn->name = cache->GetName();
@@ -200,7 +220,7 @@ inline void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStruct
 	db->write_bIn(helper->_db_bIn);
 }
 
-inline void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bOut->thisobj = cache->GetID();
 	helper->_db_bOut->index = index;
 	helper->_db_bOut->name = cache->GetName();
@@ -209,7 +229,7 @@ inline void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStruc
 	db->write_bOut(helper->_db_bOut);
 }
 
-inline void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKBehaviorIO* io = cache->GetInBehaviorIO();
 	CKBehavior* beh = io->GetOwner();
 	helper->_db_bLink->input = io->GetID();
@@ -229,7 +249,7 @@ inline void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataSt
 	db->write_bLink(helper->_db_bLink);
 }
 
-inline void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
+void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
 	helper->_db_pLocal->thisobj = cache->GetID();
 	helper->_db_pLocal->name = cache->GetName() ? cache->GetName() : "";
 	CKParameterType vaildTypeChecker = cache->GetType();
@@ -242,10 +262,10 @@ inline void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDat
 	db->write_pLocal(helper->_db_pLocal);
 
 	//export plocal metadata
-	IteratepLocalData(cache, db, helper, cache->GetID());
+	DigParameterData(cache, db, helper, cache->GetID());
 }
 
-inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pOper->thisobj = cache->GetID();
 	helper->_db_pOper->op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
 	copyGuid(cache->GetOperationGuid(), helper->_db_pOper->op_guid);
@@ -259,24 +279,41 @@ inline void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDataba
 	proc_pOut(ctx, cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0, FALSE);
 }
 
+void proc_pAttr(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper* helper, CKParameter* cache) {
+	//write self first to detect conflict
+	helper->_db_pAttr->thisobj = cache->GetID();
+	safeStringCopy(helper->_db_pAttr->name, cache->GetName());
+	CKParameterType vaildTypeChecker = cache->GetType();
+	if (vaildTypeChecker != -1) helper->_db_pAttr->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+	else helper->_db_pAttr->type = "!!UNKNOW TYPE!!"; //unknow type
+	copyGuid(cache->GetGUID(), helper->_db_pAttr->type_guid);
+
+	if (!db->write_pAttr(helper->_db_pAttr))
+		return;
+
+	//not duplicated, continue write property
+	CKObject* host = cache->GetOwner();
+	helper_pDataExport("attr.host_id", (long)host->GetID(), db, helper, cache->GetID());
+	helper_pDataExport("attr.host_name", host->GetName(), db, helper, cache->GetID());
+}
 
 //============================helper for pLocal data export
-inline void helper_pLocalDataExport(const char* field, const char* data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
-	helper->_db_pLocalData->field = field;
-	helper->_db_pLocalData->data = data;
-	helper->_db_pLocalData->belong_to = parents;
+void helper_pDataExport(const char* field, const char* data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+	helper->_db_pData->field = field;
+	helper->_db_pData->data = data;
+	helper->_db_pData->belong_to = parents;
 
-	db->write_pLocalData(helper->_db_pLocalData);
+	db->write_pData(helper->_db_pData);
 }
-inline void helper_pLocalDataExport(const char* field, float data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void helper_pDataExport(const char* field, float data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	sprintf(str, "%f", data);
-	helper_pLocalDataExport(field, str, db, helper, parents);
+	helper_pDataExport(field, str, db, helper, parents);
 }
-inline void helper_pLocalDataExport(const char* field, long data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void helper_pDataExport(const char* field, long data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	ltoa(data, str, 10);
-	helper_pLocalDataExport(field, str, db, helper, parents);
+	helper_pDataExport(field, str, db, helper, parents);
 }
 
 
@@ -363,7 +400,7 @@ void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScri
 		IterateBehavior(ctx, bhv->GetSubBehavior(i), db, helper, bhv->GetID());
 }
 
-void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKGUID t = p->GetGUID();
 	BOOL unknowType = FALSE;
 
@@ -372,15 +409,15 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 	//nothing
 	if (t == CKPGUID_NONE) return;
 	if (p->GetParameterClassID() && p->GetValueObject(false)) {
-		helper_pLocalDataExport("id", (long)p->GetValueObject(false)->GetID(), db, helper, parents);
-		helper_pLocalDataExport("name", p->GetValueObject(false)->GetName(), db, helper, parents);
-		helper_pLocalDataExport("type", p->GetValueObject(false)->GetClassNameA(), db, helper, parents);
+		helper_pDataExport("id", (long)p->GetValueObject(false)->GetID(), db, helper, parents);
+		helper_pDataExport("name", p->GetValueObject(false)->GetName(), db, helper, parents);
+		helper_pDataExport("type", p->GetValueObject(false)->GetClassNameA(), db, helper, parents);
 		return;
 	}
 	//float
 	if (t == CKPGUID_FLOAT || t == CKPGUID_ANGLE || t == CKPGUID_PERCENTAGE || t == CKPGUID_TIME
 		|| t == CKPGUID_FLOATSLIDER) {
-		helper_pLocalDataExport("float-data", *(float*)(p->GetReadDataPtr(false)), db, helper, parents);
+		helper_pDataExport("float-data", *(float*)(p->GetReadDataPtr(false)), db, helper, parents);
 		return;
 	}
 	//int
@@ -391,22 +428,22 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 		|| t == CKPGUID_LIGHTTYPE || t == CKPGUID_SPRITEALIGN || t == CKPGUID_DIRECTION || t == CKPGUID_LAYERTYPE
 		|| t == CKPGUID_COMPOPERATOR || t == CKPGUID_BINARYOPERATOR || t == CKPGUID_SETOPERATOR
 		|| t == CKPGUID_OBSTACLEPRECISION || t == CKPGUID_OBSTACLEPRECISIONBEH) {
-		helper_pLocalDataExport("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), db, helper, parents);
+		helper_pDataExport("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), db, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_VECTOR) {
 		VxVector vec;
 		memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-		helper_pLocalDataExport("vector.x", vec.x, db, helper, parents);
-		helper_pLocalDataExport("vector.y", vec.y, db, helper, parents);
-		helper_pLocalDataExport("vector.z", vec.z, db, helper, parents);
+		helper_pDataExport("vector.x", vec.x, db, helper, parents);
+		helper_pDataExport("vector.y", vec.y, db, helper, parents);
+		helper_pDataExport("vector.z", vec.z, db, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_2DVECTOR) {
 		Vx2DVector vec;
 		memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-		helper_pLocalDataExport("2dvector.x", vec.x, db, helper, parents);
-		helper_pLocalDataExport("2dvector.y", vec.y, db, helper, parents);
+		helper_pDataExport("2dvector.x", vec.x, db, helper, parents);
+		helper_pDataExport("2dvector.y", vec.y, db, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_MATRIX) {
@@ -417,7 +454,7 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
 				sprintf(position, "matrix[%d][%d]", i, j);
-				helper_pLocalDataExport(position, mat[i][j], db, helper, parents);
+				helper_pDataExport(position, mat[i][j], db, helper, parents);
 			}
 		}
 		return;
@@ -425,10 +462,10 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 	if (t == CKPGUID_COLOR) {
 		VxColor col;
 		memcpy(&col, p->GetReadDataPtr(false), sizeof(col));
-		helper_pLocalDataExport("color.r", col.r, db, helper, parents);
-		helper_pLocalDataExport("color.g", col.g, db, helper, parents);
-		helper_pLocalDataExport("color.b", col.b, db, helper, parents);
-		helper_pLocalDataExport("color.a", col.a, db, helper, parents);
+		helper_pDataExport("color.r", col.r, db, helper, parents);
+		helper_pDataExport("color.g", col.g, db, helper, parents);
+		helper_pDataExport("color.b", col.b, db, helper, parents);
+		helper_pDataExport("color.a", col.a, db, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_2DCURVE) {
@@ -441,27 +478,27 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 			endIndex = strlen(prefix);
 
 			changeSuffix(".pos.x");
-			helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetPosition().x, db, helper, parents);
+			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().x, db, helper, parents);
 			changeSuffix(".pos.y");
-			helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetPosition().y, db, helper, parents);
+			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().y, db, helper, parents);
 			changeSuffix(".islinear");
-			helper_pLocalDataExport(prefix, (long)c->GetControlPoint(i)->IsLinear(), db, helper, parents);
+			helper_pDataExport(prefix, (long)c->GetControlPoint(i)->IsLinear(), db, helper, parents);
 			if (c->GetControlPoint(i)->IsTCB()) {
 				changeSuffix(".bias");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetBias(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetBias(), db, helper, parents);
 				changeSuffix(".continuity");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetContinuity(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetContinuity(), db, helper, parents);
 				changeSuffix(".tension");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetTension(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetTension(), db, helper, parents);
 			} else {
 				changeSuffix(".intangent.x");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetInTangent().x, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().x, db, helper, parents);
 				changeSuffix(".intangent.y");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetInTangent().y, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().y, db, helper, parents);
 				changeSuffix(".outtangent.x");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().x, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().x, db, helper, parents);
 				changeSuffix(".outtangent.y");
-				helper_pLocalDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().y, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().y, db, helper, parents);
 			}
 		}
 		return;
@@ -470,11 +507,11 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 		char* cptr = (char*)p->GetReadDataPtr(false);
 		int cc = p->GetDataSize();
 
-		helper->_db_pLocalData->data.clear();
-		helper->_db_pLocalData->data.insert(0, cptr, 0, cc);
-		helper->_db_pLocalData->field = "str";
-		helper->_db_pLocalData->belong_to = p->GetID();
-		db->write_pLocalData(helper->_db_pLocalData);
+		helper->_db_pData->data.clear();
+		helper->_db_pData->data.insert(0, cptr, 0, cc);
+		helper->_db_pData->field = "str";
+		helper->_db_pData->belong_to = p->GetID();
+		db->write_pData(helper->_db_pData);
 		return;
 	}
 
@@ -489,24 +526,24 @@ void IteratepLocalData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStru
 		rcc = cc = p->GetDataSize();
 		if (rcc > 1024) rcc = 1024;
 
-		helper->_db_pLocalData->data.clear();
+		helper->_db_pData->data.clear();
 		for (int i = 0; i < rcc; i++) {
 			sprintf(temp, "0x%02X", cptr[i]);
 
-			helper->_db_pLocalData->data += temp;
+			helper->_db_pData->data += temp;
 			if (i != rcc - 1)
-				helper->_db_pLocalData->data += ", ";
+				helper->_db_pData->data += ", ";
 		}
 
 		if (rcc == cc)
-			helper->_db_pLocalData->field = "dump.data";
+			helper->_db_pData->field = "dump.data";
 		else
-			helper->_db_pLocalData->field = "dump.partial_data";
-		helper->_db_pLocalData->belong_to = p->GetID();
-		db->write_pLocalData(helper->_db_pLocalData);
+			helper->_db_pData->field = "dump.partial_data";
+		helper->_db_pData->belong_to = p->GetID();
+		db->write_pData(helper->_db_pData);
 
 		//dump data length
-		helper_pLocalDataExport("dump.length", (long)cc, db, helper, parents);
+		helper_pDataExport("dump.length", (long)cc, db, helper, parents);
 		return;
 	}
 }
