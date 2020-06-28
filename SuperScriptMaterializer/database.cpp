@@ -50,6 +50,7 @@ void dbEnvDataStructHelper::init() {
 	_db_envMsg = new db_envMsg;
 	_db_envAttr = new db_envAttr;
 	_db_envPlugin = new db_envPlugin;
+	_db_envVariable = new db_envVariable;
 
 	_stringCache = (char*)malloc(STRINGCACHE_SIZE * sizeof(char));
 	if (_stringCache == NULL)
@@ -62,6 +63,7 @@ void dbEnvDataStructHelper::dispose() {
 	delete _db_envMsg;
 	delete _db_envAttr;
 	delete _db_envPlugin;
+	delete _db_envVariable;
 
 	free(_stringCache);
 }
@@ -233,6 +235,10 @@ BOOL envDatabase::init() {
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
 		"CREATE TABLE plugin([dll_index] INTEGER, [dll_name] TEXT, [plugin_index] INTEGER, [category] TEXT, [active] INTEGER, [needed_by_file] INTEGER, [guid] TEXT, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [func_init] INTEGER, [func_exit] INTEGER);",
+		NULL, NULL, NULL);
+	if (result != SQLITE_OK) return FALSE;
+	result = sqlite3_exec(db,
+		"CREATE TABLE [variable] ([name] TEXT, [description] TEXT, [flags] INTEGER, [type] INTEGER, [representation] TEXT, [data] TEXT);",
 		NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 
@@ -589,6 +595,22 @@ void envDatabase::write_envPlugin(db_envPlugin* data) {
 	sqlite3_bind_int(stmt, 11, data->version);
 	sqlite3_bind_int(stmt, 12, (int)data->func_init);
 	sqlite3_bind_int(stmt, 13, (int)data->func_exit);
+	sqlite3_step(stmt);
+}
+
+void envDatabase::write_envVariable(db_envVariable* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(5, "INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_text(stmt, 1, data->name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 2, data->desciption.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data->flags);
+	sqlite3_bind_int(stmt, 4, data->type);
+	sqlite3_bind_text(stmt, 5, data->representation.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 6, data->data.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_step(stmt);
 }
 

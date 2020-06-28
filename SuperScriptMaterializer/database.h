@@ -217,6 +217,15 @@ typedef struct {
 	CK_EXITINSTANCEFCT func_exit;
 }db_envPlugin;
 
+typedef struct {
+	std::string name;
+	std::string desciption;
+	XWORD flags;
+	CKVariableManager::Variable::Type type;
+	std::string representation;
+	std::string data;
+}db_envVariable;
+
 #pragma endregion
 
 class dbScriptDataStructHelper {
@@ -253,6 +262,7 @@ class dbEnvDataStructHelper {
 	db_envMsg* _db_envMsg;
 	db_envAttr* _db_envAttr;
 	db_envPlugin* _db_envPlugin;
+	db_envVariable* _db_envVariable;
 };
 
 
@@ -300,6 +310,7 @@ class envDatabase : public database {
 	void write_envMsg(db_envMsg* data);
 	void write_envAttr(db_envAttr* data);
 	void write_envPlugin(db_envPlugin* data);
+	void write_envVariable(db_envVariable* data);
 
 	protected:
 	BOOL init();

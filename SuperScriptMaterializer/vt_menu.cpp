@@ -119,6 +119,7 @@ void PluginMenuCallback(int commandID) {
 				IterateMessage(ctx->GetMessageManager(), _db, _helper);
 				IterateAttribute(ctx->GetAttributeManager(), _db, _helper);
 				IteratePlugin(CKGetPluginManager(), _db, _helper);
+				IterateVariable(ctx->GetVariableManager(), _db, _helper);
 
 				//release all
 				_helper->dispose();

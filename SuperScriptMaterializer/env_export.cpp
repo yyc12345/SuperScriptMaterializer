@@ -3,6 +3,7 @@
 #pragma warning(disable:26812)
 
 #define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
+#define safeStringCopy(storage,str) storage=(str)?(str):"";
 
 void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase* db, dbEnvDataStructHelper* helper) {
 	int count = parameterManager->GetParameterOperationCount();
@@ -122,5 +123,23 @@ void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStruct
 
 			db->write_envPlugin(helper->_db_envPlugin);
 		}
+	}
+}
+
+void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+	CKVariableManager::Iterator it = varManager->GetVariableIterator();
+	CKVariableManager::Variable* varobj = NULL;
+	XString dataCopyCache;
+	for (; !it.End(); it++) {
+		varobj = it.GetVariable();
+		helper->_db_envVariable->name = it.GetName();
+		safeStringCopy(helper->_db_envVariable->desciption, varobj->GetDescription());
+		helper->_db_envVariable->flags = varobj->GetFlags();
+		helper->_db_envVariable->type = varobj->GetType();
+		safeStringCopy(helper->_db_envVariable->representation, varobj->GetRepresentation());
+		varobj->GetStringValue(dataCopyCache);
+		helper->_db_envVariable->data = dataCopyCache.CStr();
+
+		db->write_envVariable(helper->_db_envVariable);
 	}
 }
