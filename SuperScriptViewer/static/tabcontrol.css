@@ -1,0 +1,14 @@
+/*side panel style*/
+div.tabitem-activated {
+    background: #0000ff;
+}
+div.tabitem-activated b {
+    color: white;
+}
+
+div.tabitem-deactivated {
+    background: #ffffff00;
+}
+div.tabitem-deactivated b {
+    color: black;
+}

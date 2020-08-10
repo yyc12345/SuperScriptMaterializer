@@ -4,6 +4,10 @@
 <head>
     <meta charset="utf-8">
     <title>Help - Converter</title>
+    <link rel="stylesheet" href="{{tabcontrol_css}}">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js"></script>
+    <script src="{{tabcontrol_js}}"></script>
+    <script src="{{converter_js}}"></script>
 </head>
 
 <body>
@@ -11,39 +15,118 @@
 <p>This page provide some useful converter for your decoding work. All converter is interactive..</p>
 <br />
 
-<h2>Reverse C style byte array</h2>
-<p>This converter will reverse your inputed C style byte array. Actually, it take responsibility for the convert between big-endian and little-endian.<br />
-Typical and legal input just like this: <code>0x00, 0xBb, 0xff, 0xFF</code><br />
-Support multi-input. Use line break to split each input.</p>
-<p>Input:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
-<p>Output:</p>
-<textarea style="width: 350px; height: 100px; resize: none;" readonly="true"></textarea>
+<div style="display: flex; flex-flow: row; height: 30px; width: 100%; margin: 0; padding: 0; border-bottom: 1px solid black;">
+    <div id="tabnavigation_1_1" class="tabnavigation_1 tabitem-activated" style="height: 100%; padding-left: 20px; padding-right: 20px;" onclick="tabControlSwitcher(1, 1);"><b>Reverse C style byte array</b></div>
+    <div id="tabnavigation_1_2" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; padding-left: 20px; padding-right: 20px;" onclick="tabControlSwitcher(1, 2);"><b>C style byte array to HEX</b></div>
+    <div id="tabnavigation_1_3" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; padding-left: 20px; padding-right: 20px;" onclick="tabControlSwitcher(1, 3);"><b>C style byte array to DEC</b></div>
+    <div id="tabnavigation_1_4" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; padding-left: 20px; padding-right: 20px;" onclick="tabControlSwitcher(1, 4);"><b>Lowcase upcase converter</b></div>
+</div>
 
-<h2>C style byte array to HEX</h2>
-<p>This converter will converte provided C style byte array into HEX number. It is double interactive.<br />
-Acceptable byte array should follow little-endian format.<br />
-Support multi-input. Use line break to split each input.</p>
-<p>Byte array:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
-<p>HEX number:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
+<div id="tabpanel_1_1" class="tabpanel_1">
+    <p>This converter will reverse your inputed C style byte array. Actually, it take responsibility for the convert between big-endian and little-endian.<br />
+        Typical and legal input just like this: <code>0x00, 0xBb, 0xff, 0xFF</code><br />
+        Support multi-input. Use line break to split each input.</p>
+        <table>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            </tr>
+            <tr>
+                <td align="left">Input</td>
+                <th colspan="2">&nbsp;</th>
+            </tr>
+            <tr>
+                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 150px;">&nbsp;</td>
+                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+            </tr>
+            <tr>
+                <th colspan="2">&nbsp;</th>
+                <td align="right">Output</td>
+            </tr>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;" readonly="true"></textarea></th>
+            </tr>
+        </table>
+</div>
 
-<h2>C style byte array to DEC</h2>
-<p>This converter will converte provided C style byte array into DEC number. It is double interactive.<br />
-Acceptable byte array should follow little-endian format.<br />
-Support multi-input. Use line break to split each input.</p>
-<p>Byte array:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
-<p>DEC number:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
+<div id="tabpanel_1_2" class="tabpanel_1" style="display: none;">
+    <p>This converter will converte provided C style byte array into HEX number. It is double interactive.<br />
+        Acceptable byte array should follow little-endian format.<br />
+        Support multi-input. Use line break to split each input.</p>
+        <table>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            </tr>
+            <tr>
+                <td align="left">Byte array</td>
+                <th colspan="2">&nbsp;</th>
+            </tr>
+            <tr>
+                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 150px;">&nbsp;</td>
+                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+            </tr>
+            <tr>
+                <th colspan="2">&nbsp;</th>
+                <td align="right">HEX number</td>
+            </tr>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            </tr>
+        </table>
+</div>
 
-<h2>Lowcase upcase converter</h2>
-<p>This converter will provide the convert between lowcase and upcase string. It is double interactive.</p>
-<p>Lowcase:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
-<p>Upcase:</p>
-<textarea style="width: 350px; height: 100px; resize: none;"></textarea>
+<div id="tabpanel_1_3" class="tabpanel_1" style="display: none;">
+    <p>This converter will converte provided C style byte array into DEC number. It is double interactive.<br />
+        Acceptable byte array should follow little-endian format.<br />
+        Support multi-input. Use line break to split each input.</p>
+        <table>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            </tr>
+            <tr>
+                <td align="left">Byte array</td>
+                <th colspan="2">&nbsp;</th>
+            </tr>
+            <tr>
+                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 150px;">&nbsp;</td>
+                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+            </tr>
+            <tr>
+                <th colspan="2">&nbsp;</th>
+                <td align="right">DEC number</td>
+            </tr>
+            <tr>
+                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            </tr>
+        </table>
+</div>
+
+<div id="tabpanel_1_4" class="tabpanel_1" style="display: none;">
+    <p>This converter will provide the convert between lowcase and upcase string. It is double interactive.</p>
+    <table>
+        <tr>
+            <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+        </tr>
+        <tr>
+            <td align="left">Lowcase</td>
+            <th colspan="2">&nbsp;</th>
+        </tr>
+        <tr>
+            <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+            <td style="width: 150px;">&nbsp;</td>
+            <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+        </tr>
+        <tr>
+            <th colspan="2">&nbsp;</th>
+            <td align="right">Upcase</td>
+        </tr>
+        <tr>
+            <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+        </tr>
+    </table>
+</div>
 
 </body>
 

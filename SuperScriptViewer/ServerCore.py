@@ -44,8 +44,18 @@ def nospecHandle():
     return redirect(url_for('indexHandle'))
 
 @app.route('/help', methods=['GET'])
-def helpHandle():
+def helpMainHandle():
     return render_template("help.html")
+
+@app.route('/help/<path:scriptPath>', methods=['GET'])
+def helpHandle(scriptPath):
+    if scriptPath == 'converter':
+        return render_template("help/converter.html",
+                        tabcontrol_css = url_for('static', filename='tabcontrol.css'),
+                        tabcontrol_js = url_for('static', filename='tabcontrol.js'),
+                        converter_js = url_for('static', filename='converter.js'))
+    else:
+        abort(404)
 
 @app.route('/about', methods=['GET'])
 def aboutHandle():
@@ -104,8 +114,10 @@ def viewerHandle(scriptPath):
                     gWidth = width,
                     gHeight = height,
                     hamburgerHistory = hamburger,
-                    static_css = url_for('static', filename='viewer.css'),
-                    static_js = url_for('static', filename='viewer.js'),
+                    viewer_css = url_for('static', filename='viewer.css'),
+                    tabcontrol_css = url_for('static', filename='tabcontrol.css'),
+                    viewer_js = url_for('static', filename='viewer.js'),
+                    tabcontrol_js = url_for('static', filename='tabcontrol.js'),
                     hamburgerCurrent = currentHamburger,
                     blocks = dbBlocks,
                     cells = dbCells,

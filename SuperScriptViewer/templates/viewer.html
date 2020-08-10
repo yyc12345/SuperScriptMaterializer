@@ -4,9 +4,11 @@
 <head>
     <meta charset="utf-8">
     <title>Script Viewer</title>
-    <link rel="stylesheet" href="{{static_css}}">
+    <link rel="stylesheet" href="{{viewer_css}}">
+    <link rel="stylesheet" href="{{tabcontrol_css}}">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js"></script>
-    <script src="{{static_js}}"></script>
+    <script src="{{viewer_js}}"></script>
+    <script src="{{tabcontrol_js}}"></script>
 </head>
 
 <body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;" onkeydown="keyboardNavigation(true);" onkeyup="keyboardNavigation(false);">
@@ -81,18 +83,18 @@
 
     <div id="sidepanelContainer" style="display: flex; flex-flow: column; background: #cfcfcf; height: 100%; width: 20%; margin: 0; padding: 0; border-left: 1px solid black;">
         <div style="display: flex; flex-flow: row; height: 30px; width: 100%; margin: 0; padding: 0; border-bottom: 1px solid black;">
-            <div class="tabitem tabitem1 tabitem-activated" style="height: 100%; width: 33.33%; text-align: center;" onclick="sidePanelSwitcher(0);"><b style="margin: 0;" class="tabitem tabitem1 tabitem-activated">Properties</b></div>
-            <div class="tabitem tabitem2 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="sidePanelSwitcher(1);"><b style="margin: 0;" class="tabitem tabitem2 tabitem-deactivated">Display</b></div>
-            <div class="tabitem tabitem3 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="sidePanelSwitcher(2);"><b style="margin: 0;" class="tabitem tabitem3 tabitem-deactivated">Tools</b></div>
+            <div id="tabnavigation_1_1" class="tabnavigation_1 tabitem-activated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 1);"><b style="margin: 0;">Properties</b></div>
+            <div id="tabnavigation_1_2" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 2);"><b style="margin: 0;">Display</b></div>
+            <div id="tabnavigation_1_3" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 3);"><b style="margin: 0;">Tools</b></div>
         </div>
 
-        <div id="sidepanel-properties" style="display: flex; flex-flow: column;width: 100%; height: 100%; display: flex; flex-flow: column;">
+        <div id="tabpanel_1_1" class="tabpanel_1" style="display: flex; flex-flow: column;width: 100%; height: 100%; display: flex; flex-flow: column;">
             <p style="margin: 5px;">Properties of <b id="sidepanel-properties-id">---</b></p>
             <div id="sidepanel-properties-container" style="width: 100%; height: 100%; overflow: scroll;">
             </div>
         </div>
 
-        <div id="sidepanel-display" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
+        <div id="tabpanel_1_2" class="tabpanel_1" id="sidepanel-display" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
             <p style="margin: 5px;">Render:<br />
                 <input type="checkbox" id="sidepanel-display-plink" value="1" onclick="settingChange(&quot;plink&quot;);">Show pLink and eLink</input>
             </p>
@@ -103,7 +105,7 @@
             </p>
         </div>
 
-        <div id="sidepanel-tools" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
+        <div id="tabpanel_1_3" class="tabpanel_1" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
             <p style="margin: 5px;">Object finder:<br />
                 <input type="text" id="sidepanel-tools-objfinder"></input><br />
                 <button style="height: 30px; margin: 10px 0 10px 0;">Find</button>

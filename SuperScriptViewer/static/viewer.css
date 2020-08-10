@@ -85,21 +85,6 @@ text.link-delay {
     color: black;
 }
 
-/*side panel style*/
-div.tabitem-activated {
-    background: #0000ff;
-}
-b.tabitem-activated {
-    color: white;
-}
-
-div.tabitem-deactivated {
-    background: #ffffff00;
-}
-b.tabitem-deactivated {
-    color: black;
-}
-
 pre {
     border: 1px solid black;
     border-radius: 2px;
