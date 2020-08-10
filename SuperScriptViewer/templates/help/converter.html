@@ -12,7 +12,7 @@
 
 <body>
 <h1>Converter</h1>
-<p>This page provide some useful converter for your decoding work. All converter is interactive..</p>
+<p>This page provide some useful converter for your decoding work.</p>
 <br />
 
 <div style="display: flex; flex-flow: row; height: 30px; width: 100%; margin: 0; padding: 0; border-bottom: 1px solid black;">
@@ -28,23 +28,23 @@
         Support multi-input. Use line break to split each input.</p>
         <table>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv1Input" style="width: 100%; height: 100%; resize: none;"></textarea></th>
             </tr>
             <tr>
                 <td align="left">Input</td>
                 <th colspan="2">&nbsp;</th>
             </tr>
             <tr>
-                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 100px;" align="left"><button style="width: 50px;" onclick="doConv1_I2O();">v</button></td>
                 <td style="width: 150px;">&nbsp;</td>
-                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+                <td style="width: 100px;" align="right">&nbsp;</td>
             </tr>
             <tr>
                 <th colspan="2">&nbsp;</th>
                 <td align="right">Output</td>
             </tr>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;" readonly="true"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv1Output" style="width: 100%; height: 100%; resize: none;" readonly="true"></textarea></th>
             </tr>
         </table>
 </div>
@@ -55,23 +55,23 @@
         Support multi-input. Use line break to split each input.</p>
         <table>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv2Input" style="width: 100%; height: 100%; resize: none;"></textarea></th>
             </tr>
             <tr>
                 <td align="left">Byte array</td>
                 <th colspan="2">&nbsp;</th>
             </tr>
             <tr>
-                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 100px;" align="left"><button style="width: 50px;" onclick="doConv2_I2O();">v</button></td>
                 <td style="width: 150px;">&nbsp;</td>
-                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+                <td style="width: 100px;" align="right"><button style="width: 50px;" onclick="doConv2_O2I();">^</button></td>
             </tr>
             <tr>
                 <th colspan="2">&nbsp;</th>
                 <td align="right">HEX number</td>
             </tr>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv2Output" style="width: 100%; height: 100%; resize: none;"></textarea></th>
             </tr>
         </table>
 </div>
@@ -82,23 +82,23 @@
         Support multi-input. Use line break to split each input.</p>
         <table>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv3Input" style="width: 100%; height: 100%; resize: none;"></textarea></th>
             </tr>
             <tr>
                 <td align="left">Byte array</td>
                 <th colspan="2">&nbsp;</th>
             </tr>
             <tr>
-                <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+                <td style="width: 100px;" align="left"><button style="width: 50px;" onclick="doConv3_I2O();">v</button></td>
                 <td style="width: 150px;">&nbsp;</td>
-                <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+                <td style="width: 100px;" align="right"><button style="width: 50px;" onclick="doConv3_O2I();">^</button></td>
             </tr>
             <tr>
                 <th colspan="2">&nbsp;</th>
                 <td align="right">DEC number</td>
             </tr>
             <tr>
-                <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+                <th colspan="3" style="height: 150px;"><textarea id="conv3Output" style="width: 100%; height: 100%; resize: none;"></textarea></th>
             </tr>
         </table>
 </div>
@@ -107,23 +107,23 @@
     <p>This converter will provide the convert between lowcase and upcase string. It is double interactive.</p>
     <table>
         <tr>
-            <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            <th colspan="3" style="height: 150px;"><textarea id="conv4Input" style="width: 100%; height: 100%; resize: none;"></textarea></th>
         </tr>
         <tr>
             <td align="left">Lowcase</td>
             <th colspan="2">&nbsp;</th>
         </tr>
         <tr>
-            <td style="width: 100px;" align="left"><button style="width: 50px;">v</button></td>
+            <td style="width: 100px;" align="left"><button style="width: 50px;" onclick="doConv4_I2O();">v</button></td>
             <td style="width: 150px;">&nbsp;</td>
-            <td style="width: 100px;" align="right"><button style="width: 50px;">^</button></td>
+            <td style="width: 100px;" align="right"><button style="width: 50px;" onclick="doConv4_O2I();">^</button></td>
         </tr>
         <tr>
             <th colspan="2">&nbsp;</th>
             <td align="right">Upcase</td>
         </tr>
         <tr>
-            <th colspan="3" style="height: 150px;"><textarea style="width: 100%; height: 100%; resize: none;"></textarea></th>
+            <th colspan="3" style="height: 150px;"><textarea id="conv4Output" style="width: 100%; height: 100%; resize: none;"></textarea></th>
         </tr>
     </table>
 </div>
