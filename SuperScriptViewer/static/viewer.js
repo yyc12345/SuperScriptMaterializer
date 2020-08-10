@@ -117,35 +117,3 @@ function queryInfo(obj) {
             }
         });
 }
-
-function sidePanelSwitcher(target) {
-    // 0->property; 1->display; 2->tools
-    //disable all
-    $("#sidepanel-properties").hide();
-    $("#sidepanel-display").hide();
-    $("#sidepanel-tools").hide();
-    $(".tabitem").each(function () {
-        $(this).removeClass("tabitem-activated").addClass("tabitem-deactivated");
-    });
-
-    switch (target) {
-        case 0:
-            $("#sidepanel-properties").show();
-            $(".tabitem1").each(function () {
-                $(this).removeClass("tabitem-deactivated").addClass("tabitem-activated");
-            });
-            break;
-        case 1:
-            $("#sidepanel-display").show();
-            $(".tabitem2").each(function () {
-                $(this).removeClass("tabitem-deactivated").addClass("tabitem-activated");
-            });
-            break;
-        case 2:
-            $("#sidepanel-tools").show();
-            $(".tabitem3").each(function () {
-                $(this).removeClass("tabitem-deactivated").addClass("tabitem-activated");
-            });
-            break;
-    }
-}

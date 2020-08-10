@@ -1,0 +1,3 @@
+function doQuery(fieldIndex, queryTag) {
+    ;
+}

@@ -54,6 +54,13 @@ def helpHandle(scriptPath):
                         tabcontrol_css = url_for('static', filename='tabcontrol.css'),
                         tabcontrol_js = url_for('static', filename='tabcontrol.js'),
                         converter_js = url_for('static', filename='converter.js'))
+    elif scriptPath == 'env':
+        return render_template("help/env.html",
+                        tabcontrol_css = url_for('static', filename='tabcontrol.css'),
+                        tabcontrol_js = url_for('static', filename='tabcontrol.js'),
+                        env_js = url_for('static', filename='env.js'),
+                        env_css = url_for('static', filename='env.css'),
+                        database_data = ss.envDatabaseList)
     else:
         abort(404)
 
