@@ -26,7 +26,7 @@ def get_env():
     env = getattr(g, '_envDatabase', None)
     if env is None:
         env = g._envDatabase = sqlite3.connect(CustomConfig.env_db)
-        env.text_factory = lambda x: x.decode(CustomConfig.database_encoding)
+        env.text_factory = lambda x: x.decode(CustomConfig.database_encoding, errors="ignore")
     return env
 
 @app.teardown_appcontext
@@ -102,7 +102,7 @@ def envQueryHandle():
     if fieldLength == 0:
         cur.execute("SELECT * FROM {}".format(queryTag))
     else:
-        whereStatement = '&&'.join(map(lambda x: "([" + x + "] = ?)", readyData.keys()))
+        whereStatement = 'AND'.join(map(lambda x: "([" + x + "] = ?)", readyData.keys()))
         cur.execute("SELECT * FROM {} WHERE ({})".format(queryTag, whereStatement), list(readyData.values()))
         
     # iterate

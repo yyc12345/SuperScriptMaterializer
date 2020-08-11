@@ -6,7 +6,7 @@ import Progressbar
 
 def run():
     exportDb = sqlite3.connect(CustomConfig.export_db)
-    exportDb.text_factory = lambda x: x.decode(CustomConfig.database_encoding)
+    exportDb.text_factory = lambda x: x.decode(CustomConfig.database_encoding, errors="ignore")
     decorateDb = sqlite3.connect(CustomConfig.decorated_db)
 
     # init table
