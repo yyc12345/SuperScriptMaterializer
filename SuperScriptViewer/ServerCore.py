@@ -22,6 +22,13 @@ def get_db():
         db = g._database = sqlite3.connect(CustomConfig.decorated_db)
     return db
 
+def get_env():
+    env = getattr(g, '_envDatabase', None)
+    if env is None:
+        env = g._envDatabase = sqlite3.connect(CustomConfig.env_db)
+        env.text_factory = lambda x: x.decode(CustomConfig.database_encoding)
+    return env
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
@@ -39,13 +46,24 @@ def block_pin_decoder2(target):
     return [vab['name'], vab['type']]
 
 # =============================================route
+
+# =========== default
+
 @app.route('/', methods=['GET'])
 def nospecHandle():
     return redirect(url_for('indexHandle'))
 
+# =========== misc page
+
 @app.route('/help', methods=['GET'])
 def helpMainHandle():
     return render_template("help.html")
+
+@app.route('/about', methods=['GET'])
+def aboutHandle():
+    return render_template("about.html", static_icon = url_for('static', filename='icon.png'))
+
+# =========== help page
 
 @app.route('/help/<path:scriptPath>', methods=['GET'])
 def helpHandle(scriptPath):
@@ -64,9 +82,47 @@ def helpHandle(scriptPath):
     else:
         abort(404)
 
-@app.route('/about', methods=['GET'])
-def aboutHandle():
-    return render_template("about.html", static_icon = url_for('static', filename='icon.png'))
+@app.route('/help/env', methods=['POST'])
+def envQueryHandle():
+    basicReturn = {
+        "status": False,
+        "overflow": False,
+        "data": []
+    }
+
+    # check tag
+    queryTag = request.form['tag'];
+    if queryTag not in ss.legalEnvQueryKey:
+        return basicReturn
+
+    cur = get_env().cursor()
+    #try:
+    readyData = json.loads(request.form['data'])
+    fieldLength = len(readyData.keys())
+    if fieldLength == 0:
+        cur.execute("SELECT * FROM {}".format(queryTag))
+    else:
+        whereStatement = '&&'.join(map(lambda x: "([" + x + "] = ?)", readyData.keys()))
+        cur.execute("SELECT * FROM {} WHERE ({})".format(queryTag, whereStatement), list(readyData.values()))
+        
+    # iterate
+    counter = 0
+    for i in cur.fetchall():
+        if counter == 100:
+            basicReturn['overflow'] = True
+            break
+        basicReturn['data'].append(i)
+        counter+=1
+
+    basicReturn['status'] = True
+    #except Exception as ex:
+    #    basicReturn['status'] = False
+    #    basicReturn['overflow'] = False
+    #    basicReturn['data'] = []
+
+    return basicReturn
+
+# =========== index
 
 @app.route('/index', methods=['GET'])
 def indexHandle():
@@ -80,6 +136,8 @@ def indexHandle():
             data[i[2]].append(ss.ScriptItem(i[1], i[0]))
 
     return render_template('index.html', scripts = data)
+
+# =========== viewer
 
 @app.route('/viewer/<path:scriptPath>', methods=['GET'])
 def viewerHandle(scriptPath):
@@ -155,4 +213,3 @@ def moveHandle(target):
 def run():
     app.run()
     
-

@@ -218,7 +218,7 @@ BOOL envDatabase::init() {
 	if (result != SQLITE_OK) return FALSE;
 
 	result = sqlite3_exec(db,
-		"CREATE TABLE op([funcptr] INTEGER, [in1_guid] TEXT, [in2_guid] TEXT, [out_guid] TEXT, [op_guid] INTEGER, [op_name] TEXT, [op_code] INTEGER);",
+		"CREATE TABLE op([funcptr] INTEGER, [in1_guid] TEXT, [in2_guid] TEXT, [out_guid] TEXT, [op_guid] TEXT, [op_name] TEXT, [op_code] INTEGER);",
 		NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 	result = sqlite3_exec(db,
