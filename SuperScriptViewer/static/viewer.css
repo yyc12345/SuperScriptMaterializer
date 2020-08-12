@@ -85,11 +85,29 @@ text.link-delay {
     color: black;
 }
 
-pre {
+/* property list*/
+
+pre.propertyItem {
     border: 1px solid black;
     border-radius: 2px;
     padding: 5px;
     margin: 5px;
     background: #3f3f3f;
     color: white;
+}
+
+code.propertyItem {
+    border: 1px solid black;
+    border-radius: 2px;
+    padding: 5px;
+    margin: 5px;
+    background: gray;
+    color: white;
+}
+
+div.propertyItem {
+    margin: 5px;
+    border: 1px solid gray;
+    border-radius: 2px;
+    padding: 5px;
 }

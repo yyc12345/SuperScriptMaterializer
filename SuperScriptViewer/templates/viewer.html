@@ -31,7 +31,7 @@
             <div>
                 {# blocks content #}
                 {% for i in blocks %}
-                <div class="block-body" style="height: {{ i[12] }}px; width: {{ i[11] }}px; top: {{ i[10] }}px; left: {{ i[9] }}px;" onclick="highlightLink({{ i[1] }});">
+                <div class="block-body" style="height: {{ i[12] }}px; width: {{ i[11] }}px; top: {{ i[10] }}px; left: {{ i[9] }}px;" ondblclick="queryInfo(1,{{ i[1] }});" onclick="highlightLink({{ i[1] }});">
                     {% if i[4] != '{}' %}
                     <div class="block-target" title="{{ "Name: %s\nType: %s"|format(*pinDecoder2(i[4])) }}" style="height: 6px; width: 6px; top: 0; left: 0;" onclick="highlightLink({{ pinDecoder(i[4]).id }});"></div>
                     {% endif %}
@@ -61,7 +61,7 @@
                 {% for i in cells %}
                 <div class="{% if i[6] == 0 %}cell-plocal{% elif i[6] == 1 %}cell-shortcut{% elif i[6] == 2 %}cell-pio{% elif i[6] == 3 %}cell-bio{% else %}cell-ptarget{% endif %}"
                 style="height: {% if i[6] == 2 or i[6] == 3 %}6{% else %}5{% endif %}px; width: {% if i[6] == 2 or i[6] == 3 %}6{% else %}15{% endif %}px; top: {{ i[5] }}px; left: {{ i[4] }}px;"
-                title="{{ "Name: %s\nType: %s"|format(i[2], i[3]) }}" ondblclick="queryInfo({{ i[1] }});" onclick="highlightLink({{ i[1] }});"></div>
+                title="{{ "Name: %s\nType: %s"|format(i[2], i[3]) }}" ondblclick="queryInfo(0,{{ i[1] }});" onclick="highlightLink({{ i[1] }});"></div>
                 {% endfor %}
 
                 <svg version="1.1" width="{{ gWidth }}px" height="{{ gHeight }}px" style="position: absolute; top: 0; left: 0;pointer-events: none;">
@@ -89,7 +89,6 @@
         </div>
 
         <div id="tabpanel_1_1" class="tabpanel_1" style="display: flex; flex-flow: column;width: 100%; height: 100%; display: flex; flex-flow: column;">
-            <p style="margin: 5px;">Properties of <b id="sidepanel-properties-id">---</b></p>
             <div id="sidepanel-properties-container" style="width: 100%; height: 100%; overflow: scroll;">
             </div>
         </div>

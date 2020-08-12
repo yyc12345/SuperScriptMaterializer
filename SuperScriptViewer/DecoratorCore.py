@@ -44,7 +44,7 @@ def run():
 def initDecorateDb(db):
     cur = db.cursor()
     cur.execute("CREATE TABLE graph([graph] INTEGER, [graph_name] TEXT, [width] INTEGER, [height] INTEGER, [index] INTEGER, [belong_to] TEXT);")
-    cur.execute("CREATE TABLE info([target] INTEGER, [attach_bb] INTEGER, [is_setting] INTEGER, [field] TEXT, [data] TEXT);")
+    cur.execute("CREATE TABLE info([target] INTEGER, [attach_bb] INTEGER, [is_setting] INTEGER, [name] TEXT, [field] TEXT, [data] TEXT);")
 
     cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-ptarget] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
     cur.execute("CREATE TABLE cell([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [x] REAL, [y] REAL, [type] INTEGER);")
@@ -673,33 +673,38 @@ def buildInfo(exDb, deDb):
 
     # declare tiny storage for convenient query
     tinyStorageKey = 0
-    tineStorageBB = 0
-    tineStorageSetting = 0
+    tinyStorageBB = -1
+    tinyStorageSetting = 0
+    tinyStorageName = ""
 
     # export local data (including proto bb internal data)
     exInfoCur.execute("SELECT * FROM pData;")
     for i in exInfoCur.fetchall():
-        attachBB = 0
+        attachBB = -1
         isSetting = 0
+        infoName = ""
 
         if i[2] == tinyStorageKey:
-            attachBB = tineStorageBB
-            isSetting = tineStorageSetting
+            attachBB = tinyStorageBB
+            isSetting = tinyStorageSetting
+            infotName = tinyStorageName
         else:
             # clear storage first
-            tineStorageBB = 0
-            tineStorageSetting = 0
+            tinyStorageBB = -1
+            tinyStorageSetting = 0
+            tinyStorageName = ""
 
             # query correspond pLocal
-            exQueryCur.execute("SELECT [belong_to], [is_setting] FROM pLocal WHERE [thisobj] = ?", (i[2], ))
+            exQueryCur.execute("SELECT [belong_to], [is_setting], [name] FROM pLocal WHERE [thisobj] = ?", (i[2], ))
             plocalCache = exQueryCur.fetchone()
             if plocalCache is not None:
                 # add setting config
-                tineStorageSetting = isSetting = plocalCache[1]
+                tinyStorageSetting = isSetting = plocalCache[1]
+                tinyStorageName = infoName = plocalCache[2]
                 # query bb again
-                exQueryCur.execute("SELECT [thisobj] FROM behavior WHERE ( [thisobj] = ? AND [type] = 0)", (plocalCache[0], ))
+                exQueryCur.execute("SELECT [thisobj] FROM behavior WHERE ([thisobj] = ? AND [type] = 0)", (plocalCache[0], ))
                 behaviorCache = exQueryCur.fetchone()
                 if behaviorCache is not None:
-                    tineStorageBB = attachBB = behaviorCache[0]
+                    tinyStorageBB = attachBB = behaviorCache[0]
 
-        deCur.execute("INSERT INTO info VALUES (?, ?, ?, ?, ?)", (i[2], attachBB, isSetting, i[0], i[1]))
+        deCur.execute("INSERT INTO info VALUES (?, ?, ?, ?, ?, ?)", (i[2], attachBB, isSetting, infoName, i[0], i[1]))

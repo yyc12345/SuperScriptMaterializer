@@ -96,7 +96,9 @@ function highlightLink(target) {
     event.stopPropagation();
 }
 
-function queryInfo(obj) {
+// type = 0: call from cell
+// type = 1: call from bb
+function queryInfo(type, obj) {
     // confirm user enable this function
     if (!currentSettings["properties"])
         return;
@@ -104,16 +106,29 @@ function queryInfo(obj) {
     $.post(window.location,
         {
             operation: "info",
+            tag: type,
             target: obj
         },
         function (data, status) {
-            //set id
-            $("#sidepanel-properties-id").text(obj);
-
             //set data
             $("#sidepanel-properties-container").empty()
             for (var key in data) {
-                $("#sidepanel-properties-container").append("<p><b>" + key + ":</b><br /><pre>" + data[key] + "</pre></p>")
+                $("#sidepanel-properties-container").append("<div class=\"propertyItem\"></div>");
+
+                var box = $("#sidepanel-properties-container div:last-child");
+                if (data[key]["is_setting"])
+                    $(box).append("<p><code class=\"propertyItem\">S</code><b></b><i></i></p>");
+                else
+                    $(box).append("<p><b></b><i></i></p>");
+
+                $(box).find("p b").text(data[key]["name"]);
+                $(box).find("p i").text("(" + key + ")");
+
+                for (var i = 0; i < data[key]['data'].length; i++) {
+                    $(box).append("<p></p><pre class=\"propertyItem\"></pre>")
+                    $(box).find("p:last-child").text(data[key]['data'][0])
+                    $(box).find("pre:last-child").text(data[key]['data'][1])
+                }
             }
         });
 }

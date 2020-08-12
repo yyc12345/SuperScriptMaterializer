@@ -192,18 +192,36 @@ def viewerHandle(scriptPath):
 def actionHandle(scriptPath):
     cache = request.form['operation']
     if cache == "info":
-        return infoHandle(request.form['target'])
+        return infoHandle(request.form['target'], request.form['tag'])
     elif cache == "move":
         return moveHandle(request.form['target'])
     else:
         abort(400)
 
-def infoHandle(target):
+def infoHandle(target, tag):
     cur = get_db().cursor()
-    cur.execute("SELECT [field], [data] FROM info WHERE [target] == ?", (target, ))
+
     data = {}
+    existedSet = set()
+    if tag == 0:
+        # call from cell
+        cur.execute("SELECT * FROM info WHERE [target] == ?", (target, ))
+    elif tag == 1:
+        # call from bb
+        cur.execute("SELECT * FROM info WHERE [attach_bb] == ?", (target, ))
+    else:
+        return []
+    # get data
     for i in cur.fetchall():
-        data[i[0]] = i[1]
+        if i[0] in existedSet:
+            data[i[0]]['data'].append((i[4], i[5]))
+        else:
+            existedSet.add(i[0])
+            data[i[0]] = {
+                'name': i[3],
+                'is_setting': True if i[2] != 0 else False,
+                'data': []
+            }
 
     return data
 
