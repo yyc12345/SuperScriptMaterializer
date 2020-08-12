@@ -44,7 +44,7 @@ def run():
 def initDecorateDb(db):
     cur = db.cursor()
     cur.execute("CREATE TABLE graph([graph] INTEGER, [graph_name] TEXT, [width] INTEGER, [height] INTEGER, [index] INTEGER, [belong_to] TEXT);")
-    cur.execute("CREATE TABLE info([target] INTEGER, [field] TEXT, [data] TEXT);")
+    cur.execute("CREATE TABLE info([target] INTEGER, [attach_bb] INTEGER, [is_setting] INTEGER, [field] TEXT, [data] TEXT);")
 
     cur.execute("CREATE TABLE block([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [pin-ptarget] TEXT, [pin-pin] TEXT, [pin-pout] TEXT, [pin-bin] TEXT, [pin-bout] TEXT, [x] REAL, [y] REAL, [width] REAL, [height] REAL, [expandable] INTEGER);")
     cur.execute("CREATE TABLE cell([belong_to_graph] INETGER, [thisobj] INTEGER, [name] TEXT, [assist_text] TEXT, [x] REAL, [y] REAL, [type] INTEGER);")
@@ -667,10 +667,39 @@ def computLinkPTerminal(obj, ytype, index, currentGraphBlockCell):
             cache.y if ytype == 0 else (cache.y + cache.h - dcv.BB_PBSIZE))
 
 def buildInfo(exDb, deDb):
-    exCur = exDb.cursor()
+    exInfoCur = exDb.cursor()
+    exQueryCur = exDb.cursor()
     deCur = deDb.cursor()
 
+    # declare tiny storage for convenient query
+    tinyStorageKey = 0
+    tineStorageBB = 0
+    tineStorageSetting = 0
+
     # export local data (including proto bb internal data)
-    exCur.execute("SELECT * FROM pData;")
-    for i in exCur.fetchall():
-        deCur.execute("INSERT INTO info VALUES (?, ?, ?)", (i[2], i[0], i[1]))
+    exInfoCur.execute("SELECT * FROM pData;")
+    for i in exInfoCur.fetchall():
+        attachBB = 0
+        isSetting = 0
+
+        if i[2] == tinyStorageKey:
+            attachBB = tineStorageBB
+            isSetting = tineStorageSetting
+        else:
+            # clear storage first
+            tineStorageBB = 0
+            tineStorageSetting = 0
+
+            # query correspond pLocal
+            exQueryCur.execute("SELECT [belong_to], [is_setting] FROM pLocal WHERE [thisobj] = ?", (i[2], ))
+            plocalCache = exQueryCur.fetchone()
+            if plocalCache is not None:
+                # add setting config
+                tineStorageSetting = isSetting = plocalCache[1]
+                # query bb again
+                exQueryCur.execute("SELECT [thisobj] FROM behavior WHERE ( [thisobj] = ? AND [type] = 0)", (plocalCache[0], ))
+                behaviorCache = exQueryCur.fetchone()
+                if behaviorCache is not None:
+                    tineStorageBB = attachBB = behaviorCache[0]
+
+        deCur.execute("INSERT INTO info VALUES (?, ?, ?, ?, ?)", (i[2], attachBB, isSetting, i[0], i[1]))
