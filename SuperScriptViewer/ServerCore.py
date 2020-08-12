@@ -203,14 +203,14 @@ def infoHandle(target, tag):
 
     data = {}
     existedSet = set()
-    if tag == 0:
+    if tag == '0':
         # call from cell
         cur.execute("SELECT * FROM info WHERE [target] == ?", (target, ))
-    elif tag == 1:
+    elif tag == '1':
         # call from bb
         cur.execute("SELECT * FROM info WHERE [attach_bb] == ?", (target, ))
     else:
-        return []
+        return {}
     # get data
     for i in cur.fetchall():
         if i[0] in existedSet:
@@ -220,7 +220,7 @@ def infoHandle(target, tag):
             data[i[0]] = {
                 'name': i[3],
                 'is_setting': True if i[2] != 0 else False,
-                'data': []
+                'data': [(i[4], i[5])]
             }
 
     return data

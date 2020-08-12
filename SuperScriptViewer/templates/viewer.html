@@ -88,12 +88,13 @@
             <div id="tabnavigation_1_3" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 3);"><b style="margin: 0;">Tools</b></div>
         </div>
 
-        <div id="tabpanel_1_1" class="tabpanel_1" style="display: flex; flex-flow: column;width: 100%; height: 100%; display: flex; flex-flow: column;">
+        <div id="tabpanel_1_1" class="tabpanel_1" style="display: flex; flex-flow: column;width: 100%; height: 100%; display: flex; flex-flow: column; overflow-x: hidden;">
+            <p style="margin: 5px;" id="sidepanel-properties-target">Selected target: <b></b></p>
             <div id="sidepanel-properties-container" style="width: 100%; height: 100%; overflow: scroll;">
             </div>
         </div>
 
-        <div id="tabpanel_1_2" class="tabpanel_1" id="sidepanel-display" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
+        <div id="tabpanel_1_2" class="tabpanel_1" id="sidepanel-display" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; overflow-x: hidden; display: none;">
             <p style="margin: 5px;">Render:<br />
                 <input type="checkbox" id="sidepanel-display-plink" value="1" onclick="settingChange(&quot;plink&quot;);">Show pLink and eLink</input>
             </p>
@@ -104,7 +105,7 @@
             </p>
         </div>
 
-        <div id="tabpanel_1_3" class="tabpanel_1" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; display: none;">
+        <div id="tabpanel_1_3" class="tabpanel_1" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; overflow-x: hidden; display: none;">
             <p style="margin: 5px;">Object finder:<br />
                 <input type="text" id="sidepanel-tools-objfinder"></input><br />
                 <button style="height: 30px; margin: 10px 0 10px 0;">Find</button>

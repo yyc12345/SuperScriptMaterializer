@@ -48,22 +48,22 @@ function localstorageAssist_Set(index, value) {
 //=======================================internal event
 previousHighlight = "";
 function highlightLink(target) {
-    realTarget = ".target" + target
+    realTarget = ".target" + target;
 
     if (previousHighlight != "") {
         //need restore
         $(previousHighlight).each(function () {
             if ($(this).hasClass("link-blink")) {
-                $(this).attr("stroke", "black")
+                $(this).attr("stroke", "black");
             }
             if ($(this).hasClass("link-blinkDelay")) {
-                $(this).attr("fill", "black")
+                $(this).attr("fill", "black");
             }
             if ($(this).hasClass("link-plink")) {
-                $(this).attr("stroke", "blue")
+                $(this).attr("stroke", "blue");
             }
             if ($(this).hasClass("link-elink")) {
-                $(this).attr("stroke", "cyan")
+                $(this).attr("stroke", "cyan");
             }
         });
     }
@@ -76,20 +76,20 @@ function highlightLink(target) {
         //apply new highlight
         $(realTarget).each(function () {
             if ($(this).hasClass("link-blink")) {
-                $(this).attr("stroke", "yellow")
+                $(this).attr("stroke", "yellow");
             }
             if ($(this).hasClass("link-blinkDelay")) {
-                $(this).attr("fill", "yellow")
+                $(this).attr("fill", "yellow");
             }
             if ($(this).hasClass("link-plink")) {
-                $(this).attr("stroke", "orange")
+                $(this).attr("stroke", "orange");
             }
             if ($(this).hasClass("link-elink")) {
-                $(this).attr("stroke", "orange")
+                $(this).attr("stroke", "orange");
             }
         });
 
-        previousHighlight = realTarget
+        previousHighlight = realTarget;
     }
 
     //cancel event seperate
@@ -110,12 +110,15 @@ function queryInfo(type, obj) {
             target: obj
         },
         function (data, status) {
+            //set target
+            $("#sidepanel-properties-target b").text(obj);
+
             //set data
-            $("#sidepanel-properties-container").empty()
+            $("#sidepanel-properties-container").empty();
             for (var key in data) {
                 $("#sidepanel-properties-container").append("<div class=\"propertyItem\"></div>");
 
-                var box = $("#sidepanel-properties-container div:last-child");
+                var box = $("#sidepanel-properties-container div:last");
                 if (data[key]["is_setting"])
                     $(box).append("<p><code class=\"propertyItem\">S</code><b></b><i></i></p>");
                 else
@@ -125,9 +128,9 @@ function queryInfo(type, obj) {
                 $(box).find("p i").text("(" + key + ")");
 
                 for (var i = 0; i < data[key]['data'].length; i++) {
-                    $(box).append("<p></p><pre class=\"propertyItem\"></pre>")
-                    $(box).find("p:last-child").text(data[key]['data'][0])
-                    $(box).find("pre:last-child").text(data[key]['data'][1])
+                    $(box).append("<p></p><pre class=\"propertyItem\"></pre>");
+                    $(box).find("p:last").text(data[key]['data'][i][0]);
+                    $(box).find("pre:last").text(data[key]['data'][i][1]);
                 }
             }
         });

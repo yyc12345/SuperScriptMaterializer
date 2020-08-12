@@ -91,9 +91,10 @@ pre.propertyItem {
     border: 1px solid black;
     border-radius: 2px;
     padding: 5px;
-    margin: 5px;
     background: #3f3f3f;
     color: white;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 code.propertyItem {

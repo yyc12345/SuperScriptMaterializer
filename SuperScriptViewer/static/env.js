@@ -37,8 +37,8 @@ function doQuery(fieldIndex, queryTag) {
             for(var i = 0; i < data['data'].length; i++) {
                 $("#resultTable_" + fieldIndex).append("<tr></tr>");
                 for(var j = 0; j < data['data'][i].length; j++) {
-                    $("#resultTable_" + fieldIndex + " tr:last-child").append("<td></td>");
-                    $("#resultTable_" + fieldIndex + " tr:last-child td:last-child").text(data['data'][i][j]);
+                    $("#resultTable_" + fieldIndex + " tr:last").append("<td></td>");
+                    $("#resultTable_" + fieldIndex + " tr:last td:last").text(data['data'][i][j]);
                 }
             }
         });

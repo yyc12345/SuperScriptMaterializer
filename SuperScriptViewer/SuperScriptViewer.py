@@ -6,14 +6,14 @@ import sys
 import getopt
 
 try:
-    opts, args = getopt.getopt(sys.argv, "hi:o:e:f")
+    opts, args = getopt.getopt(sys.argv[1:], "hi:o:e:f")
 except getopt.GetoptError:
     print('Wrong arguments!')
-    print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -f')
+    print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -c <codec_name> -f')
     sys.exit(1)
 for opt, arg in opts:
     if opt == '-h':
-        print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -f')
+        print('python SuperScriptViewer.py -i <export.db> -o <decorated.db> -e <env.db> -c <codec_name> -f')
         sys.exit(0)
     elif opt == '-i':
         CustomConfig.export_db = arg
@@ -21,6 +21,8 @@ for opt, arg in opts:
         CustomConfig.decorated_db = arg
     elif opt == '-e':
         CustomConfig.env_db = arg
+    elif opt == '-c':
+        CustomConfig.database_encoding = arg
     elif opt == '-f':
         CustomConfig.force_regenerate = True
 
