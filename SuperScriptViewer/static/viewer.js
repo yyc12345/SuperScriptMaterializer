@@ -85,7 +85,7 @@ function highlightLink(target) {
                 $(this).attr("stroke", "orange");
             }
             if ($(this).hasClass("link-elink")) {
-                $(this).attr("stroke", "orange");
+                $(this).attr("stroke", "orangered");
             }
         });
 

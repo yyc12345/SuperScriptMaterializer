@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Help - Viewer legend</title>、
+</head>
+
+<body>
+<h1>Viewer legend</h1>
+<p>This page introduce how to use viewer page.</p>
+<br />
+
+
+
+<h2>Layout</h2>
+<p>In viewer page, it can be divided into 3 panels:</p>
+<table border="1">
+<tr style="height: 50px;">
+    <td style="width: 200px;">Navigation panel</td>
+    <td style="width: 100px;" rowspan="2">Information & tools panel</td>
+</tr>
+<tr style="height: 50px;">
+    <td>Graph panel</td>
+</tr>
+</table>
+<ul>
+    <li><b>Navigation panel</b>: Display current script's hierarchy. And you can click all layers which located in this panel to jump into it.</li>
+    <li><b>Information & tools panel</b>: Provide property data, display configuration and some useful tools.</li>
+    <li><b>Graph panel</b>: Core panel. Display current browsing behavior graph's data. Some legend will be desscribe in the follwing sector.</li>
+</ul>
+
+
+
+<h2>Graph legend</h2>
+<h3>Block</h3>
+<div style="background: #7f7f7f; padding: 20px;">
+<div style="display: flex; flex-flow: row; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+    <div style="height: 5px; width: 15px;background: #8f8f8f;border: 1px solid #cfcfcf;"></div>
+    <div style="margin-left: 10px;">pLocal (including arrtibute) (ParameterLocal abbr.)</div>
+    </div>
+<div style="display: flex; flex-flow: row; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+    <div style="height: 5px; width: 15px;background: purple;border: 1px solid #cfcfcf;"></div>
+    <div style="margin-left: 10px;">Shortcut (Only shortcut output)</div>
+</div>    
+<div style="display: flex; flex-flow: row; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+    <div style="height: 6px; width: 6px;background: yellow;border: 1px solid #cfcfcf;"></div>
+    <div style="margin-left: 10px;">bIn / bOut (BehaviorIn / BehaviorOut abbr.)</div>
+</div>    
+<div style="display: flex; flex-flow: row; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+    <div style="height: 6px; width: 6px;background: blue;border: 1px solid #cfcfcf;"></div>
+    <div style="margin-left: 10px;">pIn / pOut (ParameterIn / ParameterOut abbr.)</div>
+</div>   
+<div style="display: flex; flex-flow: row; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+    <div style="height: 6px; width: 6px;background: green;border: 1px solid #cfcfcf;"></div>
+    <div style="margin-left: 10px;">pTarget (ParameterTarget abbr.)</div>
+</div>   
+</div>
+
+
+<h3>Building block</h3>
+
+<p>Building block (abbr. BB)</p>
+<p>All building block can be devided into 2 types: prototype building block and behavior graph</p>
+
+<div style="background: #7f7f7f; padding: 20px; width: 500px;">
+    <div style="height: 72.0px; width: 104.0px;background: #8f8f8f;border: 1px solid #cfcfcf;position: relative; top: 0; left: 0;">
+                        
+        <div class="block-target" style="height: 6px; width: 6px; top: 0; left: 0;position: absolute;background: green;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 20px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 46px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; bottom: 0; left: 20px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 10px; left: 0;position: absolute;background: yellow;"></div>
+        <div style="height: 6px; width: 6px; top: 10px; right: 0;position: absolute;background: yellow;"></div>
+        <div style="height: 6px; width: 6px; top: 36px; right: 0;position: absolute;background: yellow;"></div>
+        
+        <p style="top: 10px; left: 20px;position: absolute;margin: 0;padding: 0;font-size: 12px;color: black;">Get Cell</p>
+        <p style="top: 24px; left: 20px;position: absolute; margin: 0;padding: 0;font-size: 9px;color: white;">Get Cell</p>
+    </div>
+</div>
+<p>This is a typical prototype building block. Some port are attached into this building block.<br />
+pIn and pTarget are at the top, pOut are at the bottom, bIn are on the left, and bOut are on the right.<br />
+In the middle of building block, the name of this building block is written in black font, and the name of this building block's prototype is written in white font.</p>
+
+<div style="background: #7f7f7f; padding: 20px; width: 500px;">
+    <div class="block-body" style="height: 72.0px; width: 196.0px;background: #8f8f8f;border: 1px solid #cfcfcf;position: relative; top: 0; left: 0;">
+        
+        <div style="height: 6px; width: 6px; top: 0; left: 20px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 46px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 72px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 98px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 124px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 0; left: 150px;position: absolute;background: blue;"></div>
+        <div style="height: 6px; width: 6px; top: 10px; left: 0;position: absolute;background: yellow;"></div>
+        <div style="height: 6px; width: 6px; top: 10px; right: 0;position: absolute;background: yellow;"></div>
+        <div style="height: 6px; width: 6px; top: 36px; right: 0;position: absolute;background: yellow;"></div>
+        
+        <p style="top: 10px; left: 20px;position: absolute;margin: 0;padding: 0;font-size: 12px;color: black;"><a href="/help/legend">vt2obj</a></p>
+        <p style="top: 24px; left: 20px;position: absolute; margin: 0;padding: 0;font-size: 9px;color: white;"></p>
+    </div>
+</div>
+<p>This is a typical behavior graph. It is very similar to prototype building block.<br />
+It don't have the name of prototype. Instead, you can click on the name to see what is inside this graph(jump into this graph).</p>
+
+<h3>Link</h3>
+
+<svg version="1.1" width="500px" height="350px" style="position: relative; top: 0; left: 0;background: #7f7f7f; padding: 20px;">
+    <line x1="0" y1="20" x2="100" y2="20" stroke="black" stroke-width="1px"></line>
+    <text x="50" y="20" fill="black" style="font-size: 12px; color: black;">0</text>
+    <text x="120" y="20" fill="black">bLink (BehaviorLink)</text>
+    <line x1="0" y1="70" x2="100" y2="70" stroke="blue" stroke-width="1px" stroke-dasharray="5, 1"></line>
+    <text x="120" y="70" fill="black">pLink (ParameterLink)</text>
+    <line x1="0" y1="120" x2="100" y2="120" stroke="cyan" stroke-width="1px" stroke-dasharray="5, 1"></line>
+    <text x="120" y="120" fill="black">eLink (ExportParameterLink)</text>
+
+    <line x1="0" y1="170" x2="100" y2="170" stroke="yellow" stroke-width="1px"></line>
+    <text x="50" y="170" fill="yellow" style="font-size: 12px;">0</text>
+    <text x="120" y="170" fill="black">Highlight bLink</text>
+    <line x1="0" y1="220" x2="100" y2="220" stroke="orange" stroke-width="1px" stroke-dasharray="5, 1"></line>
+    <text x="120" y="220" fill="black">Highlight pLink</text>
+    <line x1="0" y1="270" x2="100" y2="270" stroke="orangered" stroke-width="1px" stroke-dasharray="5, 1"></line>
+    <text x="120" y="270" fill="black">Highlight eLink</text>
+</svg>
+
+<h3>Operation</h3>
+<ul>
+    <li>You can highlight the associated links by clicking Block or BB, and click again to cancel the highlight.</li>
+    <li>You can double-click Block or prototoye BB to get the properties associated with it.</li>
+    <li>You can hover over the Block to view its name and type through tooltip.</li>
+</ul>
+
+<h2>Properties</h2>
+<p>Properties can be visited in Information & tools panel. It can display the information of the object currently being double-clicked.</p>
+
+<div style="margin: 5px;border: 1px solid gray;border-radius: 2px;padding: 5px; width: 400px;">
+    <p><code style="border: 1px solid black; border-radius: 2px;padding: 5px;margin: 5px;background: gray;color: white;">S</code><b>Rectangle/Box Mode</b><i>(176)</i></p>
+    <p>dump.data</p>
+    <pre style="border: 1px solid black;border-radius: 2px;padding: 5px;background: #3f3f3f;color: white;white-space: pre-wrap;word-wrap: break-word;">0x01, 0x00, 0x00, 0x00</pre>
+    <p>dump.length</p>
+    <pre style="border: 1px solid black;border-radius: 2px;padding: 5px;background: #3f3f3f;color: white;white-space: pre-wrap;word-wrap: break-word;">4</pre>
+</div>
+<p>This is a typical property unit. You may see more than 1 property unit in property list. A property unit may contain more than 1 key-value pair to describe it.<br />
+In the first line, the name of the current property unit (actually a pLocal) will be displayed. The number in brackets is CK_ID. If an S is displayed in front of it (as shown in the figure above), then it is also a setting.</p>
+
+</body>
+
+</html>

@@ -79,6 +79,8 @@ def helpHandle(scriptPath):
                         env_js = url_for('static', filename='env.js'),
                         env_css = url_for('static', filename='env.css'),
                         database_data = ss.envDatabaseList)
+    elif scriptPath == 'legend':
+        return render_template("help/legend.html")
     else:
         abort(404)
 
