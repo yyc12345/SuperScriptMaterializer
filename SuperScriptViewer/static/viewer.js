@@ -17,6 +17,17 @@ $(document).ready(function () {
         $(".link-elink").hide();
         $(".link-plink").hide();
     }
+
+    // read sidepanel display property
+    var sidepanelDisplay = localstorageAssist_Get("ssm-settings-sidepanelDisplay", "true") == "true";
+    if (sidepanelDisplay){
+        $("#sidepanelContainer").show();
+        $("#sidepanelToggle").text(">>>");
+    } else {
+        $("#sidepanelContainer").hide();
+        $("#sidepanelToggle").text("<<<");
+    }
+        
 });
 function settingChange(target) {
     newValue = $("#sidepanel-display-" + target).prop("checked");
@@ -31,6 +42,16 @@ function settingChange(target) {
             $(".link-elink").hide();
             $(".link-plink").hide();
         }
+    }
+}
+function sidepanelDisplayChange() {
+    $("#sidepanelContainer").toggle();
+    if ($("#sidepanelContainer").is(":hidden")) {
+        $("#sidepanelToggle").text("<<<");
+        localstorageAssist_Set("ssm-settings-sidepanelDisplay", false)
+    } else {
+        $("#sidepanelToggle").text(">>>");
+        localstorageAssist_Set("ssm-settings-sidepanelDisplay", true)
     }
 }
 function localstorageAssist_Get(index, defaultValue) {

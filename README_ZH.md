@@ -2,6 +2,12 @@
 
 [English document](./README.md)
 
+---
+
+![preview_image](./preview.png)
+
+---
+
 超级Virtools脚本物化器（机翻（确信））
 
 将Virtools文档中的所有脚本导出成一个SQLite数据库文件，然后经过Python进行排布处理，最后提供一个本地Web前端查看脚本。这同样适用于`Script Hidden`的Virtools脚本，也适用于其中含有不可展开的`Behavior Graph`的脚本。
@@ -12,32 +18,35 @@
 
 本项目分为2个部分，`SuperScriptMaterializer`是一个C++工程，将生成一个Virtools界面插件用于导出初步数据，`SuperScriptViewer`是一个Python工程，将解析导出的数据，然后使用Flask提供一个本地Web界面进行脚本查看。
 
-此项目仍在开发。
+当前最新的commit并不一定可以稳定使用，请访问Release界面获取可以稳定使用的版本。且本程序的开发周期很长，如果您使用了第一个正式版之前的版本，那么您需要重新构建所有数据，因为之前的版本与正式版本不兼容。
 
 ## 使用方法
 
 ### 基本方法
 
-将Virtools插件投入`InterfacePlugins`目录下，将`sqlite3.dll`和`Dev.exe`放在同一目录。然后启动Virtools，打开需要解析的文档，点击菜单栏的`Super Script Materializer`-`Export all script`，选择要保存到的文件，然后等待Virtools提示你已经导出完成。
+将Virtools插件投入`InterfacePlugins`目录下，将`sqlite3.dll`和`Dev.exe`放在同一目录。如果你使用了Release页面的打包文件，则直接在Virtools根目录解压然后允许合并和覆盖即可。然后启动Virtools，打开需要解析的文档，点击菜单栏的`Super Script Materializer`-`Export all script`，保存为`export.db`，然后等待Virtools提示你已经导出完成。然后同样的操作执行`Super Script Materializer`-`Export environment`，并将其保存为`env.db`。
 
-将导出文件重命名为`export.db`并和`SuperScriptViewer.py`放在一起。然后在此目录中运行`python ./SuperScriptViewer.py`，等待Python交互界面提示可以打开本地的网页即可。
+将`export.db`和`env.db`与`SuperScriptViewer.py`放在一起。然后在此目录中运行`python ./SuperScriptViewer.py`，等待Python交互界面提示可以打开本地的网页即可。
 
 `SuperScriptViewer.py`具有一些命令行开关：
 
 - `-i`：指定输入的`export.db`
 - `-o`：指定输出的`decorated.db`，如果已经存在将不考虑输入，直接使用输出数据库呈现
 - `-e`：指定输入的`env.db`，环境数据库
+- `-c`：指定数据库编码，可用的编码表可以在[这里](https://docs.python.org/3/library/codecs.html#standard-encodings)查看
 - `-f`：无参数，用于强制重新生成输出数据库，无论输出数据库是否存在
 
 以上选项在基本使用中应该不会用到，因此按上述规则直接放置好文件直接运行即可。
 
+一份指导你如何使用Viewer的文档已内置在Viewer中，可以从Help页面进行查看
+
 ### 使用注意
 
-- 您需要先安装Virtools, Python和任意一种浏览器才能使用本工程。Python需要先安装`Flask`库。
-- 导出插件目前只支持Virtools 5，后期会支持Virtools 3.5
-- 导出插件选择完文件后卡住，或者Python交互界面弹出错误堆栈，这可能是设计失误，请附带您引起bug的文件提交bug
-- 如果Python交互界面提示数据库`TEXT`类型解码失败，那么可能您需要手动在`CustomConfig.py`中的`database_encoding`中指定数据库文本解码方式。因为Virtools使用多字节编码，依赖于当前操作系统的代码页，`SuperScriptMaterializer`做了特殊获取以保证大多数计算机可以直接运行，但仍然不能排除一些特殊情况。
-- 如果您使用本工程的Release页面中提供的已编译好的Virtools界面插件（现在因为仍然在开发所以没有），您需要放入的`sqlite3.dll`版本应为`sqlite-dll-win32-x86-3310100`
+- 您需要先安装Virtools 5, Python和任意一种浏览器才能使用本工程。Python需要先安装`Flask`库。浏览器建议使用Chrome或Firefox，本程序不支持Safari浏览器。
+- 导出插件目前只支持Virtools 5，但Virtools 4已经过测试可以无修改编译运行。
+- 导出插件选择完文件后弹出错误，或者Python交互界面弹出错误，请附带您引起bug的文件以及错误窗口的内容提交bug
+- 如果Python交互界面提示数据库`TEXT`类型解码失败，或者解析的字符出现乱码，那么可能您需要手动使用`-c`开关指定数据库文本解码方式。因为Virtools使用多字节编码，依赖于当前操作系统的代码页，`SuperScriptMaterializer`做了特殊获取以保证大多数计算机可以直接运行，但仍然不能排除一些特殊情况。需要注意的是，指定的编码不是你计算机当前的代码页，而是制作这个Virtools文档的作者的计算机的代码页。
+- 如果您使用本工程的Release页面中提供的已编译好的Virtools界面插件，您需要放入的`sqlite3.dll`版本应为`sqlite-dll-win32-x86-3310100`
 
 ## 编译
 
@@ -45,8 +54,10 @@
 
 需要手动配置Virtools插件的编译参数，例如包含路径等，需要指向您自己的Virtools SDK。对于SQLite SDK，您可以从[sqlite.org](http://www.sqlite.org/)下载，然后使用Visual C++的工具集执行`LIB /DEF:sqlite3.def /machine:IX86`以获取可以用于编译的文件。
 
-## 下一版本计划
+## 开发计划
 
-第一个版本的开发即将告一段落，下一版本的开放将会加入一直搁置的移动功能。
+在之后的版本中，以下功能将逐步加入：
 
-至于之后的企划，可能只包含修复各种Bug的内容，因为已做完应该做完的事情了。
+* 当前页面搜索和全局搜索
+* Shortcut追踪
+* 在Viewer中移动Block和BB

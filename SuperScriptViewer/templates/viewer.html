@@ -11,21 +11,25 @@
     <script src="{{tabcontrol_js}}"></script>
 </head>
 
-<body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;" onkeydown="keyboardNavigation(true);" onkeyup="keyboardNavigation(false);">
-    <div style="display: flex; flex-flow: column; height: 100%; width: 80%; margin: 0; padding: 0;">
-        <div id="hamburgerMenu" style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
+<body style="display: flex; flex-flow: row; height: 100%; width: 100%; margin: 0; padding: 0;">
+    <div style="display: flex; flex-flow: column; height: 100%; width: 100%; margin: 0; padding: 0;">
+        <div style="display: flex; flex-flow: row; width: 100%;">
+            <div id="hamburgerMenu" style="display: flex; background: #cfcfcf; flex-flow: row; width: 100%; height: 50px; overflow: scroll;">
 
-            <p class="hamburger"><a href="/index"><b>Script Hierarchy</b></a></p>
+                <p class="hamburger"><a href="/index"><b>Script Hierarchy</b></a></p>
 
-            {% for i in hamburgerHistory %}
-            <p class="hamburger">&gt;&gt;</p>
-            <p class="hamburger"><a href="{{ "/viewer%s"|format(i.path) }}">{{ i.name|e }}</a></p>
-            {% endfor %}
+                {% for i in hamburgerHistory %}
+                <p class="hamburger">&gt;&gt;</p>
+                <p class="hamburger"><a href="{{ "/viewer%s"|format(i.path) }}">{{ i.name|e }}</a></p>
+                {% endfor %}
 
-            <p class="hamburger">&gt;&gt;</p>
-            <p class="hamburger"><b>{{ hamburgerCurrent|e  }}</b></p>
+                <p class="hamburger">&gt;&gt;</p>
+                <p class="hamburger"><b>{{ hamburgerCurrent|e  }}</b></p>
 
+            </div>
+            <button id="sidepanelToggle" style="width: 50px;" title="Toggle sidepanel display" onclick="sidepanelDisplayChange();"></button>
         </div>
+
 
         <div id="graphContainer" style="background: #7f7f7f; width: 100%; height: 100%; overflow: scroll; position: relative;">
             <div>
@@ -81,7 +85,7 @@
         </div>
     </div>
 
-    <div id="sidepanelContainer" style="display: flex; flex-flow: column; background: #cfcfcf; height: 100%; width: 20%; margin: 0; padding: 0; border-left: 1px solid black;">
+    <div id="sidepanelContainer" style="display: flex; flex-flow: column; background: #cfcfcf; height: 100%; width: 25%; margin: 0; padding: 0; border-left: 1px solid black;">
         <div style="display: flex; flex-flow: row; height: 30px; width: 100%; margin: 0; padding: 0; border-bottom: 1px solid black;">
             <div id="tabnavigation_1_1" class="tabnavigation_1 tabitem-activated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 1);"><b style="margin: 0;">Properties</b></div>
             <div id="tabnavigation_1_2" class="tabnavigation_1 tabitem-deactivated" style="height: 100%; width: 33.33%; text-align: center;" onclick="tabControlSwitcher(1, 2);"><b style="margin: 0;">Display</b></div>
@@ -107,8 +111,8 @@
 
         <div id="tabpanel_1_3" class="tabpanel_1" style="width: 100%; height: 100%; display: flex; flex-flow: column; overflow: scroll; overflow-x: hidden; display: none;">
             <p style="margin: 5px;">Object finder:<br />
-                <input type="text" id="sidepanel-tools-objfinder"></input><br />
-                <button style="height: 30px; margin: 10px 0 10px 0;">Find</button>
+                <input type="text" id="sidepanel-tools-objfinder" disabled="true"></input><br />
+                <button style="height: 30px; margin: 10px 0 10px 0;" disabled="true">Find</button>
             </p>
             <p style="margin: 5px;">Misc:<br />
                 <button style="height: 30px; margin: 10px 0 10px 0;" onclick="window.open(&quot;/help&quot;);">Help</button><br />
