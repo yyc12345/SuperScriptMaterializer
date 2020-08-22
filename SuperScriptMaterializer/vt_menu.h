@@ -11,4 +11,6 @@ void RemoveMenu();
 void UpdateMenu();
 void PluginMenuCallback(int commandID);
 
+BOOL OpenFileDialog(std::string* returned_file);
+
 #endif

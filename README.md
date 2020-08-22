@@ -23,7 +23,7 @@ The inspiration came from:
 
 * This project does not give ability to edit hidden scripts within the file. It simply exports and views.
 * The latest commit may not be stable to use, please visit the Release page to get a stable version.
-* The development cycle of this program is very long. If you use a version before the first official version, you need to rebuild all the data because the previous version is not compatible with the official version.
+* If you change the version (including the version before the first stable version), then you need to rebuild all the data, because the data between the various versions may not be compatible with each other.
 
 ## Requirements
 
