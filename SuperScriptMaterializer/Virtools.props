@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ImportGroup Label="PropertySheets"/>
+	<PropertyGroup Label="UserMacros">
+		<VIRTOOLS_HEADER_PATH>E:\Virtools\Virtools Dev 5.0\Sdk/Includes</VIRTOOLS_HEADER_PATH>
+		<VIRTOOLS_LIB_PATH>E:\Virtools\Virtools Dev 5.0\Sdk/Lib/Win32/Release</VIRTOOLS_LIB_PATH>
+		<SQLITE_HEADER_PATH>D:\CppLib\SQLite\sqlite-amalgamation-3310100</SQLITE_HEADER_PATH>
+		<SQLITE_LIB_PATH>D:\CppLib\SQLite\sqlite-dll-win32-x86-3310100</SQLITE_LIB_PATH>
+		<VIRTOOLS_OUTPUT_PATH>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\</VIRTOOLS_OUTPUT_PATH>
+		<VIRTOOLS_BUILD_TYPE>VIRTOOLS_PLUGIN</VIRTOOLS_BUILD_TYPE>
+		<VIRTOOLS_DEBUG_TARGET>E:\Virtools\Virtools Dev 5.0\devr.exe</VIRTOOLS_DEBUG_TARGET>
+		<VIRTOOLS_DEBUG_ROOT>E:\Virtools\Virtools Dev 5.0</VIRTOOLS_DEBUG_ROOT>
+		<VIRTOOLS_BUILD_SUFFIX>dll</VIRTOOLS_BUILD_SUFFIX>
+		<VIRTOOLS_VER>VIRTOOLS_50</VIRTOOLS_VER>
+		<BML_SPECIAL_MACRO></BML_SPECIAL_MACRO>
+		<VIRTOOLS_ATTACH_REF>vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib</VIRTOOLS_ATTACH_REF>
+		<SQLITE_ATTACH_REF>sqlite3.lib</SQLITE_ATTACH_REF>
+	</PropertyGroup>
+	<PropertyGroup/>
+	<ItemDefinitionGroup/>
+	<ItemGroup>
+		<BuildMacro Include="VIRTOOLS_HEADER_PATH">
+			<Value>$(VIRTOOLS_HEADER_PATH)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_LIB_PATH">
+			<Value>$(VIRTOOLS_LIB_PATH)</Value>
+		</BuildMacro>
+		<BuildMacro Include="SQLITE_HEADER_PATH">
+			<Value>$(SQLITE_HEADER_PATH)</Value>
+		</BuildMacro>
+		<BuildMacro Include="SQLITE_LIB_PATH">
+			<Value>$(SQLITE_LIB_PATH)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_OUTPUT_PATH">
+			<Value>$(VIRTOOLS_OUTPUT_PATH)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_BUILD_TYPE">
+			<Value>$(VIRTOOLS_BUILD_TYPE)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_DEBUG_TARGET">
+			<Value>$(VIRTOOLS_DEBUG_TARGET)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_DEBUG_ROOT">
+			<Value>$(VIRTOOLS_DEBUG_ROOT)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_BUILD_SUFFIX">
+			<Value>$(VIRTOOLS_BUILD_SUFFIX)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_VER">
+			<Value>$(VIRTOOLS_VER)</Value>
+		</BuildMacro>
+		<BuildMacro Include="BML_SPECIAL_MACRO">
+			<Value>$(BML_SPECIAL_MACRO)</Value>
+		</BuildMacro>
+		<BuildMacro Include="VIRTOOLS_ATTACH_REF">
+			<Value>$(VIRTOOLS_ATTACH_REF)</Value>
+		</BuildMacro>
+		<BuildMacro Include="SQLITE_ATTACH_REF">
+			<Value>$(SQLITE_ATTACH_REF)</Value>
+		</BuildMacro>
+	</ItemGroup>
+</Project>

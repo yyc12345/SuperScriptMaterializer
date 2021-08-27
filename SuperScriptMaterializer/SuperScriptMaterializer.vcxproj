@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="VT5Debug|Win32">
-      <Configuration>VT5Debug</Configuration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="VT5Release|Win32">
-      <Configuration>VT5Release</Configuration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -17,13 +17,13 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='VT5Debug|Win32'">
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PlatformToolset>v142</PlatformToolset>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT5Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -34,45 +34,53 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="Virtools.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="Virtools.props" />
+  </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT5Debug|Win32'">
-    <OutDir>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\</OutDir>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(VIRTOOLS_OUTPUT_PATH)</OutDir>
     <LinkIncremental>true</LinkIncremental>
     <IntDir>Temp\$(Configuration)\</IntDir>
+    <TargetExt>.$(VIRTOOLS_BUILD_SUFFIX)</TargetExt>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VT5Release|Win32'">
-    <OutDir>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\</OutDir>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(VIRTOOLS_OUTPUT_PATH)</OutDir>
     <IntDir>Temp\$(Configuration)\</IntDir>
+    <TargetExt>.$(VIRTOOLS_BUILD_SUFFIX)</TargetExt>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT5Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT5Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>D:\CppLib\SQLite\sqlite-amalgamation-3310100;E:\Virtools\Virtools Dev 5.0\Sdk\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;VIRTOOLS_5;VX_MEM_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VX_MEM_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <OutputFile>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\$(ProjectName).dll</OutputFile>
+      <OutputFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.$(VIRTOOLS_BUILD_SUFFIX)</OutputFile>
     </Link>
     <Link>
-      <AdditionalLibraryDirectories>D:\CppLib\SQLite\sqlite-dll-win32-x86-3310100;E:\Virtools\Virtools Dev 5.0\Sdk\Lib\Win32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SQLITE_LIB_PATH);$(VIRTOOLS_LIB_PATH);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(VIRTOOLS_ATTACH_REF);$(SQLITE_ATTACH_REF);%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\$(ProjectName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VT5Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
@@ -83,9 +91,9 @@
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>Default</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\CppLib\SQLite\sqlite-amalgamation-3310100;E:\Virtools\Virtools Dev 5.0\Sdk\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;VIRTOOLS_5;VX_MEM_RELEASE;_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VX_MEM_RELEASE;_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
@@ -93,10 +101,10 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
-      <OutputFile>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>D:\CppLib\SQLite\sqlite-dll-win32-x86-3310100;E:\Virtools\Virtools Dev 5.0\Sdk\Lib\Win32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ProgramDatabaseFile>E:\Virtools\Virtools Dev 5.0\InterfacePlugins\$(ProjectName).pdb</ProgramDatabaseFile>
+      <OutputFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.$(VIRTOOLS_BUILD_SUFFIX)</OutputFile>
+      <AdditionalLibraryDirectories>$(VIRTOOLS_LIB_PATH);$(SQLITE_LIB_PATH);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(VIRTOOLS_ATTACH_REF);$(SQLITE_ATTACH_REF);%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
