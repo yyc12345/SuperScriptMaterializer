@@ -19,12 +19,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PlatformToolset>v142</PlatformToolset>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -64,7 +62,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VX_MEM_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
@@ -93,7 +91,7 @@
       <LanguageStandard>Default</LanguageStandard>
       <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VX_MEM_RELEASE;_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
