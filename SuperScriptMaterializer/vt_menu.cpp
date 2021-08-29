@@ -3,6 +3,8 @@
 #include "script_export.h"
 #include "env_export.h"
 
+#if defined(VIRTOOLS_PLUGIN)
+
 extern PluginInterface* s_Plugininterface;
 CMenu* s_MainMenu = NULL;
 
@@ -177,3 +179,5 @@ BOOL OpenFileDialog(std::string* returned_file) {
 	free(file);
 	return status;
 }
+
+#endif

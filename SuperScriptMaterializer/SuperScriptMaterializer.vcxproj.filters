@@ -15,39 +15,42 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="database.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="env_export.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="script_export.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="vt_menu.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="database.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="script_export.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="env_export.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="vt_menu.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="database.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="env_export.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="script_export.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="env_export.cpp">
+    <ClCompile Include="vt_menu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vt_player.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -75,7 +75,7 @@ void dbEnvDataStructHelper::dispose() {
 
 void database::open(const char* file) {
 	db = NULL;
-	stmtCache = new std::vector<sqlite3_stmt*>(15, NULL);
+	stmtCache = new std::vector<sqlite3_stmt*>(14, NULL);	// TODO: sync with tryGetStmt's count
 
 	//open db
 	int result;
@@ -206,7 +206,7 @@ BOOL scriptDatabase::finalJob() {
 }
 
 BOOL envDatabase::init() {
-	stmtCache = new std::vector<sqlite3_stmt*>(5, NULL);
+	stmtCache = new std::vector<sqlite3_stmt*>(6, NULL);	// TODO: sync with tryGetStmt's count
 
 
 	int result;

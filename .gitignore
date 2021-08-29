@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# ignore generated Virtools.props
+SuperScriptMaterializer/Virtools.props
+
+# ignore generated database
 *.db
 *.db-journal
 

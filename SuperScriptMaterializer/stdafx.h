@@ -31,6 +31,9 @@
 
 //PLUGIN PRECOMPILED HEADER INCLUDED
 #include "CKAll.h"
+
+#if defined(VIRTOOLS_PLUGIN)
+
 #include "VIControls.h"
 #include "CKControlsAll.h"
 #include "VEP_ScriptActionMenu.h"
@@ -38,3 +41,7 @@
 #include "VEP_All.h"
 
 using namespace CKControl;
+
+#elif defined(VIRTOOLS_STANDALONE)
+
+#endif

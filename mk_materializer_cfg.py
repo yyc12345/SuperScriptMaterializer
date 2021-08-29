@@ -5,8 +5,6 @@ import sys
 
 # ======================== const define
 
-program_name = "SuperScriptMaterializer"
-
 build_type_standalone = "standalone"
 build_type_plugin = "plugin"
 valid_build_type = (
@@ -14,12 +12,19 @@ valid_build_type = (
     build_type_plugin
 )
 
-virtools_attach_ref_dict = {
+virtools_attach_ref_plugin_dict = {
     "21": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "25": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "35": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "40": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "50": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib" 
+}
+virtools_attach_ref_standalone_dict = {
+    "21": "vxmath.lib;ck2.lib",
+    "25": "vxmath.lib;ck2.lib",
+    "35": "vxmath.lib;ck2.lib",
+    "40": "vxmath.lib;ck2.lib",
+    "50": "vxmath.lib;ck2.lib"
 }
 
 executable_virtools = {
@@ -117,27 +122,32 @@ sqlite_attach_ref = input_sqlite_attach_ref
 
 virtools_ver = 'VIRTOOLS_' + input_virtools_version
 virtools_debug_root = input_virtools_root_path
-virtools_attach_ref = virtools_attach_ref_dict[input_virtools_version]
 
 if input_build_type == build_type_plugin:
     virtools_build_type = 'VIRTOOLS_PLUGIN'
     virtools_build_suffix = 'dll'
+    virtools_module_define = 'SuperScriptMaterializer.def'
+    virtools_debug_commandline = ''
     virtools_debug_target = os.path.join(input_virtools_root_path, executable_virtools[input_virtools_version])
     virtools_output_path = os.path.join(input_virtools_root_path, 'InterfacePlugins')
+    virtools_attach_ref = virtools_attach_ref_plugin_dict[input_virtools_version]
 elif input_build_type == build_type_standalone:
     virtools_build_type = 'VIRTOOLS_STANDALONE'
     virtools_build_suffix = 'exe'
+    virtools_module_define = ''
+    virtools_debug_commandline = 'test.nmo test_script.db test_env.db'
     virtools_debug_target = os.path.join(input_virtools_root_path, 'SuperScriptMaterializer.exe')
     virtools_output_path = input_virtools_root_path
+    virtools_attach_ref = virtools_attach_ref_standalone_dict[input_virtools_version]
 
 # make sure the last char of output_path is slash
 if virtools_output_path[-1] != '\\' or virtools_output_path[-1] != '/':
     virtools_output_path = virtools_output_path + '\\'
 
-# in virtools 2.1, we use bml, so we need add bml macro and set virtools header to bml's virtools header
-# also, we don't need set lib path because all virtools file have been imported in project
+# in virtools 2.1, we use bml, so we need add bml macro and set virtools header and virtools lib to blank
+# because all virtools file have been imported in project
 if input_virtools_version == '21':
-    virtools_header_path = ''#os.path.join(input_bml_path, 'virtools')
+    virtools_header_path = ''
     virtools_lib_path = ''
     bml_special_macro = 'BML_EXPORT='
 else:
@@ -169,6 +179,23 @@ for bt in ('Debug', 'Release'):
     node_build_type.appendChild(node_configuration_type)
     root.appendChild(node_build_type)
 
+# ======================== write subsystem
+for bt in ('Debug', 'Release'):
+    node_item_def = dom.createElement('ItemDefinitionGroup')
+    node_item_def.setAttribute('Condition', "'$(Configuration)|$(Platform)'=='{}|Win32'".format(bt))
+    
+    node_item_def_link = dom.createElement('Link')
+    node_sub_system = dom.createElement('SubSystem')
+
+    if input_build_type == build_type_standalone:
+        node_sub_system.appendChild(dom.createTextNode('Console'))
+    elif input_build_type == build_type_plugin:
+        node_sub_system.appendChild(dom.createTextNode('Windows'))
+    
+    node_item_def_link.appendChild(node_sub_system)
+    node_item_def.appendChild(node_item_def_link)
+    root.appendChild(node_item_def)
+
 # ======================== write macro and misc
 node_property_group = dom.createElement('PropertyGroup')
 node_property_group.setAttribute('Label', 'UserMacros')
@@ -191,11 +218,13 @@ write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_OUTPUT_PATH', v
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_TYPE', virtools_build_type)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_TARGET', virtools_debug_target)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_ROOT', virtools_debug_root)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_COMMANDLINE', virtools_debug_commandline)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_SUFFIX', virtools_build_suffix)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_VER', virtools_ver)
 write_macro(dom, node_property_group, node_item_group, 'BML_SPECIAL_MACRO', bml_special_macro)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_ATTACH_REF', virtools_attach_ref)
 write_macro(dom, node_property_group, node_item_group, 'SQLITE_ATTACH_REF', sqlite_attach_ref)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_MODULE_DEFINE', virtools_module_define)
 
 # ======================== write extra compile
 

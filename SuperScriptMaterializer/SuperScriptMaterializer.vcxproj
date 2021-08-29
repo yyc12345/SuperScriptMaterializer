@@ -18,13 +18,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -62,9 +62,10 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VIRTOOLS_USER_SDK;_DEBUG;$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <OutputFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.$(VIRTOOLS_BUILD_SUFFIX)</OutputFile>
@@ -74,8 +75,7 @@
       <AdditionalDependencies>$(VIRTOOLS_ATTACH_REF);$(SQLITE_ATTACH_REF);%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.pdb</ProgramDatabaseFile>
-      <SubSystem>Windows</SubSystem>
-      <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(VIRTOOLS_MODULE_DEFINE)</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -91,14 +91,14 @@
       <LanguageStandard>Default</LanguageStandard>
       <AdditionalIncludeDirectories>$(VIRTOOLS_HEADER_PATH);$(SQLITE_HEADER_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;$(VIRTOOLS_VER);VIRTOOLS_USER_SDK;_DEBUG;$(BML_SPECIAL_MACRO);VX_MEM_RELEASE;_RELEASE;$(VIRTOOLS_BUILD_TYPE);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ModuleDefinitionFile>SuperScriptMaterializer.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(VIRTOOLS_MODULE_DEFINE)</ModuleDefinitionFile>
       <OutputFile>$(VIRTOOLS_OUTPUT_PATH)SuperScriptMaterializer.$(VIRTOOLS_BUILD_SUFFIX)</OutputFile>
       <AdditionalLibraryDirectories>$(VIRTOOLS_LIB_PATH);$(SQLITE_LIB_PATH);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(VIRTOOLS_ATTACH_REF);$(SQLITE_ATTACH_REF);%(AdditionalDependencies)</AdditionalDependencies>
@@ -119,6 +119,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="script_export.cpp" />
     <ClCompile Include="vt_menu.cpp" />
+    <ClCompile Include="vt_player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SuperScriptMaterializer.def" />
