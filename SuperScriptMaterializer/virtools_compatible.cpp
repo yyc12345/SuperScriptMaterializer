@@ -10,3 +10,7 @@
 //extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 
 #endif
+
+//void __declspec(noreturn) FAKE_THROW() {
+//	throw "Unimplemented function called.";
+//}

@@ -3,6 +3,6 @@
 
 #include "stdafx.h"
 
-
+//void __declspec(noreturn) FAKE_THROW();
 
 #endif

@@ -20,11 +20,26 @@ virtools_attach_ref_plugin_dict = {
     "50": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib" 
 }
 virtools_attach_ref_standalone_dict = {
-    "21": "vxmath.lib;ck2.lib",
-    "25": "vxmath.lib;ck2.lib",
+    "21": "",
+    "25": "VxMath.lib;CK2.lib",
     "35": "vxmath.lib;ck2.lib",
     "40": "vxmath.lib;ck2.lib",
     "50": "vxmath.lib;ck2.lib"
+}
+
+virtools_extra_macro_plugin_dict = {
+    "21": "",
+    "25": "",
+    "35": "_CRT_SECURE_NO_WARNINGS",
+    "40": "_CRT_SECURE_NO_WARNINGS",
+    "50": "" 
+}
+virtools_extra_macro_standalone_dict = {
+    "21": "_DEBUG",
+    "25": "_CRT_SECURE_NO_WARNINGS;_DEBUG",
+    "35": "_CRT_SECURE_NO_WARNINGS;_DEBUG",
+    "40": "_CRT_SECURE_NO_WARNINGS;_DEBUG",
+    "50": "VIRTOOLS_USER_SDK;_DEBUG" 
 }
 
 executable_virtools = {
@@ -131,6 +146,7 @@ if input_build_type == build_type_plugin:
     virtools_debug_target = os.path.join(input_virtools_root_path, executable_virtools[input_virtools_version])
     virtools_output_path = os.path.join(input_virtools_root_path, 'InterfacePlugins')
     virtools_attach_ref = virtools_attach_ref_plugin_dict[input_virtools_version]
+    virtools_extra_macro = virtools_extra_macro_plugin_dict[input_virtools_version]
 elif input_build_type == build_type_standalone:
     virtools_build_type = 'VIRTOOLS_STANDALONE'
     virtools_build_suffix = 'exe'
@@ -139,6 +155,7 @@ elif input_build_type == build_type_standalone:
     virtools_debug_target = os.path.join(input_virtools_root_path, 'SuperScriptMaterializer.exe')
     virtools_output_path = input_virtools_root_path
     virtools_attach_ref = virtools_attach_ref_standalone_dict[input_virtools_version]
+    virtools_extra_macro = virtools_extra_macro_standalone_dict[input_virtools_version]
 
 # make sure the last char of output_path is slash
 if virtools_output_path[-1] != '\\' or virtools_output_path[-1] != '/':
@@ -147,13 +164,18 @@ if virtools_output_path[-1] != '\\' or virtools_output_path[-1] != '/':
 # in virtools 2.1, we use bml, so we need add bml macro and set virtools header and virtools lib to blank
 # because all virtools file have been imported in project
 if input_virtools_version == '21':
-    virtools_header_path = ''
-    virtools_lib_path = ''
     bml_special_macro = 'BML_EXPORT='
+    virtools_header_path = os.path.join(input_bml_path, 'virtools')
+    virtools_lib_path = ''
 else:
-    virtools_header_path = os.path.join(input_virtools_root_path, 'Sdk/Includes')
-    virtools_lib_path = os.path.join(input_virtools_root_path, 'Sdk/Lib/Win32/Release')
     bml_special_macro = ''
+    if input_virtools_version == '25':
+        virtools_header_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Includes')
+        virtools_lib_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Lib')
+    else:
+        virtools_header_path = os.path.join(input_virtools_root_path, 'Sdk/Includes')
+        virtools_lib_path = os.path.join(input_virtools_root_path, 'Sdk/Lib/Win32/Release')
+    
 
 # ======================== create document
 
@@ -167,6 +189,8 @@ cache.setAttribute('Label', 'PropertySheets')
 root.appendChild(cache)
 
 # ======================== write build type
+# due to build chain v100 shit design, this configuration onlt can be modified in .vcxproj
+'''
 for bt in ('Debug', 'Release'):
     node_build_type = dom.createElement('PropertyGroup')
     node_build_type.setAttribute('Label', 'Configuration')
@@ -178,6 +202,7 @@ for bt in ('Debug', 'Release'):
         node_configuration_type.appendChild(dom.createTextNode('DynamicLibrary'))
     node_build_type.appendChild(node_configuration_type)
     root.appendChild(node_build_type)
+'''
 
 # ======================== write subsystem
 for bt in ('Debug', 'Release'):
@@ -225,6 +250,7 @@ write_macro(dom, node_property_group, node_item_group, 'BML_SPECIAL_MACRO', bml_
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_ATTACH_REF', virtools_attach_ref)
 write_macro(dom, node_property_group, node_item_group, 'SQLITE_ATTACH_REF', sqlite_attach_ref)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_MODULE_DEFINE', virtools_module_define)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_EXTRA_MACRO', virtools_extra_macro)
 
 # ======================== write extra compile
 
@@ -243,5 +269,32 @@ if input_virtools_version == '21':
 # ======================== output
 with open('./SuperScriptMaterializer/Virtools.props', 'w', encoding='utf-8') as f:
     dom.writexml(f, addindent='\t', newl='\n', encoding='utf-8')
+
+# ======================== modify .vcxproj
+# due to build chain v100 shit design, this configuration onlt can be modified in .vcxproj
+if input_build_type == build_type_standalone:
+    vcxproj_build_type = 'Application'
+elif input_build_type == build_type_plugin:
+    vcxproj_build_type = 'DynamicLibrary'
+
+vcxproj = minidom.parse('./SuperScriptMaterializer/SuperScriptMaterializer.vcxproj')
+node_project = vcxproj.documentElement
+for item in node_project.getElementsByTagName('PropertyGroup'):
+    attr_label = item.getAttribute('Label')
+    attr_condition = item.getAttribute('Condition')
+    if attr_label == 'Configuration' and (attr_condition == "'$(Configuration)|$(Platform)'=='Debug|Win32'" or attr_condition == "'$(Configuration)|$(Platform)'=='Release|Win32'"):
+        # valid node
+        node_cfg_type = item.getElementsByTagName('ConfigurationType')
+        if len(node_cfg_type) != 0:
+            # have node, change it
+            node_cfg_type[0].childNodes[0].nodeValue = vcxproj_build_type
+        else:
+            # don't have node, add one
+            node_cfg_type = vcxproj.createElement('ConfigurationType')
+            node_cfg_type.appendChild(vcxproj.createTextNode(vcxproj_build_type))
+            item.appendChild(node_cfg_type)
+
+with open('./SuperScriptMaterializer/SuperScriptMaterializer.vcxproj', 'w', encoding='utf-8') as f:
+    vcxproj.writexml(f, encoding='utf-8')
 
 print("OK!")

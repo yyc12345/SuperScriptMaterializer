@@ -416,7 +416,10 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 	}
 	//float
 	if (t == CKPGUID_FLOAT || t == CKPGUID_ANGLE || t == CKPGUID_PERCENTAGE || t == CKPGUID_TIME
-		|| t == CKPGUID_FLOATSLIDER) {
+#if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
+		|| t == CKPGUID_FLOATSLIDER
+#endif
+		) {
 		helper_pDataExport("float-data", *(float*)(p->GetReadDataPtr(false)), db, helper, parents);
 		return;
 	}
@@ -469,10 +472,11 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		return;
 	}
 	if (t == CKPGUID_2DCURVE) {
-		CK2dCurve* c;
+		//CK2dCurve* c;
+		CK2dCurve* c = (CK2dCurve*)p->GetReadDataPtr(false);
 		char prefix[128];
 		int endIndex = 0;
-		memcpy(&c, p->GetReadDataPtr(false), sizeof(c));
+		//memcpy(&c, p->GetReadDataPtr(false), sizeof(c));
 		for (int i = 0, cc = c->GetControlPointCount(); i < cc; ++i) {
 			sprintf(prefix, "2dcurve.control_point[%d]", i);
 			endIndex = strlen(prefix);
@@ -518,7 +522,11 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 	unknowType = TRUE;
 	//if it gets here, we have no idea what it really is. so simply dump it.
 	//buffer-like
-	if (unknowType || t == CKPGUID_VOIDBUF || t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS) {
+	if (unknowType || t == CKPGUID_VOIDBUF 
+#if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
+		|| t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS
+#endif
+		) {
 		//dump data
 		unsigned char* cptr = (unsigned char*)p->GetReadDataPtr(false);
 		char temp[8];

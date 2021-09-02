@@ -9,8 +9,6 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 	printf("Homepage: https://github.com/yyc12345/SuperScriptMaterializer\n");
 	printf("Report bug: https://github.com/yyc12345/SuperScriptMaterializer/issues\n");
 
-	printf("Parsing %s...\n", virtools_composition);
-
 	// ====================== init ck2 engine
 	CommonAssert(!CKStartUp(), "CKStartUp Error");
 	CKPluginManager* pluginManager = CKGetPluginManager();
@@ -30,6 +28,8 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 #if defined(_RELEASE)
 	try {
 #endif
+		printf("Parsing %s...\n", virtools_composition);
+
 		// ====================== do database export
 		// define and init
 		scriptDatabase* _script_db = new scriptDatabase();
@@ -64,6 +64,8 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 		delete _env_helper;
 		delete _env_db;
 
+		printf("Done!");
+
 #if defined(_RELEASE)
 	} catch (const std::exception & e) {
 		std::string errstr;
@@ -76,11 +78,17 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 
 	// ====================== free resources and shutdown engine
 	DeleteCKObjectArray(array);
+	context->Reset();
 	context->ClearAll();
+
+	// todo: Virtools 4.0 standalone version throw exception in there, but i don't knwo why
+	// but it doesn't affect database export, perhaps
 	CKCloseContext(context);
+
 	CKShutdown();
 
-	printf("Done!");
+	// todo: Virtools 2.5 standalone version throw exception in there, but i don't knwo why
+	// but it doesn't affect database export, perhaps
 }
 
 void CommonAssert(BOOL condition, const char* desc) {
