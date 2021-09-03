@@ -126,6 +126,7 @@ void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStruct
 	}
 }
 
+#if !defined(VIRTOOLS_21)
 void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataStructHelper* helper) {
 	CKVariableManager::Iterator it = varManager->GetVariableIterator();
 	CKVariableManager::Variable* varobj = NULL;
@@ -143,3 +144,4 @@ void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataSt
 		db->write_envVariable(helper->_db_envVariable);
 	}
 }
+#endif

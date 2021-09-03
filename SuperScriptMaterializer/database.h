@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include "virtools_compatible.h"
 
 #define STRINGCACHE_SIZE 25565
 
@@ -221,7 +222,7 @@ typedef struct {
 	std::string name;
 	std::string desciption;
 	XWORD flags;
-	CKVariableManager::Variable::Type type;
+	UNIVERSAL_VAR_TYPE type;
 	std::string representation;
 	std::string data;
 }db_envVariable;

@@ -601,6 +601,7 @@ void envDatabase::write_envPlugin(db_envPlugin* data) {
 void envDatabase::write_envVariable(db_envVariable* data) {
 	if (db == NULL) return;
 
+#if !defined(VIRTOOLS_21)
 	sqlite3_stmt* stmt = NULL;
 	tryGetStmt(5, "INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
@@ -612,6 +613,7 @@ void envDatabase::write_envVariable(db_envVariable* data) {
 	sqlite3_bind_text(stmt, 5, data->representation.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_bind_text(stmt, 6, data->data.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_step(stmt);
+#endif
 }
 
 #undef tryGetStmt

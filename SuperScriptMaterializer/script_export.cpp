@@ -2,6 +2,9 @@
 //disable shit tip
 #pragma warning(disable:26812)
 
+// disable microsoft shitty macro to avoid build error
+#undef GetClassName
+
 #define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
 #define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
 #define safeStringCopy(storage,str) storage=(str)?(str):"";
@@ -104,7 +107,7 @@ void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbSc
 	db->write_pTarget(helper->_db_pTarget);
 
 	//judge whether expoer parameter and write database
-	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetInputParameterPosition(cache) != -1) {
+	if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
 		helper->_db_eLink->is_in = TRUE;
@@ -134,7 +137,7 @@ void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScript
 	db->write_pIn(helper->_db_pIn);
 
 	//judge whether expoer parameter and write database
-	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetInputParameterPosition(cache) != -1) {
+	if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
 		helper->_db_eLink->is_in = TRUE;
@@ -163,7 +166,7 @@ void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScri
 	db->write_pOut(helper->_db_pOut);
 
 	//judge whether expoer parameter and write database
-	if (((CKBehavior*)ctx->GetObjectA(grandparents))->GetOutputParameterPosition(cache) != -1) {
+	if (((CKBehavior*)ctx->GetObject(grandparents))->GetOutputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
 		helper->_db_eLink->is_in = FALSE;
@@ -411,7 +414,10 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 	if (p->GetParameterClassID() && p->GetValueObject(false)) {
 		helper_pDataExport("id", (long)p->GetValueObject(false)->GetID(), db, helper, parents);
 		helper_pDataExport("name", p->GetValueObject(false)->GetName(), db, helper, parents);
-		helper_pDataExport("type", p->GetValueObject(false)->GetClassNameA(), db, helper, parents);
+
+		CK_CLASSID none_classid = p->GetValueObject(false)->GetClassID();
+		CKParameterType none_type = helper->_parameterManager->ClassIDToType(none_classid);
+		helper_pDataExport("type",helper->_parameterManager->ParameterTypeToName(none_type), db, helper, parents);
 		return;
 	}
 	//float

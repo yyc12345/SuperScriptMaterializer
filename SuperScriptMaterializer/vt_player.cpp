@@ -10,6 +10,10 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 	printf("Report bug: https://github.com/yyc12345/SuperScriptMaterializer/issues\n");
 
 	// ====================== init ck2 engine
+#if defined(VIRTOOLS_21)
+	CommonAssert(LoadLibrary("CK2.dll") != NULL, "Error loading CK2.dll");
+#endif
+
 	CommonAssert(!CKStartUp(), "CKStartUp Error");
 	CKPluginManager* pluginManager = CKGetPluginManager();
 	CommonAssert(pluginManager != NULL, "PluginManager = null");
@@ -52,7 +56,9 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 		IterateMessage(context->GetMessageManager(), _env_db, _env_helper);
 		IterateAttribute(context->GetAttributeManager(), _env_db, _env_helper);
 		IteratePlugin(CKGetPluginManager(), _env_db, _env_helper);
+#if !defined(VIRTOOLS_21)
 		IterateVariable(context->GetVariableManager(), _env_db, _env_helper);
+#endif
 
 		// free
 		_script_helper->dispose();

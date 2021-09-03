@@ -19,7 +19,15 @@
 * `SuperScriptViewer`：一个Python工程，使用Flask提供一个本地Web界面进行脚本以供快速查看，通常是用于本地快速查看解析后脚本的数据。
 * `SuperScriptEnterprise`：一个PHP工程，相对于`SuperScriptViewer`更适合部署于服务器上进行数据的展示和浏览。
 
-整个工程所作的事情就是，将Virtools文档中的所有脚本导出成一个SQLite数据库文件，然后经过Python进行排布处理，最后提供一个本地Web前端查看脚本。这同样适用于`Script Hidden`的Virtools脚本，也适用于其中含有不可展开的`Behavior Graph`的脚本。
+<img src='https://g.gravizo.com/svg?
+ digraph G {
+   rankdir=LR;
+   Materializer -> Decorator -> Viewer;
+   Decorator -> Exterprise;
+ }
+'/>
+
+四个部分组成的工作流程如上图所示。整个工程所作的事情就是，将Virtools文档中的所有脚本导出成一个SQLite数据库文件，然后经过Python进行排布处理，最后提供一个本地Web前端查看脚本。这同样适用于`Script Hidden`的Virtools脚本，也适用于其中含有不可展开的`Behavior Graph`的脚本。
 
 物化器不能完全恢复脚本的原有排布，无论原有排布是否存在，物化器都将重新自动生成脚本中的各个元素的位置。某些结构的关系可能会改变（例如Export parameter），亦或者是与Virtools中的呈现不同，但是逻辑思路将不会改变。同时物化器不能将已经生成的结构回写成Virtools可接受的格式，因此物化器只能提供无视脚本隐藏的分析功能。
 
