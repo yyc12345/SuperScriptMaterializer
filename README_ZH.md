@@ -12,24 +12,15 @@
 
 超级Virtools脚本物化器（机翻（确信））
 
-本项目分为4个部分：
+本项目分为3个部分：
 
 * `SuperScriptMaterializer`：一个C++工程，将生成一个Virtools界面插件或独立播放器用于导出初步数据。
 * `SuperScriptDecorator`：一个Python工程，将解析导出的数据，并将其组合成易于浏览的格式。
-* `SuperScriptViewer`：一个Python工程，使用Flask提供一个本地Web界面进行脚本以供快速查看，通常是用于本地快速查看解析后脚本的数据。
-* `SuperScriptEnterprise`：一个PHP工程，相对于`SuperScriptViewer`更适合部署于服务器上进行数据的展示和浏览。
+* `SuperScriptViewer`：一个Python工程，使用Flask提供一个本地Web界面进行脚本以供快速查看。
 
-<img src='https://g.gravizo.com/svg?
- digraph G {
-   rankdir=LR;
-   Materializer -> Decorator -> Viewer;
-   Decorator -> Exterprise;
- }
-'/>
+整个工程所作的事情就是，将Virtools文档中的所有脚本导出成一个SQLite数据库文件（`Materializer`所做的任务），然后经过Python进行排布处理（`Decorator`所做的任务），最后提供一个本地Web前端查看脚本（`Viewer`所做的任务）。整个的查看流程比较复杂，涉及到多个软件的操作。希望您能继续阅读下面比较概要操作说明，以获得良好的使用体验。
 
-四个部分组成的工作流程如上图所示。整个工程所作的事情就是，将Virtools文档中的所有脚本导出成一个SQLite数据库文件，然后经过Python进行排布处理，最后提供一个本地Web前端查看脚本。这同样适用于`Script Hidden`的Virtools脚本，也适用于其中含有不可展开的`Behavior Graph`的脚本。
-
-物化器不能完全恢复脚本的原有排布，无论原有排布是否存在，物化器都将重新自动生成脚本中的各个元素的位置。某些结构的关系可能会改变（例如Export parameter），亦或者是与Virtools中的呈现不同，但是逻辑思路将不会改变。同时物化器不能将已经生成的结构回写成Virtools可接受的格式，因此物化器只能提供无视脚本隐藏的分析功能。
+物化器同样适用于`Script Hidden`的Virtools脚本，也适用于其中含有不可展开的`Behavior Graph`的脚本。物化器不能完全恢复脚本的原有排布，无论原有排布是否存在，物化器都将重新自动生成脚本中的各个元素的位置。某些结构的关系可能会改变（例如Export parameter），亦或者是与Virtools中的呈现不同，但是逻辑思路将不会改变。同时物化器不能将已经生成的结构回写成Virtools可接受的格式，因此物化器只能提供无视脚本隐藏的分析功能。
 
 **注意事项**
 
@@ -43,17 +34,21 @@ SuperScriptMaterializer分为两种类型，一种是*插件*模式，在Virtool
 |已知的Virtools版本|插件模式|独立模式|
 |:---|:---|:---|
 |Virtools 2.1|× (0)|√ (1)|
-|Virtools 2.5|× (2)|√|
+|Virtools 2.5|× (2)|√ (4)|
 |Virtools 3.0|× (3)|× (3)|
-|Virtools 3.5|√ (4)|√ (4)|
-|Virtools 4.0|√ (4)|√ (4)|
+|Virtools 3.5|√|√|
+|Virtools 4.0|√|√ (4)|
 |Virtools 5.0|√|√|
 
 0. 没有可用的Virtools Dev 2.1，因此没有插件模式  
 0. 使用Ballance Mod Loader提供的逆向Virtools SDK进行编译  
 0. Virtools SDK不支持在界面上添加菜单  
 0. 缺少Virtools SDK，无法编译  
-0. 正在编写中  
+0. 有不影响输出的错误  
+
+### 运行环境
+
+* 至少一个可以使用的Virtools环境
 
 ### 使用
 
@@ -77,29 +72,56 @@ SuperScriptMaterializer分为两种类型，一种是*插件*模式，在Virtool
 
 ## SuperScriptDecorator
 
+上一步导出的数据库文件并不能直接被使用，需要通过`SuperScriptDecorator`辅助生成各个Building Graph的位置以及各种连线，之后才能进入下一步查看。同时，为了支持一次性在一个工程内浏览所有的脚本内容，`Decorator`还负责将多个上游导出的数据库合并成一个数据库，以供`Viewer`进行查看。
+
+### 运行环境
+
+* Python 3.x
 
 ### 使用
 
-将上一步得到的`export.db`和`env.db`与`SuperScriptDecorator.py`放在一起。然后在此目录中运行`python3 ./SuperScriptDecorator.py`，等待Python交互界面提示可以打开本地的网页即可。
+将上一步得到的`export.db`和`env.db`与`SuperScriptDecorator.py`放在一起。然后新建一个文件名为`import.txt`（使用UTF-8编码），在里面输入如下内容（三个部分之间的空白是`Tab`而不是空格）：
+
+```
+example.cmo export.db env.db
+```
+
+然后在此目录中运行`python3 ./SuperScriptDecorator.py`，等待Python交互界面提示完成操作即可。
 
 `SuperScriptDecorator.py`具有一些命令行开关：
 
-- `-i`：指定输入的`export.db`
-- `-o`：指定输出的`decorated.db`，如果已经存在将不考虑输入，直接使用输出数据库呈现
-- `-e`：指定输入的`env.db`，环境数据库
+- `-i`：指定输入的`import.txt`
+- `-o`：指定输出的`decorated.db`，如果已经存在将覆盖
 - `-c`：指定数据库编码，可用的编码表可以在[这里](https://docs.python.org/3/library/codecs.html#standard-encodings)查看
-- `-f`：无参数，用于强制重新生成输出数据库，无论输出数据库是否存在
 - `-d`：无参数，启用调试模式，直接抛出异常，而不是捕获后在控制台输出，方便调试
+
+### import.txt
+
+`import.txt`是一个提供输入文件的集和的文本文件。由于`Decorator`还负责将多个上游导出的数据库合并成一个数据库，这些多个由上游导出的数据库需要由`import.txt`来指示。`import.txt`的基本格式就是：
+
+* 每一行代表一组输入
+* 每一行共有3个输入，从左至右分别为：文档的名字（会被显示在脚本层次图中），`export.db`，和`env.db`
+* 每一行3个部分中间由`Tab`分割
+* 空行会被忽略
 
 ### 提示
 
-以上选项在基本使用中应该不会用到，因此按上述规则直接放置好文件直接运行即可。
+以上某些选项在基本使用中应该不会用到，因此按最开始所述的方式直接放置好文件直接运行即可。
 
 如果Python交互界面提示数据库`TEXT`类型解码失败，或者解析的字符出现乱码，那么可能您需要手动使用`-c`开关指定数据库文本解码方式。因为Virtools使用多字节编码，依赖于当前操作系统的代码页，`SuperScriptDecorator`做了特殊获取以保证大多数计算机可以直接运行，但仍然不能排除一些特殊情况。需要注意的是，指定的编码不是你计算机当前的代码页，而是制作这个Virtools文档的作者的计算机的代码页。
 
 ## SuperScriptViewer
 
-一份指导你如何使用Viewer的文档已内置在Viewer中，可以从Help页面进行查看
+`SuperScriptViewer`旨在提供一个网页前端查看已经生成好的数据文件。至于`Viewer`的使用，一份指导你如何使用`Viewer`的文档已内置在`Viewer`中，可以从Help页面进行查看。
+
+### 运行环境
+
+* 装有Flask的Python 3.x
+* 常见浏览器（Safari除外）
+
+### 使用
+
+如果您只是为了简单查看一下导出的文件，我们建议以调试模式运行`Viewer`，即将上一步得到的`decorated.db`和`SuperScriptViewer.py`放在一起，然后运行`python3 ./SuperScriptDecorator.py`，即可以运行调试模式的`Viewer`。如果您是要将生成的结果部署到服务器，我们更建议您使用生产模式进行部署，详情请参见[部署](./Documents/DEPLOY_ZH.md)。
 
 ## 问题反馈
 
@@ -109,10 +131,6 @@ SuperScriptMaterializer分为两种类型，一种是*插件*模式，在Virtool
 * `SuperScriptMaterializer`独立模式输出了`[ERROR]`等类似内容
 * Python交互界面弹出错误
 
-## 常见场景
-
-// todo
-
 ## 部署
 
 参见[部署](./Documents/DEPLOY_ZH.md)
@@ -121,19 +139,12 @@ SuperScriptMaterializer分为两种类型，一种是*插件*模式，在Virtool
 
 参见[编译](./Documents/COMPILE_ZH.md)
 
-<!-- 
-只有Virtools界面插件需要编译，其余均为解释性语言无需编译。
-
-需要手动配置Virtools插件的编译参数，例如包含路径等，需要指向您自己的Virtools SDK。对于SQLite SDK，您可以从[sqlite.org](http://www.sqlite.org/)下载，然后使用Visual C++的工具集执行`LIB /DEF:sqlite3.def /machine:IX86`以获取可以用于编译的文件。
--->
-
 ## 开发计划
 
 在之后的版本中，以下功能将逐步加入：
 
 * 当前页面搜索和全局搜索
 * Shortcut追踪
-* 在Viewer中移动Block和BB
 
 ## 特别感谢
 

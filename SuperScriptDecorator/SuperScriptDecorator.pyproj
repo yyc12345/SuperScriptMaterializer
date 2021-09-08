@@ -2,15 +2,18 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>0e4b5021-27ea-4f79-b87d-e123afb3d788</ProjectGuid>
+    <ProjectGuid>6d751bf5-87d6-4123-94b3-34721938cf04</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>SuperScriptViewer.py</StartupFile>
+    <StartupFile>SuperScriptDecorator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>SuperScriptViewer</Name>
-    <RootNamespace>SuperScriptViewer</RootNamespace>
+    <Name>SuperScriptDecorator</Name>
+    <RootNamespace>SuperScriptDecorator</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>-f -d</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,10 +24,19 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CustomConfig.py" />
-    <Compile Include="ServerCore.py" />
-    <Compile Include="ServerStruct.py" />
-    <Compile Include="SuperScriptViewer.py" />
+    <Compile Include="CustomConfig.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DecoratorConstValue.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DecoratorCore.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Progressbar.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SuperScriptDecorator.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
