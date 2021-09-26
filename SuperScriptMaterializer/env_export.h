@@ -1,5 +1,5 @@
-#if !defined(_YYCDLL_HELP_EXPORT_H__IMPORTED_)
-#define _YYCDLL_HELP_EXPORT_H__IMPORTED_
+#if !defined(_YYCDLL_ENV_EXPORT_H__IMPORTED_)
+#define _YYCDLL_ENV_EXPORT_H__IMPORTED_
 
 #include "stdafx.h"
 #include "database.h"

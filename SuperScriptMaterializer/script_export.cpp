@@ -338,11 +338,11 @@ void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper*
 			//write script table
 			beh = beobj->GetScript(j);
 
-			helper->_dbCKScript->thisobj = beobj->GetID();
-			helper->_dbCKScript->host_name = beobj->GetName();
-			helper->_dbCKScript->index = j;
-			helper->_dbCKScript->behavior = beh->GetID();
-			db->write_CKScript(helper->_dbCKScript);
+			helper->_db_script->thisobj = beobj->GetID();
+			helper->_db_script->host_name = beobj->GetName();
+			helper->_db_script->index = j;
+			helper->_db_script->behavior = beh->GetID();
+			db->write_script(helper->_db_script);
 
 			//iterate script
 			IterateBehavior(ctx, beh, db, helper, -1);
@@ -352,23 +352,23 @@ void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper*
 
 void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
 	//write self data
-	helper->_dbCKBehavior->thisobj = bhv->GetID();
-	helper->_dbCKBehavior->name = bhv->GetName();
-	helper->_dbCKBehavior->type = bhv->GetType();
-	helper->_dbCKBehavior->proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
-	copyGuid(bhv->GetPrototypeGuid(), helper->_dbCKBehavior->proto_guid);
-	helper->_dbCKBehavior->flags = bhv->GetFlags();
-	helper->_dbCKBehavior->priority = bhv->GetPriority();
-	helper->_dbCKBehavior->version = bhv->GetVersion();
-	helper->_dbCKBehavior->parent = parents;
+	helper->_db_behavior->thisobj = bhv->GetID();
+	helper->_db_behavior->name = bhv->GetName();
+	helper->_db_behavior->type = bhv->GetType();
+	helper->_db_behavior->proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
+	copyGuid(bhv->GetPrototypeGuid(), helper->_db_behavior->proto_guid);
+	helper->_db_behavior->flags = bhv->GetFlags();
+	helper->_db_behavior->priority = bhv->GetPriority();
+	helper->_db_behavior->version = bhv->GetVersion();
+	helper->_db_behavior->parent = parents;
 	sprintf(helper->_stringCache, "%d,%d,%d,%d,%d",
 		(bhv->IsUsingTarget() ? 1 : 0),
 		bhv->GetInputParameterCount(),
 		bhv->GetOutputParameterCount(),
 		bhv->GetInputCount(),
 		bhv->GetOutputCount());
-	helper->_dbCKBehavior->pin_count = helper->_stringCache;
-	db->write_CKBehavior(helper->_dbCKBehavior);
+	helper->_db_behavior->pin_count = helper->_stringCache;
+	db->write_behavior(helper->_db_behavior);
 
 	//write target
 	if (bhv->IsUsingTarget())

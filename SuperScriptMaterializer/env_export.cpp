@@ -12,10 +12,10 @@ void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase
 	CKGUID _guid;
 	for (int i = 0; i < count; i++) {
 		//fill basic data
-		helper->_db_envOp->op_code = i;
+		helper->_db_op->op_code = i;
 		_guid = parameterManager->OperationCodeToGuid(i);
-		copyGuid(_guid,helper->_db_envOp->op_guid);
-		helper->_db_envOp->op_name = parameterManager->OperationCodeToName(i);
+		copyGuid(_guid,helper->_db_op->op_guid);
+		helper->_db_op->op_name = parameterManager->OperationCodeToName(i);
 
 		//allocate mem
 		cacheListCount = parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, NULL);
@@ -27,12 +27,12 @@ void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase
 
 		parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, opList);
 		for (int j = 0; j < cacheListCount; j++) {
-			copyGuid(opList[j].P1Guid, helper->_db_envOp->in1_guid);
-			copyGuid(opList[j].P2Guid, helper->_db_envOp->in2_guid);
-			copyGuid(opList[j].ResGuid, helper->_db_envOp->out_guid);
-			helper->_db_envOp->funcPtr = opList[j].Fct;
+			copyGuid(opList[j].P1Guid, helper->_db_op->in1_guid);
+			copyGuid(opList[j].P2Guid, helper->_db_op->in2_guid);
+			copyGuid(opList[j].ResGuid, helper->_db_op->out_guid);
+			helper->_db_op->funcPtr = opList[j].Fct;
 
-			db->write_envOp(helper->_db_envOp);
+			db->write_op(helper->_db_op);
 		}
 	}
 	if (opList != NULL) free(opList);
@@ -45,32 +45,32 @@ void IterateParameter(CKParameterManager* parameterManager, envDatabase* db, dbE
 	for (int i = 0; i < count; i++) {
 		desc = parameterManager->GetParameterTypeDescription(i);
 
-		helper->_db_envParam->index = desc->Index;
-		copyGuid(desc->Guid, helper->_db_envParam->guid);
-		copyGuid(desc->DerivedFrom, helper->_db_envParam->derived_from);
-		helper->_db_envParam->type_name = desc->TypeName.CStr();
-		helper->_db_envParam->default_size = desc->DefaultSize;
-		helper->_db_envParam->func_CreateDefault = desc->CreateDefaultFunction;
-		helper->_db_envParam->func_Delete = desc->DeleteFunction;
-		helper->_db_envParam->func_SaveLoad = desc->SaveLoadFunction;
-		helper->_db_envParam->func_Check = desc->CheckFunction;
-		helper->_db_envParam->func_Copy = desc->CopyFunction;
-		helper->_db_envParam->func_String = desc->StringFunction;
-		helper->_db_envParam->func_UICreator = desc->UICreatorFunction;
+		helper->_db_param->index = desc->Index;
+		copyGuid(desc->Guid, helper->_db_param->guid);
+		copyGuid(desc->DerivedFrom, helper->_db_param->derived_from);
+		helper->_db_param->type_name = desc->TypeName.CStr();
+		helper->_db_param->default_size = desc->DefaultSize;
+		helper->_db_param->func_CreateDefault = desc->CreateDefaultFunction;
+		helper->_db_param->func_Delete = desc->DeleteFunction;
+		helper->_db_param->func_SaveLoad = desc->SaveLoadFunction;
+		helper->_db_param->func_Check = desc->CheckFunction;
+		helper->_db_param->func_Copy = desc->CopyFunction;
+		helper->_db_param->func_String = desc->StringFunction;
+		helper->_db_param->func_UICreator = desc->UICreatorFunction;
 		CKPluginEntry* plgEntry = desc->CreatorDll;
 		if (plgEntry != NULL) {
-			helper->_db_envParam->creator_dll_index = plgEntry->m_PluginDllIndex;
-			helper->_db_envParam->creator_plugin_index = plgEntry->m_PositionInDll;
+			helper->_db_param->creator_dll_index = plgEntry->m_PluginDllIndex;
+			helper->_db_param->creator_plugin_index = plgEntry->m_PositionInDll;
 		} else {
-			helper->_db_envParam->creator_dll_index =-1;
-			helper->_db_envParam->creator_plugin_index =-1;
+			helper->_db_param->creator_dll_index =-1;
+			helper->_db_param->creator_plugin_index =-1;
 		}
-		helper->_db_envParam->dw_param = desc->dwParam;
-		helper->_db_envParam->dw_flags = desc->dwFlags;
-		helper->_db_envParam->cid = desc->Cid;
-		copyGuid(desc->Saver_Manager, helper->_db_envParam->saver_manager);
+		helper->_db_param->dw_param = desc->dwParam;
+		helper->_db_param->dw_flags = desc->dwFlags;
+		helper->_db_param->cid = desc->Cid;
+		copyGuid(desc->Saver_Manager, helper->_db_param->saver_manager);
 
-		db->write_envParam(helper->_db_envParam);
+		db->write_param(helper->_db_param);
 	}
 }
 
@@ -80,48 +80,48 @@ void IterateMessage(CKMessageManager* msgManager, envDatabase* db, dbEnvDataStru
 		helper->_db_envMsg->index = i;
 		helper->_db_envMsg->name = msgManager->GetMessageTypeName(i);
 
-		db->write_envMsg(helper->_db_envMsg);
+		db->write_msg(helper->_db_envMsg);
 	}
 }
 
 void IterateAttribute(CKAttributeManager* attrManager, envDatabase* db, dbEnvDataStructHelper* helper) {
 	int count = attrManager->GetAttributeCount();
 	for (int i = 0; i < count; i++) {
-		helper->_db_envAttr->index = i;
-		helper->_db_envAttr->name = attrManager->GetAttributeNameByType(i);
-		helper->_db_envAttr->category_index = attrManager->GetAttributeCategoryIndex(i);
-		helper->_db_envAttr->category_name = attrManager->GetAttributeCategory(i) != NULL ? attrManager->GetAttributeCategory(i) : "";
-		helper->_db_envAttr->flags = attrManager->GetAttributeFlags(i);
-		helper->_db_envAttr->param_index = attrManager->GetAttributeParameterType(i);
-		helper->_db_envAttr->compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
-		helper->_db_envAttr->default_value = attrManager->GetAttributeDefaultValue(i) != NULL ? attrManager->GetAttributeDefaultValue(i) : "";
+		helper->_db_attr->index = i;
+		helper->_db_attr->name = attrManager->GetAttributeNameByType(i);
+		helper->_db_attr->category_index = attrManager->GetAttributeCategoryIndex(i);
+		helper->_db_attr->category_name = attrManager->GetAttributeCategory(i) != NULL ? attrManager->GetAttributeCategory(i) : "";
+		helper->_db_attr->flags = attrManager->GetAttributeFlags(i);
+		helper->_db_attr->param_index = attrManager->GetAttributeParameterType(i);
+		helper->_db_attr->compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
+		helper->_db_attr->default_value = attrManager->GetAttributeDefaultValue(i) != NULL ? attrManager->GetAttributeDefaultValue(i) : "";
 
-		db->write_envAttr(helper->_db_envAttr);
+		db->write_attr(helper->_db_attr);
 	}
 }
 
 void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStructHelper* helper) {
 	for (int i = 0; i <= 7; i++) {
 		int catCount = plgManager->GetPluginCount(i);
-		helper->_db_envPlugin->category = plgManager->GetCategoryName(i);
+		helper->_db_plugin->category = plgManager->GetCategoryName(i);
 		for (int j = 0; j < catCount; j++) {
 			CKPluginEntry* plgEntry = plgManager->GetPluginInfo(i, j);
 
-			helper->_db_envPlugin->dll_index = plgEntry->m_PluginDllIndex;
-			helper->_db_envPlugin->dll_name = plgManager->GetPluginDllInfo(plgEntry->m_PluginDllIndex)->m_DllFileName.CStr();
-			helper->_db_envPlugin->plugin_index = plgEntry->m_PositionInDll;
-			helper->_db_envPlugin->active = plgEntry->m_Active;
-			helper->_db_envPlugin->needed_by_file = plgEntry->m_NeededByFile;
+			helper->_db_plugin->dll_index = plgEntry->m_PluginDllIndex;
+			helper->_db_plugin->dll_name = plgManager->GetPluginDllInfo(plgEntry->m_PluginDllIndex)->m_DllFileName.CStr();
+			helper->_db_plugin->plugin_index = plgEntry->m_PositionInDll;
+			helper->_db_plugin->active = plgEntry->m_Active;
+			helper->_db_plugin->needed_by_file = plgEntry->m_NeededByFile;
 			CKPluginInfo* plgInfo = &(plgEntry->m_PluginInfo);
-			copyGuid(plgInfo->m_GUID, helper->_db_envPlugin->guid);
-			helper->_db_envPlugin->desc = plgInfo->m_Description.CStr();
-			helper->_db_envPlugin->author = plgInfo->m_Author.CStr();
-			helper->_db_envPlugin->summary = plgInfo->m_Summary.CStr();
-			helper->_db_envPlugin->version = plgInfo->m_Version;
-			helper->_db_envPlugin->func_init = plgInfo->m_InitInstanceFct;
-			helper->_db_envPlugin->func_exit = plgInfo->m_ExitInstanceFct;
+			copyGuid(plgInfo->m_GUID, helper->_db_plugin->guid);
+			helper->_db_plugin->desc = plgInfo->m_Description.CStr();
+			helper->_db_plugin->author = plgInfo->m_Author.CStr();
+			helper->_db_plugin->summary = plgInfo->m_Summary.CStr();
+			helper->_db_plugin->version = plgInfo->m_Version;
+			helper->_db_plugin->func_init = plgInfo->m_InitInstanceFct;
+			helper->_db_plugin->func_exit = plgInfo->m_ExitInstanceFct;
 
-			db->write_envPlugin(helper->_db_envPlugin);
+			db->write_plugin(helper->_db_plugin);
 		}
 	}
 }
@@ -133,15 +133,15 @@ void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataSt
 	XString dataCopyCache;
 	for (; !it.End(); it++) {
 		varobj = it.GetVariable();
-		helper->_db_envVariable->name = it.GetName();
-		safeStringCopy(helper->_db_envVariable->desciption, varobj->GetDescription());
-		helper->_db_envVariable->flags = varobj->GetFlags();
-		helper->_db_envVariable->type = varobj->GetType();
-		safeStringCopy(helper->_db_envVariable->representation, varobj->GetRepresentation());
+		helper->_db_variable->name = it.GetName();
+		safeStringCopy(helper->_db_variable->desciption, varobj->GetDescription());
+		helper->_db_variable->flags = varobj->GetFlags();
+		helper->_db_variable->type = varobj->GetType();
+		safeStringCopy(helper->_db_variable->representation, varobj->GetRepresentation());
 		varobj->GetStringValue(dataCopyCache);
-		helper->_db_envVariable->data = dataCopyCache.CStr();
+		helper->_db_variable->data = dataCopyCache.CStr();
 
-		db->write_envVariable(helper->_db_envVariable);
+		db->write_variable(helper->_db_variable);
 	}
 }
 #endif

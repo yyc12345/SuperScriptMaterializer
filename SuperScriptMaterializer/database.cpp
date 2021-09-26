@@ -3,20 +3,20 @@
 #pragma region helper
 
 void dbScriptDataStructHelper::init(CKParameterManager* paramManager) {
-	_dbCKBehavior = new dbCKBehavior();
-	_dbCKScript = new dbCKScript();
-	_db_pTarget = new db_pTarget();
-	_db_pIn = new db_pIn();
-	_db_pOut = new db_pOut();
-	_db_bIn = new db_bIn();
-	_db_bOut = new db_bOut();
-	_db_bLink = new db_bLink();
-	_db_pLocal = new db_pLocal();
-	_db_pAttr = new db_pAttr();
-	_db_pLink = new db_pLink();
-	_db_pData = new db_pData();
-	_db_pOper = new db_pOper();
-	_db_eLink = new db_eLink();
+	_db_behavior = new db_script_behavior();
+	_db_script = new db_script_script();
+	_db_pTarget = new db_script_pTarget();
+	_db_pIn = new db_script_pIn();
+	_db_pOut = new db_script_pOut();
+	_db_bIn = new db_script_bIn();
+	_db_bOut = new db_script_bOut();
+	_db_bLink = new db_script_bLink();
+	_db_pLocal = new db_script_pLocal();
+	_db_pAttr = new db_script_pAttr();
+	_db_pLink = new db_script_pLink();
+	_db_pData = new db_script_pData();
+	_db_pOper = new db_script_pOper();
+	_db_eLink = new db_script_eLink();
 
 	_parameterManager = paramManager;
 	_stringCache = (char*)malloc(STRINGCACHE_SIZE * sizeof(char));
@@ -25,8 +25,8 @@ void dbScriptDataStructHelper::init(CKParameterManager* paramManager) {
 }
 
 void dbScriptDataStructHelper::dispose() {
-	delete _dbCKBehavior;
-	delete _dbCKScript;
+	delete _db_behavior;
+	delete _db_script;
 	delete _db_pTarget;
 	delete _db_pIn;
 	delete _db_pOut;
@@ -44,13 +44,36 @@ void dbScriptDataStructHelper::dispose() {
 	free(_stringCache);
 }
 
+void dbDataDataStructHelper::init(CKParameterManager* paramManager) {
+	_db_obj = new db_data_obj();
+	_db_objHeader = new db_data_objHeader();
+	_db_objBody = new db_data_objBody();
+	_db_objParam = new db_data_objParam();
+	_db_msg = new db_data_msg();
+
+	_parameterManager = paramManager;
+	_stringCache = (char*)malloc(STRINGCACHE_SIZE * sizeof(char));
+	if (_stringCache == NULL)
+		throw new std::bad_alloc();
+}
+
+void dbDataDataStructHelper::dispose() {
+	delete _db_obj;
+	delete _db_objHeader;
+	delete _db_objBody;
+	delete _db_objParam;
+	delete _db_msg;
+
+	_parameterManager = NULL;
+	free(_stringCache);
+}
+
 void dbEnvDataStructHelper::init() {
-	_db_envOp = new db_envOp;
-	_db_envParam = new db_envParam;
-	_db_envMsg = new db_envMsg;
-	_db_envAttr = new db_envAttr;
-	_db_envPlugin = new db_envPlugin;
-	_db_envVariable = new db_envVariable;
+	_db_op = new db_env_op();
+	_db_param = new db_env_param();
+	_db_attr = new db_env_attr();
+	_db_plugin = new db_env_plugin();
+	_db_variable = new db_env_variable();
 
 	_stringCache = (char*)malloc(STRINGCACHE_SIZE * sizeof(char));
 	if (_stringCache == NULL)
@@ -58,12 +81,11 @@ void dbEnvDataStructHelper::init() {
 }
 
 void dbEnvDataStructHelper::dispose() {
-	delete _db_envOp;
-	delete _db_envParam;
-	delete _db_envMsg;
-	delete _db_envAttr;
-	delete _db_envPlugin;
-	delete _db_envVariable;
+	delete _db_op;
+	delete _db_param;
+	delete _db_attr;
+	delete _db_plugin;
+	delete _db_variable;
 
 	free(_stringCache);
 }
@@ -75,14 +97,22 @@ void dbEnvDataStructHelper::dispose() {
 
 void database::open(const char* file) {
 	db = NULL;
-	stmtCache = new std::vector<sqlite3_stmt*>(14, NULL);	// TODO: sync with tryGetStmt's count
+	stmtCache = new std::vector<sqlite3_stmt*>();
 
 	//open db
 	int result;
 	result = sqlite3_open(file, &db);
 	if (result != SQLITE_OK) goto fail;
 
+	// disable synchronous
+	result = sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
+	if (result != SQLITE_OK) goto fail;
+
+	// do some custom init
 	if (!init()) goto fail;
+
+	//start job
+	sqlite3_exec(db, "begin;", NULL, NULL, NULL);
 
 	return;
 fail:
@@ -92,6 +122,14 @@ fail:
 void database::close() {
 	if (db == NULL) return;
 
+	//stop job
+	for (auto it = stmtCache->begin(); it != stmtCache->end(); it++) {
+		if (*it != NULL)
+			sqlite3_finalize(*it);
+	}
+	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
+
+	// do some custom job
 	finalJob();
 
 	//release res
@@ -100,91 +138,46 @@ void database::close() {
 	delete stmtCache;
 }
 
+sqlite3_stmt* database::safeStmt(size_t index) {
+	if (index >= stmtCache->size()) {
+		// need resize
+		stmtCache->resize(index + 1, NULL);
+	}
+}
+
+#define createTable(sql) result=sqlite3_exec(db,sql,NULL,NULL,NULL);if(result!=SQLITE_OK)return FALSE;
+
 BOOL scriptDatabase::init() {
 	pAttrUniqueEnsurance = new std::set<EXPAND_CK_ID>();
 
 	int result;
-	result = sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
 
 	//init table
 	result = sqlite3_exec(db, "begin;", NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 
-	result = sqlite3_exec(db,
-		"CREATE TABLE script([thisobj] INTEGER, [name] TEXT, [index] INTEGER, [behavior] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE behavior([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] TEXT, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count] TEXT, [parent] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pTarget([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE bIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE bOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE bLink([input] INTEGER, [output] INTEGER, [delay] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pLocal([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [is_setting] INTEGER, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pData([field] TEXT, [data] TEXT, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pLink([input] INTEGER, [output] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_is_bb] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_is_bb] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pOper([thisobj] INTEGER, [op] TEXT, [op_guid] TEXT, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE eLink([export_obj] INTEGER, [internal_obj] INTEGER, [is_in] INTEGER, [index] INTEGER, [belong_to] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE pAttr([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
+	createTable("CREATE TABLE script([thisobj] INTEGER, [name] TEXT, [index] INTEGER, [behavior] INTEGER);");
+	createTable("CREATE TABLE behavior([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] TEXT, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count] TEXT, [parent] INTEGER);");
+	createTable("CREATE TABLE pTarget([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);");
+	createTable("CREATE TABLE pIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);");
+	createTable("CREATE TABLE pOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE bIn([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE bOut([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE bLink([input] INTEGER, [output] INTEGER, [delay] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);");
+	createTable("CREATE TABLE pLocal([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [is_setting] INTEGER, [belong_to] INTEGER);");
+	createTable("CREATE TABLE pData([field] TEXT, [data] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE pLink([input] INTEGER, [output] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_is_bb] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_is_bb] INTEGER, [output_index] INETEGR, [belong_to] INTEGER);");
+	createTable("CREATE TABLE pOper([thisobj] INTEGER, [op] TEXT, [op_guid] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE eLink([export_obj] INTEGER, [internal_obj] INTEGER, [is_in] INTEGER, [index] INTEGER, [belong_to] INTEGER);");
+	createTable("CREATE TABLE pAttr([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT);");
 
 	result = sqlite3_exec(db, "commit;", NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
-
-	//start job
-	sqlite3_exec(db, "begin;", NULL, NULL, NULL);
 
 	return TRUE;
 }
 
 BOOL scriptDatabase::finalJob() {
-	//stop job
-	for (auto it = stmtCache->begin(); it != stmtCache->end(); it++) {
-		if (*it != NULL)
-			sqlite3_finalize(*it);
-	}
-	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
-
 	//create index for quick select in following app
 	sqlite3_exec(db, "begin;", NULL, NULL, NULL);
 	sqlite3_exec(db, "CREATE INDEX [quick_where1] ON behavior ([parent])", NULL, NULL, NULL);
@@ -205,70 +198,63 @@ BOOL scriptDatabase::finalJob() {
 	return TRUE;
 }
 
-BOOL envDatabase::init() {
-	stmtCache = new std::vector<sqlite3_stmt*>(6, NULL);	// TODO: sync with tryGetStmt's count
-
+BOOL dataDatabase::init() {
 
 	int result;
-	result = sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
 
 	//init table
 	result = sqlite3_exec(db, "begin;", NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 
-	result = sqlite3_exec(db,
-		"CREATE TABLE op([funcptr] INTEGER, [in1_guid] TEXT, [in2_guid] TEXT, [out_guid] TEXT, [op_guid] TEXT, [op_name] TEXT, [op_code] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE param([index] INTEGER, [guid] TEXT, [derived_from] TEXT, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] INTEGER, [func_Delete] INTEGER, [func_SaveLoad] INTEGER, [func_Check] INTEGER, [func_Copy] INTEGER, [func_String] INTEGER, [func_UICreator] INTEGER, [creator_dll_index] INTEGER, [creator_plugin_index] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] TEXT);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE msg([index] INTEGER, [name] TEXT);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE attr([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE plugin([dll_index] INTEGER, [dll_name] TEXT, [plugin_index] INTEGER, [category] TEXT, [active] INTEGER, [needed_by_file] INTEGER, [guid] TEXT, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [func_init] INTEGER, [func_exit] INTEGER);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
-	result = sqlite3_exec(db,
-		"CREATE TABLE [variable] ([name] TEXT, [description] TEXT, [flags] INTEGER, [type] INTEGER, [representation] TEXT, [data] TEXT);",
-		NULL, NULL, NULL);
-	if (result != SQLITE_OK) return FALSE;
+	createTable("CREATE TABLE obj([thisObj] INTEGER, [name] TEXT, [type_classid] INTEGER, [type_guid] TEXT, [type_name] TEXT, [rows] INTEGER, [columns] INTEGER);");
+	createTable("CREATE TABLE objHeader([index] INTEGER, [name] TEXT, [type] INTEGER, [param_type] TEXT, [param_type_guid] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE objBody([row] INTEGER, [column] INTEGER, [showcase] TEXT, [inner_object] INTEGER, [inner_param] INTEGER, [belong_to] INTEGER);");
+	createTable("CREATE TABLE objParam([field] TEXT, [data] TEXT, [belong_to] INTEGER);");
+	createTable("CREATE TABLE msg([index] INTEGER, [name] TEXT);");
 
 	result = sqlite3_exec(db, "commit;", NULL, NULL, NULL);
 	if (result != SQLITE_OK) return FALSE;
 
-	//start job
-	sqlite3_exec(db, "begin;", NULL, NULL, NULL);
+	return TRUE;
+}
+
+BOOL dataDatabase::finalJob() {
+	return TRUE;
+}
+
+BOOL envDatabase::init() {
+
+	int result;
+
+	//init table
+	result = sqlite3_exec(db, "begin;", NULL, NULL, NULL);
+	if (result != SQLITE_OK) return FALSE;
+
+	createTable("CREATE TABLE op([funcptr] INTEGER, [in1_guid] TEXT, [in2_guid] TEXT, [out_guid] TEXT, [op_guid] TEXT, [op_name] TEXT, [op_code] INTEGER);");
+	createTable("CREATE TABLE param([index] INTEGER, [guid] TEXT, [derived_from] TEXT, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] INTEGER, [func_Delete] INTEGER, [func_SaveLoad] INTEGER, [func_Check] INTEGER, [func_Copy] INTEGER, [func_String] INTEGER, [func_UICreator] INTEGER, [creator_dll_index] INTEGER, [creator_plugin_index] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] TEXT);");
+	createTable("CREATE TABLE attr([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);");
+	createTable("CREATE TABLE plugin([dll_index] INTEGER, [dll_name] TEXT, [plugin_index] INTEGER, [category] TEXT, [active] INTEGER, [needed_by_file] INTEGER, [guid] TEXT, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [func_init] INTEGER, [func_exit] INTEGER);");
+	createTable("CREATE TABLE [variable] ([name] TEXT, [description] TEXT, [flags] INTEGER, [type] INTEGER, [representation] TEXT, [data] TEXT);");
+
+	result = sqlite3_exec(db, "commit;", NULL, NULL, NULL);
+	if (result != SQLITE_OK) return FALSE;
 
 	return TRUE;
 }
 
 BOOL envDatabase::finalJob() {
-	//stop job
-	for (auto it = stmtCache->begin(); it != stmtCache->end(); it++) {
-		if (*it != NULL)
-			sqlite3_finalize(*it);
-	}
-	sqlite3_exec(db, "commit;", NULL, NULL, NULL);
-
 	return TRUE;
 }
+
+#undef createTable
 
 #pragma endregion
 
 #pragma region write func
 
-#define tryGetStmt(index,defaultStr) stmt=(*stmtCache)[index];if(stmt==NULL){sqlite3_prepare_v2(db,defaultStr,-1,&stmt,NULL);(*stmtCache)[index]=stmt;}
+#define tryGetStmt(index,defaultStr) safeStmt(index);stmt=(*stmtCache)[index];if(stmt==NULL){sqlite3_prepare_v2(db,defaultStr,-1,&stmt,NULL);(*stmtCache)[index]=stmt;}
 
-void scriptDatabase::write_CKBehavior(dbCKBehavior* data) {
+void scriptDatabase::write_behavior(db_script_behavior* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -288,7 +274,7 @@ void scriptDatabase::write_CKBehavior(dbCKBehavior* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_CKScript(dbCKScript* data) {
+void scriptDatabase::write_script(db_script_script* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -302,7 +288,7 @@ void scriptDatabase::write_CKScript(dbCKScript* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pTarget(db_pTarget* data) {
+void scriptDatabase::write_pTarget(db_script_pTarget* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -319,7 +305,7 @@ void scriptDatabase::write_pTarget(db_pTarget* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pIn(db_pIn* data) {
+void scriptDatabase::write_pIn(db_script_pIn* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -337,7 +323,7 @@ void scriptDatabase::write_pIn(db_pIn* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pOut(db_pOut* data) {
+void scriptDatabase::write_pOut(db_script_pOut* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -353,7 +339,7 @@ void scriptDatabase::write_pOut(db_pOut* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_bIn(db_bIn* data) {
+void scriptDatabase::write_bIn(db_script_bIn* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -367,7 +353,7 @@ void scriptDatabase::write_bIn(db_bIn* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_bOut(db_bOut* data) {
+void scriptDatabase::write_bOut(db_script_bOut* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -381,7 +367,7 @@ void scriptDatabase::write_bOut(db_bOut* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_bLink(db_bLink* data) {
+void scriptDatabase::write_bLink(db_script_bLink* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -401,7 +387,7 @@ void scriptDatabase::write_bLink(db_bLink* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pLocal(db_pLocal* data) {
+void scriptDatabase::write_pLocal(db_script_pLocal* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -417,7 +403,7 @@ void scriptDatabase::write_pLocal(db_pLocal* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pLink(db_pLink* data) {
+void scriptDatabase::write_pLink(db_script_pLink* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -438,7 +424,7 @@ void scriptDatabase::write_pLink(db_pLink* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pData(db_pData* data) {
+void scriptDatabase::write_pData(db_script_pData* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -451,7 +437,7 @@ void scriptDatabase::write_pData(db_pData* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_pOper(db_pOper* data) {
+void scriptDatabase::write_pOper(db_script_pOper* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -465,7 +451,7 @@ void scriptDatabase::write_pOper(db_pOper* data) {
 	sqlite3_step(stmt);
 }
 
-void scriptDatabase::write_eLink(db_eLink* data) {
+void scriptDatabase::write_eLink(db_script_eLink* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -480,7 +466,7 @@ void scriptDatabase::write_eLink(db_eLink* data) {
 	sqlite3_step(stmt);
 }
 
-BOOL scriptDatabase::write_pAttr(db_pAttr* data) {
+BOOL scriptDatabase::write_pAttr(db_script_pAttr* data) {
 	if (db == NULL) return TRUE;
 
 	if (pAttrUniqueEnsurance->find(data->thisobj) != pAttrUniqueEnsurance->end())
@@ -500,7 +486,83 @@ BOOL scriptDatabase::write_pAttr(db_pAttr* data) {
 	return TRUE;
 }
 
-void envDatabase::write_envOp(db_envOp* data) {
+
+void dataDatabase::write_obj(db_data_obj* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(0, "INSERT INTO objParam VALUES (?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data->thisobj);
+	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data->type_classid);
+	sqlite3_bind_text(stmt, 4, data->type_guid.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 5, data->type_name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 6, data->rows);
+	sqlite3_bind_int(stmt, 7, data->columns);
+	sqlite3_step(stmt);
+}
+
+void dataDatabase::write_objHeader(db_data_objHeader* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(1, "INSERT INTO objParam VALUES (?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data->index);
+	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data->type);
+	sqlite3_bind_text(stmt, 4, data->param_type.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 5, data->param_type_guid.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 6, data->belong_to);
+	sqlite3_step(stmt);
+}
+
+void dataDatabase::write_objBody(db_data_objBody* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(2, "INSERT INTO objParam VALUES (?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data->row);
+	sqlite3_bind_int(stmt, 2, data->column);
+	sqlite3_bind_text(stmt, 3, data->showcase.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 4, data->inner_object);
+	sqlite3_bind_int(stmt, 5, data->inner_param);
+	sqlite3_bind_int(stmt, 6, data->belong_to);
+	sqlite3_step(stmt);
+}
+
+void dataDatabase::write_objParam(db_data_objParam* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(3, "INSERT INTO objParam VALUES (?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_text(stmt, 1, data->field.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 2, data->data.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data->belong_to);
+	sqlite3_step(stmt);
+}
+
+void dataDatabase::write_msg(db_data_msg* data) {
+	if (db == NULL) return;
+
+	sqlite3_stmt* stmt = NULL;
+	tryGetStmt(4, "INSERT INTO msg VALUES (?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data->index);
+	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_step(stmt);
+}
+
+
+void envDatabase::write_op(db_env_op* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -517,7 +579,7 @@ void envDatabase::write_envOp(db_envOp* data) {
 	sqlite3_step(stmt);
 }
 
-void envDatabase::write_envParam(db_envParam* data) {
+void envDatabase::write_param(db_env_param* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
@@ -545,23 +607,11 @@ void envDatabase::write_envParam(db_envParam* data) {
 	sqlite3_step(stmt);
 }
 
-void envDatabase::write_envMsg(db_envMsg* data) {
+void envDatabase::write_attr(db_env_attr* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
-	tryGetStmt(2, "INSERT INTO msg VALUES (?, ?)");
-	sqlite3_reset(stmt);
-
-	sqlite3_bind_int(stmt, 1, data->index);
-	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
-	sqlite3_step(stmt);
-}
-
-void envDatabase::write_envAttr(db_envAttr* data) {
-	if (db == NULL) return;
-
-	sqlite3_stmt* stmt = NULL;
-	tryGetStmt(3, "INSERT INTO attr VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+	tryGetStmt(2, "INSERT INTO attr VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data->index);
@@ -575,11 +625,11 @@ void envDatabase::write_envAttr(db_envAttr* data) {
 	sqlite3_step(stmt);
 }
 
-void envDatabase::write_envPlugin(db_envPlugin* data) {
+void envDatabase::write_plugin(db_env_plugin* data) {
 	if (db == NULL) return;
 
 	sqlite3_stmt* stmt = NULL;
-	tryGetStmt(4, "INSERT INTO plugin VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	tryGetStmt(3, "INSERT INTO plugin VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data->dll_index);
@@ -598,12 +648,12 @@ void envDatabase::write_envPlugin(db_envPlugin* data) {
 	sqlite3_step(stmt);
 }
 
-void envDatabase::write_envVariable(db_envVariable* data) {
+void envDatabase::write_variable(db_env_variable* data) {
 	if (db == NULL) return;
 
 #if !defined(VIRTOOLS_21)
 	sqlite3_stmt* stmt = NULL;
-	tryGetStmt(5, "INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
+	tryGetStmt(4, "INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_text(stmt, 1, data->name.c_str(), -1, SQLITE_TRANSIENT);
