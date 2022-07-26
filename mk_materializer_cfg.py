@@ -12,29 +12,29 @@ valid_build_type = (
     build_type_plugin
 )
 
-virtools_attach_ref_plugin_dict = {
-    "21": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
-    "25": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
+virtools_attached_lib_plugin_dict = {
+    "21": "",
+    "25": "",
     "35": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "40": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib",
     "50": "vxmath.lib;DllEditor.lib;ck2.lib;InterfaceControls.lib;CKControls.lib" 
 }
-virtools_attach_ref_standalone_dict = {
-    "21": "",
+virtools_attached_lib_standalone_dict = {
+    "21": "VxMath.lib;CK2.lib",
     "25": "VxMath.lib;CK2.lib",
     "35": "vxmath.lib;ck2.lib",
     "40": "vxmath.lib;ck2.lib",
     "50": "vxmath.lib;ck2.lib"
 }
 
-virtools_extra_macro_plugin_dict = {
+virtools_std_macro_plugin_dict = {
     "21": "",
     "25": "",
     "35": "_CRT_SECURE_NO_WARNINGS",
     "40": "_CRT_SECURE_NO_WARNINGS",
     "50": "" 
 }
-virtools_extra_macro_standalone_dict = {
+virtools_std_macro_standalone_dict = {
     "21": "_DEBUG",
     "25": "_CRT_SECURE_NO_WARNINGS;_DEBUG",
     "35": "_CRT_SECURE_NO_WARNINGS;_DEBUG",
@@ -61,6 +61,11 @@ valid_virtools_plugin_ver = (
     "35",
     "40",
     "50"
+)
+
+valid_vt21_reverse_work_type = (
+    'gamepiaynmo',
+    'doyagu'
 )
 
 # ======================== assist func
@@ -101,74 +106,139 @@ def get_executable_virtools(vt_ver):
     elif vt_ver == '50':
         return 'devr.exe'
 
-# ======================== requirement check
+# ======================== requirement get
 
-if len(sys.argv) != 8:
-    print("Error parameter!")
-    print("Format: python3 mk_materializer_cfg.py [plugin|standalone] [21|25|35|40|50] [virtools_root_path] [sqlite_header] [sqlite_lib] [sqlite attach ref] [bml path]")
-    print('Example: python3 .\mk_materializer_cfg.py standalone 50 "E:\Virtools\Virtools Dev 5.0" "D:\CppLib\SQLite\sqlite-amalgamation-3310100" "D:\CppLib\SQLite\sqlite-dll-win32-x86-3310100" sqlite3.lib "D:\BallanceModLoader"')
-    sys.exit(1)
+# get basic cfg, such as build type, and vt version
+while True:
+    input_build_type = input('Choose build type(plugin, standalone): ')
+    if input_build_type not in valid_build_type:
+        print("Invalid build type!")
+    else:
+        break
 
-input_build_type = sys.argv[1]
-if input_build_type not in valid_build_type:
-    print("Invalid build_type!")
-    sys.exit(1)
+valid_vtver_for_this_type = valid_virtools_plugin_ver if input_build_type == build_type_plugin else valid_virtools_standalone_ver
+while True:
+    input_virtools_version = input('Choose virtools version({}): '.format(', '.join(valid_vtver_for_this_type)))
+    if input_virtools_version not in valid_vtver_for_this_type:
+        print("Invalid virtools version!")
+    else:
+        break
 
-input_virtools_version = sys.argv[2]
-if input_build_type == build_type_standalone and input_virtools_version not in valid_virtools_standalone_ver:
-    print("Invalid virtools_version!")
-    sys.exit(1)
-elif input_build_type == build_type_plugin and input_virtools_version not in valid_virtools_plugin_ver:
-    print("Invalid virtools_version!")
-    sys.exit(1)
+# collect sqlite library data
+while True:
+    input_sqlite_header_path = input('SQLite header folder path: ')
+    if not os.path.isdir(input_sqlite_header_path):
+        print("Invalid SQLite header folder!")
+    else:
+        break
 
-input_virtools_root_path = sys.argv[3]
-input_sqlite_header_path = sys.argv[4]
-input_sqlite_lib_path = sys.argv[5]
-input_sqlite_attach_ref = sys.argv[6]
-input_bml_path = sys.argv[7]
+while True:
+    input_sqlite_lib_path = input('SQLite lib file path: ')
+    if not os.path.isfile(input_sqlite_lib_path):
+        print("Invalid SQLite lib file!")
+    else:
+        break
+
+# collect virtools sdk data
+if input_virtools_version != '21':
+    # if we do not use virtools 21, we order get original virtools SDK
+    while True:
+        input_virtools_root_path = input('Virtools root path: ')
+        if not os.path.isdir(input_virtools_root_path):
+            print("Invalid virtools root path!")
+        else:
+            break
+else:
+    # if we are in virtools 21 environment, we have 2 choose aboud used virtools sdk
+    # one is gamepiaynmo and another one is doyagu
+    # allow user choose a proper one from them and input their corresponding path about cloned repository.
+    # also order a proper runtime environment for debug
+    while True:
+        input_vt21_reverse_work_type = input('Choose Virtools 2.1 reverse work source(gamepiaynmo, doyagu): ')
+        if input_vt21_reverse_work_type not in valid_vt21_reverse_work_type:
+            print("Invalid Virtools 2.1 reverse work source!")
+        else:
+            break
+    while True:
+        input_vt21_reverse_work_path =  input('Virtools 2.1 reverse work root path: ')
+        if not os.path.isdir(input_vt21_reverse_work_path):
+            print("Invalid Virtools 2.1 reverse work root path!")
+        else:
+            break
+    while True:
+        input_vt21_runtime_path =  input('Virtools 2.1 runtime path: ')
+        if not os.path.isdir(input_vt21_runtime_path):
+            print("Invalid Virtools 2.1 runtime path!")
+        else:
+            break
 
 # ======================== construct some path
 # .......todo
 
+# build sqlite related data
 sqlite_header_path = input_sqlite_header_path
-sqlite_lib_path = input_sqlite_lib_path
-sqlite_attach_ref = input_sqlite_attach_ref
+(sqlite_lib_path, sqlite_lib_filename) = os.path.split(input_sqlite_lib_path)
 
+# virtools version macro
 virtools_ver = 'VIRTOOLS_' + input_virtools_version
-virtools_debug_root = input_virtools_root_path
 
+# build type macro, and some essential build macros, linked lib
 if input_build_type == build_type_plugin:
     virtools_build_type = 'VIRTOOLS_PLUGIN'
     virtools_build_suffix = 'dll'
     virtools_module_define = 'SuperScriptMaterializer.def'
-    virtools_debug_commandline = ''
-    virtools_debug_target = os.path.join(input_virtools_root_path, executable_virtools[input_virtools_version])
-    virtools_output_path = os.path.join(input_virtools_root_path, 'InterfacePlugins')
-    virtools_attach_ref = virtools_attach_ref_plugin_dict[input_virtools_version]
-    virtools_extra_macro = virtools_extra_macro_plugin_dict[input_virtools_version]
+    virtools_attached_lib = virtools_attached_lib_plugin_dict[input_virtools_version]
+    virtools_std_macro = virtools_std_macro_plugin_dict[input_virtools_version]
 elif input_build_type == build_type_standalone:
     virtools_build_type = 'VIRTOOLS_STANDALONE'
     virtools_build_suffix = 'exe'
     virtools_module_define = ''
+    virtools_attached_lib = virtools_attached_lib_standalone_dict[input_virtools_version]
+    virtools_std_macro = virtools_std_macro_standalone_dict[input_virtools_version]
+
+# debug configuration and output path
+if input_virtools_version == '21':
+    # virtools 21 onlt allow standalone build type
+    # we copy it and specific some field
+    virtools_debug_root = iinput_vt21_runtime_path
     virtools_debug_commandline = 'test.nmo test_script.db test_env.db'
-    virtools_debug_target = os.path.join(input_virtools_root_path, 'SuperScriptMaterializer.exe')
-    virtools_output_path = input_virtools_root_path
-    virtools_attach_ref = virtools_attach_ref_standalone_dict[input_virtools_version]
-    virtools_extra_macro = virtools_extra_macro_standalone_dict[input_virtools_version]
+    virtools_debug_target = os.path.join(input_vt21_runtime_path, 'SuperScriptMaterializer.exe')
+    virtools_output_path = input_vt21_runtime_path
+else:
+    # in original virtools sdk environment
+    # output file according to build type
+    virtools_debug_root = input_virtools_root_path
+    if input_build_type == build_type_plugin:
+        virtools_debug_commandline = ''
+        virtools_debug_target = os.path.join(input_virtools_root_path, executable_virtools[input_virtools_version])
+        virtools_output_path = os.path.join(input_virtools_root_path, 'InterfacePlugins')
+    else:
+        virtools_debug_commandline = 'test.nmo test_script.db test_env.db'
+        virtools_debug_target = os.path.join(input_virtools_root_path, 'SuperScriptMaterializer.exe')
+        virtools_output_path = input_virtools_root_path
 
 # make sure the last char of output_path is slash
 if virtools_output_path[-1] != '\\' or virtools_output_path[-1] != '/':
     virtools_output_path = virtools_output_path + '\\'
 
-# in virtools 2.1, we use bml, so we need add bml macro and set virtools header and virtools lib to blank
-# because all virtools file have been imported in project
+# virtools compile and link options
+# we need do different strategy for virtools 2.1 and anything else virtools version
 if input_virtools_version == '21':
-    bml_special_macro = 'BML_EXPORT='
-    virtools_header_path = os.path.join(input_bml_path, 'virtools')
-    virtools_lib_path = ''
+    # the reverse work of doyagu and gamepiaynmo is different, so we need to 
+    # use them differently
+    if input_vt21_reverse_work_type == 'doyagu':
+        # doyagu do not need any extra macro
+        virtools_extra_macro = ''
+        virtools_header_path = os.path.join(input_vt21_reverse_work_path, 'Include')
+        virtools_lib_path = os.path.join(input_vt21_reverse_work_path, 'Lib')
+    else:
+        # gamepiaynmo need a special macro but his proj do not need any link,
+        # instead, we need compile it fully which will be implemented in following code
+        bml_special_macro = 'BML_EXPORT='
+        virtools_header_path = os.path.join(input_vt21_reverse_work_path, 'virtools')
+        virtools_lib_path = ''
 else:
-    bml_special_macro = ''
+    virtools_extra_macro = ''
     if input_virtools_version == '25':
         virtools_header_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Includes')
         virtools_lib_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Lib')
@@ -179,6 +249,7 @@ else:
 
 # ======================== create document
 
+# create header
 dom = minidom.getDOMImplementation().createDocument(None, 'Project', None)
 root = dom.documentElement
 root.setAttribute('ToolsVersion', '4.0')
@@ -190,6 +261,7 @@ root.appendChild(cache)
 
 # ======================== write build type
 # due to build chain v100 shit design, this configuration onlt can be modified in .vcxproj
+# so these code were annotated
 '''
 for bt in ('Debug', 'Release'):
     node_build_type = dom.createElement('PropertyGroup')
@@ -235,29 +307,36 @@ root.appendChild(cache)
 node_item_group = dom.createElement('ItemGroup')
 root.appendChild(node_item_group)
 
+# build type distinguish macro
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_VER', virtools_ver)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_TYPE', virtools_build_type)
+# header and libs
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_HEADER_PATH', virtools_header_path)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_LIB_PATH', virtools_lib_path)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_LIB_FILENAME', virtools_attached_lib)
 write_macro(dom, node_property_group, node_item_group, 'SQLITE_HEADER_PATH', sqlite_header_path)
 write_macro(dom, node_property_group, node_item_group, 'SQLITE_LIB_PATH', sqlite_lib_path)
+write_macro(dom, node_property_group, node_item_group, 'SQLITE_LIB_FILENAME', sqlite_lib_filename)
+# output and debug
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_OUTPUT_PATH', virtools_output_path)
-write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_TYPE', virtools_build_type)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_TARGET', virtools_debug_target)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_ROOT', virtools_debug_root)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_DEBUG_COMMANDLINE', virtools_debug_commandline)
-write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_SUFFIX', virtools_build_suffix)
-write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_VER', virtools_ver)
-write_macro(dom, node_property_group, node_item_group, 'BML_SPECIAL_MACRO', bml_special_macro)
-write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_ATTACH_REF', virtools_attach_ref)
-write_macro(dom, node_property_group, node_item_group, 'SQLITE_ATTACH_REF', sqlite_attach_ref)
-write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_MODULE_DEFINE', virtools_module_define)
+# essential build macro
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_STD_MACRO', virtools_std_macro)
 write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_EXTRA_MACRO', virtools_extra_macro)
+# misc macro
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_BUILD_SUFFIX', virtools_build_suffix)
+write_macro(dom, node_property_group, node_item_group, 'VIRTOOLS_MODULE_DEFINE', virtools_module_define)
 
 # ======================== write extra compile
 
-if input_virtools_version == '21':
+# if we using gamepiaynmp vt21 reverse work
+# we need add all his cpp file into our compile list
+if input_virtools_version == '21' and input_vt21_reverse_work_type == 'gamepiaynmo':
     header_item_group = dom.createElement('ItemGroup')
     cpp_item_group = dom.createElement('ItemGroup')
-    bml_virtools_path = os.path.join(input_bml_path, 'virtools')
+    bml_virtools_path = os.path.join(input_vt21_reverse_work_path, 'virtools')
     for folderName, subfolders, filenames in os.walk(bml_virtools_path):
         for filename in filenames:
             write_cl(dom, header_item_group, cpp_item_group, os.path.join(folderName, filename))

@@ -20,7 +20,7 @@
 按如下格式运行指令：
 
 ```
-python3 mk_materializer_cfg.py [plugin|standalone] [21|25|35|40|50] [virtools_root_path] [sqlite_header] [sqlite_lib] [sqlite attach ref] [bml path]
+python3 mk_materializer_cfg.py [plugin|standalone] [21|25|35|40|50] [virtools_root_path] [sqlite_header] [sqlite_lib] [bml path]
 ```
 
 每一项参数的含义：
@@ -28,9 +28,8 @@ python3 mk_materializer_cfg.py [plugin|standalone] [21|25|35|40|50] [virtools_ro
 * `[plugin|standalone]`：编译为插件还是独立程序
 * `[21|25|35|40|50]`：Virtools版本
 * `[virtools_root_path]`：Virtools Dev的根目录，用于Virtools SDK的头文件，链接库的寻找，也决定程序编译后的输出位置
-* `[sqlite_header]`：SQlite头文件路径
-* `[sqlite_lib]`：SQlite链接库的路径，用于找到下一项
-* `[sqlite attach ref]`：SQlite链接库，通常来说是`sqlite3.lib`
+* `[sqlite_header]`：SQlite头文件路径，通常来说指向SQlite头文件所在的文件夹
+* `[sqlite_lib]`：SQlite链接库的路径，通常来说是指向`sqlite3.lib`的路径
 * `[bml path]`：BML的路径，只有在以Virtools 2.1为目标编译时才有用
 
 以下是一些指令示例：
