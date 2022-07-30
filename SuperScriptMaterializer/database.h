@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include "virtools_compatible.h"
 
 typedef long EXPAND_CK_ID;
 enum bLinkInputOutputType {
@@ -325,7 +326,7 @@ public:
 	void write_script_pLink(dbdoc_script_pLink& data);
 	void write_script_pOper(dbdoc_script_pOper& data);
 	void write_script_eLink(dbdoc_script_eLink& data);
-	BOOL write_script_pAttr(dbdoc_script_pAttr& data);
+	void write_script_pAttr(dbdoc_script_pAttr& data, BOOL* already_exist);
 
 	void write_msg(dbdoc_msg& data);
 

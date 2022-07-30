@@ -291,13 +291,15 @@ void proc_pAttr(CKContext* ctx, DocumentDatabase* mDb, dbDocDataStructHelper* he
 	else helper->_db_pAttr->type = "!!UNKNOW TYPE!!"; //unknow type
 	copyGuid(cache->GetGUID(), helper->_db_pAttr->type_guid);
 
-	if (!mDb->write_script_pAttr(helper->_db_pAttr))
-		return;
+	BOOL already_exist = FALSE;
+	mDb->write_script_pAttr(helper->_db_pAttr, &already_exist);
+	if (!already_exist) {
+		//not duplicated, continue write property
+		CKObject* host = cache->GetOwner();
+		helper_pDataExport("attr.host_id", (long)host->GetID(), mDb, helper, cache->GetID());
+		helper_pDataExport("attr.host_name", host->GetName(), mDb, helper, cache->GetID());
+	}
 
-	//not duplicated, continue write property
-	CKObject* host = cache->GetOwner();
-	helper_pDataExport("attr.host_id", (long)host->GetID(), mDb, helper, cache->GetID());
-	helper_pDataExport("attr.host_name", host->GetName(), mDb, helper, cache->GetID());
 }
 
 //============================helper for pLocal data export
@@ -393,7 +395,7 @@ void IterateBehavior(CKContext* ctx, CKBehavior* bhv, DocumentDatabase* mDb, dbD
 	//pLocal
 	for (i = 0, count = bhv->GetLocalParameterCount(); i < count; i++)
 		proc_pLocal(bhv->GetLocalParameter(i), mDb, helper, bhv->GetID(),
-			bhv->IsLocalParameterSetting(i));
+		bhv->IsLocalParameterSetting(i));
 	//pOper
 	for (i = 0, count = bhv->GetParameterOperationCount(); i < count; i++)
 		proc_pOper(ctx, bhv->GetParameterOperation(i), mDb, helper, bhv->GetID());
@@ -417,7 +419,7 @@ void DigParameterData(CKParameterLocal* p, DocumentDatabase* mDb, dbDocDataStruc
 
 		CK_CLASSID none_classid = p->GetValueObject(false)->GetClassID();
 		CKParameterType none_type = helper->_parameterManager->ClassIDToType(none_classid);
-		helper_pDataExport("type",helper->_parameterManager->ParameterTypeToName(none_type), mDb, helper, parents);
+		helper_pDataExport("type", helper->_parameterManager->ParameterTypeToName(none_type), mDb, helper, parents);
 		return;
 	}
 	//float
@@ -528,7 +530,7 @@ void DigParameterData(CKParameterLocal* p, DocumentDatabase* mDb, dbDocDataStruc
 	unknowType = TRUE;
 	//if it gets here, we have no idea what it really is. so simply dump it.
 	//buffer-like
-	if (unknowType || t == CKPGUID_VOIDBUF 
+	if (unknowType || t == CKPGUID_VOIDBUF
 #if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
 		|| t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS
 #endif

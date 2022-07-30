@@ -118,7 +118,7 @@ BOOL DocumentDatabase::Init() {
 	SafeSqlExec("CREATE TABLE [script] ([thisobj] INTEGER, [name] TEXT, [index] INTEGER, [behavior] INTEGER);");
 	SafeSqlExec("CREATE TABLE [script_behavior] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] TEXT, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count] TEXT, [parent] INTEGER);");
 	SafeSqlExec("CREATE TABLE [script_pTarget] ([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);");
-	SafeSqlExec("CREATE TABLE [script_pIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);");
+	SafeSqlExec("CREATE TABLE [script_pIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER, [direct_source] INTEGER, [shared_source] INTEGER);");
 	SafeSqlExec("CREATE TABLE [script_pOut] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER);");
 	SafeSqlExec("CREATE TABLE [script_bIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [parent] INTEGER);");
 	SafeSqlExec("CREATE TABLE [script_bOut] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [parent] INTEGER);");
@@ -191,13 +191,13 @@ BOOL EnvironmentDatabase::Finalize() {
 
 #pragma endregion
 
-#pragma region write func
-
 #define TryGetStmtCache(str_sql) static sqlite3_stmt* stmt = NULL; \
 if (stmt == NULL) { \
 	stmt = CreateStmt(str_sql); \
 	if (stmt == NULL) return; \
 }
+
+#pragma region document database
 
 void DocumentDatabase::write_script(dbdoc_script& data) {
 	if (mDb == NULL) return;
@@ -235,8 +235,7 @@ void DocumentDatabase::write_script_behavior(dbdoc_script_behavior& data) {
 void DocumentDatabase::write_script_pTarget(dbdoc_script_pTarget& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(2, "INSERT INTO [script_pTarget] VALUES (?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pTarget] VALUES (?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -252,8 +251,7 @@ void DocumentDatabase::write_script_pTarget(dbdoc_script_pTarget& data) {
 void DocumentDatabase::write_script_pIn(dbdoc_script_pIn& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(3, "INSERT INTO [script_pIn] VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pIn] VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -270,8 +268,7 @@ void DocumentDatabase::write_script_pIn(dbdoc_script_pIn& data) {
 void DocumentDatabase::write_script_pOut(dbdoc_script_pOut& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(4, "INSERT INTO [script_pOut] VALUES (?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pOut] VALUES (?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -286,8 +283,7 @@ void DocumentDatabase::write_script_pOut(dbdoc_script_pOut& data) {
 void DocumentDatabase::write_script_bIn(dbdoc_script_bIn& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(5, "INSERT INTO [script_bIn] VALUES (?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_bIn] VALUES (?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -300,8 +296,7 @@ void DocumentDatabase::write_script_bIn(dbdoc_script_bIn& data) {
 void DocumentDatabase::write_script_bOut(dbdoc_script_bOut& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(6, "INSERT INTO [script_bOut] VALUES (?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_bOut] VALUES (?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -314,8 +309,7 @@ void DocumentDatabase::write_script_bOut(dbdoc_script_bOut& data) {
 void DocumentDatabase::write_script_bLink(dbdoc_script_bLink& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(7, "INSERT INTO [script_bLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_bLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.input);
@@ -334,8 +328,7 @@ void DocumentDatabase::write_script_bLink(dbdoc_script_bLink& data) {
 void DocumentDatabase::write_script_pLocal(dbdoc_script_pLocal& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(8, "INSERT INTO [script_pLocal] VALUES (?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pLocal] VALUES (?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -350,8 +343,7 @@ void DocumentDatabase::write_script_pLocal(dbdoc_script_pLocal& data) {
 void DocumentDatabase::write_script_pLink(dbdoc_script_pLink& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(9, "INSERT INTO [script_pLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.input);
@@ -368,24 +360,10 @@ void DocumentDatabase::write_script_pLink(dbdoc_script_pLink& data) {
 	sqlite3_step(stmt);
 }
 
-//void DocumentDatabase::write_pData(db_script_pData* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(10, "INSERT INTO pData VALUES (?, ?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_text(stmt, 1, data.field.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_text(stmt, 2, data.data.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 3, data.parent);
-//	sqlite3_step(stmt);
-//}
-
 void DocumentDatabase::write_script_pOper(dbdoc_script_pOper& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(11, "INSERT INTO [script_pOper] VALUES (?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pOper] VALUES (?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -398,8 +376,7 @@ void DocumentDatabase::write_script_pOper(dbdoc_script_pOper& data) {
 void DocumentDatabase::write_script_eLink(dbdoc_script_eLink& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(12, "INSERT INTO [script_eLink] VALUES (?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_eLink] VALUES (?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.export_obj);
@@ -410,15 +387,22 @@ void DocumentDatabase::write_script_eLink(dbdoc_script_eLink& data) {
 	sqlite3_step(stmt);
 }
 
-BOOL DocumentDatabase::write_script_pAttr(dbdoc_script_pAttr& data) {
-	if (mDb == NULL) return TRUE;
+void DocumentDatabase::write_script_pAttr(dbdoc_script_pAttr& data, BOOL* already_exist) {
+	// check duplication first
+	if (m_pAttrUniqueEnsurance.find(data.thisobj) != m_pAttrUniqueEnsurance.end()) {
+		//existing item. skip it to make sure unique
+		*already_exist = TRUE;
+		return;
+	} else {
+		//add this item
+		m_pAttrUniqueEnsurance.insert(data.thisobj);
+		*already_exist = FALSE;
+	}
 
-	if (m_pAttrUniqueEnsurance->find(data.thisobj) != m_pAttrUniqueEnsurance->end())
-		return FALSE;	//existing item. skip it to make sure unique
-	m_pAttrUniqueEnsurance->insert(data.thisobj);	//add this item
+	// then check database validation
+	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(13, "INSERT INTO [script_pAttr] VALUES (?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [script_pAttr] VALUES (?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.thisobj);
@@ -427,91 +411,82 @@ BOOL DocumentDatabase::write_script_pAttr(dbdoc_script_pAttr& data) {
 	sqlite3_bind_text(stmt, 4, data.type_guid.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_step(stmt);
 
-	return TRUE;
+	return;
 }
 
-//
-//void dataDatabase::write_obj(dbdoc_array* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(0, "INSERT INTO objParam VALUES (?, ?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_int(stmt, 1, data.thisobj);
-//	sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 3, data.type_classid);
-//	sqlite3_bind_text(stmt, 4, data.type_guid.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_text(stmt, 5, data.type_name.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 6, data.rows);
-//	sqlite3_bind_int(stmt, 7, data.columns);
-//	sqlite3_step(stmt);
-//}
-//
-//void dataDatabase::write_objHeader(dbdoc_array_header* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(1, "INSERT INTO objParam VALUES (?, ?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_int(stmt, 1, data.index);
-//	sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 3, data->type);
-//	sqlite3_bind_text(stmt, 4, data->param_type.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_text(stmt, 5, data->param_type_guid.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 6, data->parent);
-//	sqlite3_step(stmt);
-//}
-//
-//void dataDatabase::write_objBody(dbdoc_array_cell* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(2, "INSERT INTO objParam VALUES (?, ?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_int(stmt, 1, data->row);
-//	sqlite3_bind_int(stmt, 2, data->column);
-//	sqlite3_bind_text(stmt, 3, data->showcase.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 4, data->inner_object);
-//	sqlite3_bind_int(stmt, 5, data->inner_param);
-//	sqlite3_bind_int(stmt, 6, data->parent);
-//	sqlite3_step(stmt);
-//}
-//
-//void dataDatabase::write_objParam(db_data_objParam* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(3, "INSERT INTO objParam VALUES (?, ?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_text(stmt, 1, data->field.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_text(stmt, 2, data->data.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_bind_int(stmt, 3, data->parent);
-//	sqlite3_step(stmt);
-//}
-//
-//void dataDatabase::write_msg(dbdoc_msg* data) {
-//	if (mDb == NULL) return;
-//
-//	sqlite3_stmt* stmt = NULL;
-//	TryGetStmtCache(4, "INSERT INTO msg VALUES (?, ?)");
-//	sqlite3_reset(stmt);
-//
-//	sqlite3_bind_int(stmt, 1, data->index);
-//	sqlite3_bind_text(stmt, 2, data->name.c_str(), -1, SQLITE_TRANSIENT);
-//	sqlite3_step(stmt);
-//}
+void DocumentDatabase::write_msg(dbdoc_msg& data) {
+	if (mDb == NULL) return;
 
+	TryGetStmtCache("INSERT INTO [msg] VALUES (?, ?)");
+	sqlite3_reset(stmt);
 
+	sqlite3_bind_int(stmt, 1, data.index);
+	sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_step(stmt);
+}
+
+void DocumentDatabase::write_array(dbdoc_array& data) {
+	if (mDb == NULL) return;
+
+	TryGetStmtCache("INSERT INTO [array] VALUES (?, ?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data.thisobj);
+	sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data.rows);
+	sqlite3_bind_int(stmt, 4, data.columns);
+	sqlite3_step(stmt);
+}
+
+void DocumentDatabase::write_array_header(dbdoc_array_header& data) {
+	if (mDb == NULL) return;
+
+	TryGetStmtCache("INSERT INTO [array_header] VALUES (?, ?, ?, ?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data.index);
+	sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data.type);
+	sqlite3_bind_text(stmt, 4, data.param_type.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 5, data.param_type_guid.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 6, data.parent);
+	sqlite3_step(stmt);
+}
+
+void DocumentDatabase::write_array_cell(dbdoc_array_cell& data) {
+	if (mDb == NULL) return;
+
+	TryGetStmtCache("INSERT INTO [array_cell] VALUES (?, ?, ?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_int(stmt, 1, data.row);
+	sqlite3_bind_int(stmt, 2, data.column);
+	sqlite3_bind_text(stmt, 3, data.showcase.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 4, data.inner_param);
+	sqlite3_bind_int(stmt, 5, data.parent);
+	sqlite3_step(stmt);
+}
+
+void DocumentDatabase::write_data(dbdoc_data& data) {
+	if (mDb == NULL) return;
+
+	TryGetStmtCache("INSERT INTO [data] VALUES (?, ?, ?)");
+	sqlite3_reset(stmt);
+
+	sqlite3_bind_text(stmt, 1, data.field.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 2, data.data.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 3, data.parent);
+	sqlite3_step(stmt);
+}
+
+#pragma endregion
+
+#pragma region environment database
 
 void EnvironmentDatabase::write_op(dbenv_op& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(0, "INSERT INTO [op] VALUES (?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [op] VALUES (?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, (int)data.funcPtr);
@@ -527,8 +502,7 @@ void EnvironmentDatabase::write_op(dbenv_op& data) {
 void EnvironmentDatabase::write_param(dbenv_param& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(1, "INSERT INTO [param] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [param] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.index);
@@ -555,8 +529,7 @@ void EnvironmentDatabase::write_param(dbenv_param& data) {
 void EnvironmentDatabase::write_attr(dbenv_attr& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(2, "INSERT INTO [attr] VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [attr] VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.index);
@@ -573,8 +546,7 @@ void EnvironmentDatabase::write_attr(dbenv_attr& data) {
 void EnvironmentDatabase::write_plugin(dbenv_plugin& data) {
 	if (mDb == NULL) return;
 
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(3, "INSERT INTO [plugin] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [plugin] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_int(stmt, 1, data.dll_index);
@@ -582,14 +554,13 @@ void EnvironmentDatabase::write_plugin(dbenv_plugin& data) {
 	sqlite3_bind_int(stmt, 3, data.plugin_index);
 	sqlite3_bind_text(stmt, 4, data.category.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_bind_int(stmt, 5, data.active);
-	sqlite3_bind_int(stmt, 6, data.needed_by_file);
-	sqlite3_bind_text(stmt, 7, data.guid.c_str(), -1, SQLITE_TRANSIENT);
-	sqlite3_bind_text(stmt, 8, data.desc.c_str(), -1, SQLITE_TRANSIENT);
-	sqlite3_bind_text(stmt, 9, data.author.c_str(), -1, SQLITE_TRANSIENT);
-	sqlite3_bind_text(stmt, 10, data.summary.c_str(), -1, SQLITE_TRANSIENT);
-	sqlite3_bind_int(stmt, 11, data.version);
-	sqlite3_bind_int(stmt, 12, (int)data.func_init);
-	sqlite3_bind_int(stmt, 13, (int)data.func_exit);
+	sqlite3_bind_text(stmt, 6, data.guid.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 7, data.desc.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 8, data.author.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt, 9, data.summary.c_str(), -1, SQLITE_TRANSIENT);
+	sqlite3_bind_int(stmt, 10, data.version);
+	sqlite3_bind_int(stmt, 11, (int)data.func_init);
+	sqlite3_bind_int(stmt, 12, (int)data.func_exit);
 	sqlite3_step(stmt);
 }
 
@@ -597,8 +568,7 @@ void EnvironmentDatabase::write_variable(dbenv_variable& data) {
 	if (mDb == NULL) return;
 
 #if !defined(VIRTOOLS_21)
-	sqlite3_stmt* stmt = NULL;
-	TryGetStmtCache(4, "INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
+	TryGetStmtCache("INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?)");
 	sqlite3_reset(stmt);
 
 	sqlite3_bind_text(stmt, 1, data.name.c_str(), -1, SQLITE_TRANSIENT);
@@ -611,8 +581,7 @@ void EnvironmentDatabase::write_variable(dbenv_variable& data) {
 #endif
 }
 
-#undef TryGetStmtCache
-
 #pragma endregion
 
+#undef TryGetStmtCache
 
