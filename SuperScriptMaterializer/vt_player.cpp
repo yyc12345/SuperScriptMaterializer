@@ -9,7 +9,7 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 	printf("Homepage: https://github.com/yyc12345/SuperScriptMaterializer\n");
 	printf("Report bug: https://github.com/yyc12345/SuperScriptMaterializer/issues\n");
 
-	// ====================== init ck2 engine
+	// ====================== Init ck2 engine
 #if defined(VIRTOOLS_21)
 	CommonAssert(LoadLibrary("CK2.dll") != NULL, "Error loading CK2.dll");
 #endif
@@ -34,8 +34,8 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 #endif
 		printf("Parsing %s...\n", virtools_composition);
 
-		// ====================== do database export
-		// define and init
+		// ====================== do SSMaterializerDatabase export
+		// define and Init
 		scriptDatabase* _script_db = new scriptDatabase();
 		dbScriptDataStructHelper* _script_helper = new dbScriptDataStructHelper();
 		envDatabase* _env_db = new envDatabase();
@@ -88,13 +88,13 @@ void PlayerMain(const char* virtools_composition, const char* script_db_path, co
 	context->ClearAll();
 
 	// todo: Virtools 4.0 standalone version throw exception in there, but i don't knwo why
-	// but it doesn't affect database export, perhaps
+	// but it doesn't affect SSMaterializerDatabase export, perhaps
 	CKCloseContext(context);
 
 	CKShutdown();
 
 	// todo: Virtools 2.5 standalone version throw exception in there, but i don't knwo why
-	// but it doesn't affect database export, perhaps
+	// but it doesn't affect SSMaterializerDatabase export, perhaps
 }
 
 void CommonAssert(BOOL condition, const char* desc) {

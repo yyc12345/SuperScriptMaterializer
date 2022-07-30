@@ -5,7 +5,7 @@
 #define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
 #define safeStringCopy(storage,str) storage=(str)?(str):"";
 
-void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IterateParameterOperation(CKParameterManager* parameterManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	int count = parameterManager->GetParameterOperationCount();
 	CKOperationDesc* opList = NULL;
 	int listCount = 0, cacheListCount = 0;
@@ -32,14 +32,14 @@ void IterateParameterOperation(CKParameterManager* parameterManager, envDatabase
 			copyGuid(opList[j].ResGuid, helper->_db_op->out_guid);
 			helper->_db_op->funcPtr = opList[j].Fct;
 
-			db->write_op(helper->_db_op);
+			mDb->write_op(helper->_db_op);
 		}
 	}
 	if (opList != NULL) free(opList);
 
 }
 
-void IterateParameter(CKParameterManager* parameterManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IterateParameter(CKParameterManager* parameterManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	int count = parameterManager->GetParameterTypesCount();
 	CKParameterTypeDesc* desc = NULL;
 	for (int i = 0; i < count; i++) {
@@ -70,21 +70,21 @@ void IterateParameter(CKParameterManager* parameterManager, envDatabase* db, dbE
 		helper->_db_param->cid = desc->Cid;
 		copyGuid(desc->Saver_Manager, helper->_db_param->saver_manager);
 
-		db->write_param(helper->_db_param);
+		mDb->write_param(helper->_db_param);
 	}
 }
 
-void IterateMessage(CKMessageManager* msgManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IterateMessage(CKMessageManager* msgManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	int count = msgManager->GetMessageTypeCount();
 	for (int i = 0; i < count; i++) {
 		helper->_db_envMsg->index = i;
 		helper->_db_envMsg->name = msgManager->GetMessageTypeName(i);
 
-		db->write_msg(helper->_db_envMsg);
+		mDb->write_msg(helper->_db_envMsg);
 	}
 }
 
-void IterateAttribute(CKAttributeManager* attrManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IterateAttribute(CKAttributeManager* attrManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	int count = attrManager->GetAttributeCount();
 	for (int i = 0; i < count; i++) {
 		helper->_db_attr->index = i;
@@ -96,11 +96,11 @@ void IterateAttribute(CKAttributeManager* attrManager, envDatabase* db, dbEnvDat
 		helper->_db_attr->compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
 		helper->_db_attr->default_value = attrManager->GetAttributeDefaultValue(i) != NULL ? attrManager->GetAttributeDefaultValue(i) : "";
 
-		db->write_attr(helper->_db_attr);
+		mDb->write_attr(helper->_db_attr);
 	}
 }
 
-void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IteratePlugin(CKPluginManager* plgManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	for (int i = 0; i <= 7; i++) {
 		int catCount = plgManager->GetPluginCount(i);
 		helper->_db_plugin->category = plgManager->GetCategoryName(i);
@@ -121,13 +121,13 @@ void IteratePlugin(CKPluginManager* plgManager, envDatabase* db, dbEnvDataStruct
 			helper->_db_plugin->func_init = plgInfo->m_InitInstanceFct;
 			helper->_db_plugin->func_exit = plgInfo->m_ExitInstanceFct;
 
-			db->write_plugin(helper->_db_plugin);
+			mDb->write_plugin(helper->_db_plugin);
 		}
 	}
 }
 
 #if !defined(VIRTOOLS_21)
-void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataStructHelper* helper) {
+void IterateVariable(CKVariableManager* varManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	CKVariableManager::Iterator it = varManager->GetVariableIterator();
 	CKVariableManager::Variable* varobj = NULL;
 	XString dataCopyCache;
@@ -141,7 +141,7 @@ void IterateVariable(CKVariableManager* varManager, envDatabase* db, dbEnvDataSt
 		varobj->GetStringValue(dataCopyCache);
 		helper->_db_variable->data = dataCopyCache.CStr();
 
-		db->write_variable(helper->_db_variable);
+		mDb->write_variable(helper->_db_variable);
 	}
 }
 #endif

@@ -7,12 +7,12 @@
 class combined_database {
 public:
 	combined_database();
-	db_shared_dictData* get_struct();
+	dbdoc_data* get_struct();
 	char* get_string_cache();
-	void write_dict(db_shared_dictData* data);
+	void write_dict(dbdoc_data* data);
 
-	scriptDatabase* db_script;
-	dbScriptDataStructHelper* helper_script;
+	DocumentDatabase* db_script;
+	dbDocDataStructHelper* helper_script;
 	dataDatabase* db_data;
 	dbDataDataStructHelper* helper_data;
 };
@@ -21,11 +21,11 @@ public:
 #define safeStringCopy(storage,str) storage=(str)?(str):"";
 
 void DigParameterData(CKParameter* p, combined_database* helper, EXPAND_CK_ID parents);
-void DigParameterData(CKParameter* p, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents);
-void DigParameterData(CKParameter* p, dataDatabase* db, dbDataDataStructHelper* helper, EXPAND_CK_ID parents);
+void DigParameterData(CKParameter* p, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents);
+void DigParameterData(CKParameter* p, dataDatabase* mDb, dbDataDataStructHelper* helper, EXPAND_CK_ID parents);
 
-void helper_FillStruct(const char* field, long data, db_shared_dictData* helper);
-void helper_FillStruct(const char* field, float data, db_shared_dictData* helper);
-void helper_FillStruct(const char* field, const char* data, db_shared_dictData* helper);
+void helper_FillStruct(const char* field, long data, dbdoc_data* helper);
+void helper_FillStruct(const char* field, float data, dbdoc_data* helper);
+void helper_FillStruct(const char* field, const char* data, dbdoc_data* helper);
 
 #endif

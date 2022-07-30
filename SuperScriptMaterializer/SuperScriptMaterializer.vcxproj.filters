@@ -42,6 +42,9 @@
     <ClInclude Include="data_export.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="string_helper.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp">
@@ -69,6 +72,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="data_export.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="string_helper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

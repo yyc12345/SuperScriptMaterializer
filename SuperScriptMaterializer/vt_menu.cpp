@@ -80,25 +80,25 @@ void PluginMenuCallback(int commandID) {
 		switch (commandID) {
 			case 0:
 			{
-				//init file
+				//Init file
 				std::string file;
 				OpenFileDialog(&file);
 				if (file.empty())
 					break;
 				DeleteFile(file.c_str());
 
-				//init resources
-				scriptDatabase* _db = new scriptDatabase();
-				dbScriptDataStructHelper* _helper = new dbScriptDataStructHelper();
-				_db->open(file.c_str());
-				_helper->init(ctx->GetParameterManager());
+				//Init resources
+				DocumentDatabase* _db = new DocumentDatabase();
+				dbDocDataStructHelper* _helper = new dbDocDataStructHelper();
+				_db->Open(file.c_str());
+				_helper->Init(ctx->GetParameterManager());
 
 				//iterate item
 				IterateScript(ctx, _db, _helper);
 
-				//close all resources
+				//Close all resources
 				_helper->dispose();
-				_db->close();
+				_db->Close();
 				delete _helper;
 				delete _db;
 
@@ -107,18 +107,18 @@ void PluginMenuCallback(int commandID) {
 			break;
 			case 1:
 			{
-				//init file
+				//Init file
 				std::string file;
 				OpenFileDialog(&file);
 				if (file.empty())
 					break;
 				DeleteFile(file.c_str());
 
-				//init
-				envDatabase* _db = new envDatabase();
+				//Init
+				EnvironmentDatabase* _db = new EnvironmentDatabase();
 				dbEnvDataStructHelper* _helper = new dbEnvDataStructHelper();
-				_db->open(file.c_str());
-				_helper->init();
+				_db->Open(file.c_str());
+				_helper->Init();
 
 				//iterate parameter operation/param
 				IterateParameterOperation(ctx->GetParameterManager(), _db, _helper);
@@ -132,7 +132,7 @@ void PluginMenuCallback(int commandID) {
 
 				//release all
 				_helper->dispose();
-				_db->close();
+				_db->Close();
 				delete _helper;
 				delete _db;
 

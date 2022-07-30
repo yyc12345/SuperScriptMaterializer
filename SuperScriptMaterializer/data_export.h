@@ -4,6 +4,6 @@
 #include "stdafx.h"
 #include "database.h"
 
-void DigCKObjectData(CKObject* cko, scriptDatabase* db, db_shared_dictData* helper, EXPAND_CK_ID parents);
+void DigCKObjectData(CKObject* cko, DocumentDatabase* mDb, dbdoc_data* helper, EXPAND_CK_ID parents);
 
 #endif

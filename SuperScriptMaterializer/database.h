@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "virtools_compatible.h"
-
-#define STRINGCACHE_SIZE 25565
 
 typedef long EXPAND_CK_ID;
 enum bLinkInputOutputType {
@@ -25,9 +22,16 @@ enum pLinkInputOutputType {
 
 #pragma region data struct define
 
-// =================== script db
+// =================== doc mDb
 
-typedef struct {
+struct dbdoc_script {
+	EXPAND_CK_ID thisobj;
+	std::string host_name;
+	int index;
+	EXPAND_CK_ID behavior;
+};
+
+struct dbdoc_script_behavior {
 	EXPAND_CK_ID thisobj;
 	std::string name;
 	CK_BEHAVIOR_TYPE type;
@@ -39,59 +43,52 @@ typedef struct {
 	//pTarget, pIn, pOut, bIn, bOut
 	std::string pin_count;
 	EXPAND_CK_ID parent;
-}db_script_behavior;
+};
 
-typedef struct {
+struct dbdoc_script_bIO {
 	EXPAND_CK_ID thisobj;
-	std::string host_name;
 	int index;
-	EXPAND_CK_ID behavior;
-}db_script_script;
+	std::string name;
+	EXPAND_CK_ID parent;
+};
+typedef dbdoc_script_bIO dbdoc_script_bIn;
+typedef dbdoc_script_bIO dbdoc_script_bOut;
 
-typedef struct {
+struct dbdoc_script_pTarget {
 	EXPAND_CK_ID thisobj;
 	std::string name;
 	std::string type;
 	std::string type_guid;
-	EXPAND_CK_ID belong_to;
+	EXPAND_CK_ID parent;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
-}db_script_pTarget;
+};
 
-typedef struct {
+struct dbdoc_script_pIn {
 	EXPAND_CK_ID thisobj;
 	int index;
 	std::string name;
 	std::string type;
 	std::string type_guid;
-	EXPAND_CK_ID belong_to;
+	EXPAND_CK_ID parent;
 	EXPAND_CK_ID direct_source;
 	EXPAND_CK_ID shared_source;
-}db_script_pIn;
+};
 
-typedef struct {
+struct dbdoc_script_pOut {
 	EXPAND_CK_ID thisobj;
 	int index;
 	std::string name;
 	std::string type;
 	std::string type_guid;
-	EXPAND_CK_ID belong_to;
-}db_script_pOut;
+	EXPAND_CK_ID parent;
+};
 
-typedef struct {
-	EXPAND_CK_ID thisobj;
-	int index;
-	std::string name;
-	EXPAND_CK_ID belong_to;
-}db_shared_bIO;
-typedef db_shared_bIO db_script_bIn;
-typedef db_shared_bIO db_script_bOut;
-
-typedef struct {
+struct dbdoc_script_bLink {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
 	int delay;
-	EXPAND_CK_ID belong_to;
+	EXPAND_CK_ID parent;
 
 	//additional field
 	EXPAND_CK_ID input_obj;
@@ -100,35 +97,28 @@ typedef struct {
 	EXPAND_CK_ID output_obj;
 	bLinkInputOutputType output_type;
 	int output_index;
-}db_script_bLink;
+};
 
-typedef struct {
+struct dbdoc_script_pLocal {
 	EXPAND_CK_ID thisobj;
 	std::string name;
 	std::string type;
 	std::string type_guid;
 	BOOL is_setting;
-	EXPAND_CK_ID belong_to;
-}db_script_pLocal;
+	EXPAND_CK_ID parent;
+};
 
-typedef struct {
+struct dbdoc_script_pAttr {
 	EXPAND_CK_ID thisobj;
 	std::string name;
 	std::string type;
 	std::string type_guid;
-}db_script_pAttr;
+};
 
-typedef struct {
-	std::string field;
-	std::string data;
-	EXPAND_CK_ID belong_to;
-}db_shared_dictData;
-typedef db_shared_dictData db_script_pData;
-
-typedef struct {
+struct dbdoc_script_pLink {
 	EXPAND_CK_ID input;
 	EXPAND_CK_ID output;
-	EXPAND_CK_ID belong_to;
+	EXPAND_CK_ID parent;
 
 	//additional field
 	EXPAND_CK_ID input_obj;
@@ -139,64 +129,61 @@ typedef struct {
 	pLinkInputOutputType output_type;
 	BOOL output_is_bb;
 	int output_index;
-}db_script_pLink;
+};
 
-typedef struct {
+struct dbdoc_script_pOper {
 	EXPAND_CK_ID thisobj;
 	std::string op;
 	std::string op_guid;
-	EXPAND_CK_ID belong_to;
-}db_script_pOper;
+	EXPAND_CK_ID parent;
+};
 
-typedef struct {
+struct dbdoc_script_eLink {
 	EXPAND_CK_ID export_obj;
 	EXPAND_CK_ID internal_obj;
 	BOOL is_in;
 	int index;
-	EXPAND_CK_ID belong_to;
-}db_script_eLink;
+	EXPAND_CK_ID parent;
+};
 
+struct dbdoc_msg {
+	CKMessageType index;
+	std::string name;
+};
 
-// =================== data db
-
-typedef struct {
+struct dbdoc_array {
 	EXPAND_CK_ID thisobj;
 	std::string name;
-	CK_CLASSID type_classid;
-	std::string type_guid;
-	std::string type_name;
 	int rows;
 	int columns;
-}db_data_obj;
+};
 
-typedef struct {
+struct dbdoc_array_header {
 	int index;
 	std::string name;
 	CK_ARRAYTYPE type;
 	std::string param_type;
 	std::string param_type_guid;
-	EXPAND_CK_ID belong_to;
-}db_data_objHeader;
+	EXPAND_CK_ID parent;
+};
 
-typedef struct {
+struct dbdoc_array_cell {
 	int row;
 	int column;
 	std::string showcase;
-	EXPAND_CK_ID inner_object;
 	EXPAND_CK_ID inner_param;
-	EXPAND_CK_ID belong_to;
-}db_data_objBody;
+	EXPAND_CK_ID parent;
+};
 
-typedef db_shared_dictData db_data_objParam;
+struct dbdoc_data {
+	std::string field;
+	std::string data;
+	EXPAND_CK_ID parent;
+};
 
-typedef struct {
-	CKMessageType index;
-	std::string name;
-}db_data_msg;
+// =================== env mDb
 
-// =================== env db
-
-typedef struct {
+struct dbenv_op {
 	CK_PARAMETEROPERATION funcPtr;
 	std::string in1_guid;
 	std::string in2_guid;
@@ -204,9 +191,9 @@ typedef struct {
 	std::string op_guid;
 	std::string op_name;
 	CKOperationType op_code;
-}db_env_op;
+};
 
-typedef struct {
+struct dbenv_param {
 	CKParameterType index;
 	std::string guid;
 	std::string derived_from;
@@ -225,9 +212,9 @@ typedef struct {
 	CKDWORD dw_flags;
 	CKDWORD cid;
 	std::string saver_manager;
-}db_env_param;
+};
 
-typedef struct {
+struct dbenv_attr {
 	CKAttributeType index;
 	std::string name;
 	CKAttributeCategory category_index;
@@ -236,15 +223,14 @@ typedef struct {
 	CKParameterType param_index;
 	CK_CLASSID compatible_classid;
 	std::string default_value;
-}db_env_attr;
+};
 
-typedef struct {
+struct dbenv_plugin {
 	int dll_index;
 	std::string dll_name;
 	int plugin_index;
 	std::string category;
 	CKBOOL active;
-	CKBOOL needed_by_file;
 	std::string guid;
 	std::string desc;
 	std::string author;
@@ -252,136 +238,124 @@ typedef struct {
 	DWORD version;
 	CK_INITINSTANCEFCT func_init;
 	CK_EXITINSTANCEFCT func_exit;
-}db_env_plugin;
+};
 
-typedef struct {
+struct dbenv_variable {
 	std::string name;
 	std::string desciption;
 	XWORD flags;
 	UNIVERSAL_VAR_TYPE type;
 	std::string representation;
 	std::string data;
-}db_env_variable;
+};
 
 #pragma endregion
 
-class dbScriptDataStructHelper {
-	public:
-	void init(CKParameterManager* paramManager);
-	void dispose();
-
-	char* _stringCache;
-	CKParameterManager* _parameterManager;
-	db_script_behavior* _db_behavior;
-	db_script_script* _db_script;
-	db_script_pTarget* _db_pTarget;
-	db_script_pIn* _db_pIn;
-	db_script_pOut* _db_pOut;
-	db_script_bIn* _db_bIn;
-	db_script_bOut* _db_bOut;
-	db_script_bLink* _db_bLink;
-	db_script_pLocal* _db_pLocal;
-	db_script_pAttr* _db_pAttr;
-	db_script_pLink* _db_pLink;
-	db_script_pData* _db_pData;
-	db_script_pOper* _db_pOper;
-	db_script_eLink* _db_eLink;
-};
-
-class dbDataDataStructHelper {
+class DbDataStructHelper_Doc {
 public:
-	void init(CKParameterManager* paramManager);
-	void dispose();
+	DbDataStructHelper_Doc(CKParameterManager* paramManager);
+	~DbDataStructHelper_Doc();
 
-	char* _stringCache;
-	CKParameterManager* _parameterManager;
-	db_data_obj* _db_obj;
-	db_data_objHeader* _db_objHeader;
-	db_data_objBody* _db_objBody;
-	db_data_objParam* _db_objParam;
-	db_data_msg* _db_msg;
-	
+	CKParameterManager* param_manager;
+
+	dbdoc_script script;
+	dbdoc_script_behavior script_behavior;
+	dbdoc_script_bIn script_bIn;
+	dbdoc_script_bOut script_bOut;
+	dbdoc_script_pIn script_pIn;
+	dbdoc_script_pOut script_pOut;
+	dbdoc_script_bLink script_bLink;
+	dbdoc_script_pLocal script_pLocal;
+	dbdoc_script_pAttr script_pAttr;
+	dbdoc_script_pLink script_pLink;
+	dbdoc_script_pOper script_pOper;
+	dbdoc_script_eLink script_eLink;
+	dbdoc_script_pTarget script_pTarget;
+
+	dbdoc_msg msg;
+
+	dbdoc_array _array;
+	dbdoc_array_header array_header;
+	dbdoc_array_cell array_cell;
+
+	dbdoc_data data;
 };
 
-class dbEnvDataStructHelper {
-	public:
-	void init();
-	void dispose();
-
-	char* _stringCache;
-	db_env_op* _db_op;
-	db_env_param* _db_param;
-	//db_data_msg* _db_envMsg;
-	db_env_attr* _db_attr;
-	db_env_plugin* _db_plugin;
-	db_env_variable* _db_variable;
-};
-
-
-class database {
-	public:
-	void open(const char* file);
-	void close();
-
-	protected:
-	sqlite3_stmt* safeStmt(size_t index);
-	virtual BOOL init() { return TRUE; }
-	virtual BOOL finalJob() { return TRUE; }
-
-	sqlite3* db;
-	std::vector<sqlite3_stmt*>* stmtCache;
-};
-
-class scriptDatabase : public database {
-	public:
-	void write_behavior(db_script_behavior* data);
-	void write_script(db_script_script* data);
-	void write_pTarget(db_script_pTarget* data);
-	void write_pIn(db_script_pIn* data);
-	void write_pOut(db_script_pOut* data);
-	void write_bIn(db_script_bIn* data);
-	void write_bOut(db_script_bOut* data);
-	void write_bLink(db_script_bLink* data);
-	void write_pLocal(db_script_pLocal* data);
-	void write_pLink(db_script_pLink* data);
-	void write_pData(db_script_pData* data);
-	void write_pOper(db_script_pOper* data);
-	void write_eLink(db_script_eLink* data);
-	BOOL write_pAttr(db_script_pAttr* data);
-
-	protected:
-	BOOL init();
-	BOOL finalJob();
-
-	std::set<EXPAND_CK_ID>* pAttrUniqueEnsurance;
-};
-
-class dataDatabase : public database {
+class DbDataStructHelper_Env {
 public:
-	void write_obj(db_data_obj* data);
-	void write_objHeader(db_data_objHeader* data);
-	void write_objBody(db_data_objBody* data);
-	void write_objParam(db_data_objParam* data);
-	void write_msg(db_data_msg* data);
+	DbDataStructHelper_Env();
+	~DbDataStructHelper_Env();
+
+	dbenv_op op;
+	dbenv_param param;
+	dbenv_attr attr;
+	dbenv_plugin plugin;
+	dbenv_variable variable;
+};
+
+
+class SSMaterializerDatabase {
+public:
+	SSMaterializerDatabase(const char* file);
+	virtual ~SSMaterializerDatabase();
 
 protected:
-	BOOL init();
-	BOOL finalJob();
+	sqlite3_stmt* CreateStmt(const char* stmt);
+	virtual BOOL Init() = 0;
+	virtual BOOL Finalize() = 0;
 
+	sqlite3* mDb;
+	std::vector<sqlite3_stmt*> mStmtCache;
 };
 
-class envDatabase : public database {
-	public:
-	void write_op(db_env_op* data);
-	void write_param(db_env_param* data);
-	//void write_msg(db_data_msg* data);
-	void write_attr(db_env_attr* data);
-	void write_plugin(db_env_plugin* data);
-	void write_variable(db_env_variable* data);
+class DocumentDatabase : public SSMaterializerDatabase {
+public:
+	DocumentDatabase(const char* file);
+	virtual ~DocumentDatabase();
 
-	protected:
-	BOOL init();
-	BOOL finalJob();
+	void write_script(dbdoc_script& data);
+	void write_script_behavior(dbdoc_script_behavior& data);
+	void write_script_pTarget(dbdoc_script_pTarget& data);
+	void write_script_pIn(dbdoc_script_pIn& data);
+	void write_script_pOut(dbdoc_script_pOut& data);
+	void write_script_bIn(dbdoc_script_bIn& data);
+	void write_script_bOut(dbdoc_script_bOut& data);
+	void write_script_bLink(dbdoc_script_bLink& data);
+	void write_script_pLocal(dbdoc_script_pLocal& data);
+	void write_script_pLink(dbdoc_script_pLink& data);
+	void write_script_pOper(dbdoc_script_pOper& data);
+	void write_script_eLink(dbdoc_script_eLink& data);
+	BOOL write_script_pAttr(dbdoc_script_pAttr& data);
+
+	void write_msg(dbdoc_msg& data);
+
+	void write_array(dbdoc_array& data);
+	void write_array_header(dbdoc_array_header& data);
+	void write_array_cell(dbdoc_array_cell& data);
+
+	void write_data(dbdoc_data& data);
+
+protected:
+	BOOL Init() override;
+	BOOL Finalize() override;
+
+	std::set<EXPAND_CK_ID> m_pAttrUniqueEnsurance;
+};
+
+class EnvironmentDatabase : public SSMaterializerDatabase {
+public:
+	EnvironmentDatabase(const char* file);
+	virtual ~EnvironmentDatabase();
+
+	void write_op(dbenv_op& data);
+	void write_param(dbenv_param& data);
+	void write_attr(dbenv_attr& data);
+	void write_plugin(dbenv_plugin& data);
+	void write_variable(dbenv_variable& data);
+
+protected:
+	BOOL Init() override;
+	BOOL Finalize() override;
 };
 
 #endif

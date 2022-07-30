@@ -11,7 +11,7 @@
 
 #pragma region inline func
 
-void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
+void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
 	//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
 	CKParameter* directSource = NULL;
 	CKObject* ds_Owner = NULL;
@@ -48,7 +48,7 @@ void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase*
 					helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
 					helper->_db_pLink->input_is_bb = FALSE;
 					helper->_db_pLink->input_index = -1;
-					proc_pAttr(ctx, db, helper, directSource);
+					proc_pAttr(ctx, mDb, helper, directSource);
 					break;
 				default:
 					//normal object, see as virtual bb pLocal shortcut
@@ -56,7 +56,7 @@ void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase*
 					helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
 					helper->_db_pLink->input_is_bb = FALSE;
 					helper->_db_pLink->input_index = -1;
-					proc_pAttr(ctx, db, helper, directSource);
+					proc_pAttr(ctx, mDb, helper, directSource);
 					break;
 			}
 		}
@@ -91,11 +91,11 @@ void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase*
 		helper->_db_pLink->output_index = index;
 		helper->_db_pLink->belong_to = grandparents;
 
-		db->write_pLink(helper->_db_pLink);
+		mDb->write_script_pLink(helper->_db_pLink);
 	}
 }
 
-void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
+void proc_pTarget(CKContext* ctx, CKParameterIn* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents) {
 	helper->_db_pTarget->thisobj = cache->GetID();
 	helper->_db_pTarget->name = cache->GetName();
 	helper->_db_pTarget->type = helper->_parameterManager->ParameterTypeToName(cache->GetType());
@@ -104,9 +104,9 @@ void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbSc
 	helper->_db_pTarget->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 	helper->_db_pTarget->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
-	db->write_pTarget(helper->_db_pTarget);
+	mDb->write_script_pTarget(helper->_db_pTarget);
 
-	//judge whether expoer parameter and write database
+	//judge whether expoer parameter and write SSMaterializerDatabase
 	if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
@@ -114,15 +114,15 @@ void proc_pTarget(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbSc
 		helper->_db_eLink->index = -1;
 		helper->_db_eLink->belong_to = grandparents;
 
-		db->write_eLink(helper->_db_eLink);
+		mDb->write_script_eLink(helper->_db_eLink);
 		return;
 	}
 
 	//=========try generate pLink
-	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, -1, TRUE, TRUE);
+	generate_pLink_in_pIn(ctx, cache, mDb, helper, parents, grandparents, -1, TRUE, TRUE);
 }
 
-void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+void proc_pIn(CKContext* ctx, CKParameterIn* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pIn->thisobj = cache->GetID();
 	helper->_db_pIn->index = index;
 	helper->_db_pIn->name = cache->GetName();
@@ -134,9 +134,9 @@ void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScript
 	helper->_db_pIn->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 	helper->_db_pIn->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
-	db->write_pIn(helper->_db_pIn);
+	mDb->write_script_pIn(helper->_db_pIn);
 
-	//judge whether expoer parameter and write database
+	//judge whether expoer parameter and write SSMaterializerDatabase
 	if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
@@ -144,16 +144,16 @@ void proc_pIn(CKContext* ctx, CKParameterIn* cache, scriptDatabase* db, dbScript
 		helper->_db_eLink->index = index;
 		helper->_db_eLink->belong_to = grandparents;
 
-		db->write_eLink(helper->_db_eLink);
+		mDb->write_script_eLink(helper->_db_eLink);
 		return;
 	}
 
 	//=========try generate pLink
-	generate_pLink_in_pIn(ctx, cache, db, helper, parents, grandparents, index, executedFromBB, FALSE);
+	generate_pLink_in_pIn(ctx, cache, mDb, helper, parents, grandparents, index, executedFromBB, FALSE);
 
 }
 
-void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+void proc_pOut(CKContext* ctx, CKParameterOut* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 	helper->_db_pOut->thisobj = cache->GetID();
 	helper->_db_pOut->index = index;
 	helper->_db_pOut->name = cache->GetName();
@@ -163,9 +163,9 @@ void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScri
 	copyGuid(cache->GetGUID(), helper->_db_pOut->type_guid);
 	helper->_db_pOut->belong_to = parents;
 
-	db->write_pOut(helper->_db_pOut);
+	mDb->write_script_pOut(helper->_db_pOut);
 
-	//judge whether expoer parameter and write database
+	//judge whether expoer parameter and write SSMaterializerDatabase
 	if (((CKBehavior*)ctx->GetObject(grandparents))->GetOutputParameterPosition(cache) != -1) {
 		helper->_db_eLink->export_obj = cache->GetID();
 		helper->_db_eLink->internal_obj = parents;
@@ -173,7 +173,7 @@ void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScri
 		helper->_db_eLink->index = index;
 		helper->_db_eLink->belong_to = grandparents;
 
-		db->write_eLink(helper->_db_eLink);
+		mDb->write_script_eLink(helper->_db_eLink);
 		return;
 	}
 
@@ -210,29 +210,29 @@ void proc_pOut(CKContext* ctx, CKParameterOut* cache, scriptDatabase* db, dbScri
 
 		helper->_db_pLink->belong_to = grandparents;
 
-		db->write_pLink(helper->_db_pLink);
+		mDb->write_script_pLink(helper->_db_pLink);
 	}
 }
 
-void proc_bIn(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+void proc_bIn(CKBehaviorIO* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bIn->thisobj = cache->GetID();
 	helper->_db_bIn->index = index;
 	helper->_db_bIn->name = cache->GetName();
 	helper->_db_bIn->belong_to = parents;
 
-	db->write_bIn(helper->_db_bIn);
+	mDb->write_script_bIn(helper->_db_bIn);
 }
 
-void proc_bOut(CKBehaviorIO* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
+void proc_bOut(CKBehaviorIO* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, int index) {
 	helper->_db_bOut->thisobj = cache->GetID();
 	helper->_db_bOut->index = index;
 	helper->_db_bOut->name = cache->GetName();
 	helper->_db_bOut->belong_to = parents;
 
-	db->write_bOut(helper->_db_bOut);
+	mDb->write_script_bOut(helper->_db_bOut);
 }
 
-void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void proc_bLink(CKBehaviorLink* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKBehaviorIO* io = cache->GetInBehaviorIO();
 	CKBehavior* beh = io->GetOwner();
 	helper->_db_bLink->input = io->GetID();
@@ -249,10 +249,10 @@ void proc_bLink(CKBehaviorLink* cache, scriptDatabase* db, dbScriptDataStructHel
 	helper->_db_bLink->delay = cache->GetActivationDelay();
 	helper->_db_bLink->belong_to = parents;
 
-	db->write_bLink(helper->_db_bLink);
+	mDb->write_script_bLink(helper->_db_bLink);
 }
 
-void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
+void proc_pLocal(CKParameterLocal* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents, BOOL is_setting) {
 	helper->_db_pLocal->thisobj = cache->GetID();
 	helper->_db_pLocal->name = cache->GetName() ? cache->GetName() : "";
 	CKParameterType vaildTypeChecker = cache->GetType();
@@ -262,27 +262,27 @@ void proc_pLocal(CKParameterLocal* cache, scriptDatabase* db, dbScriptDataStruct
 	helper->_db_pLocal->is_setting = is_setting;
 	helper->_db_pLocal->belong_to = parents;
 
-	db->write_pLocal(helper->_db_pLocal);
+	mDb->write_script_pLocal(helper->_db_pLocal);
 
 	//export plocal metadata
-	DigParameterData(cache, db, helper, cache->GetID());
+	DigParameterData(cache, mDb, helper, cache->GetID());
 }
 
-void proc_pOper(CKContext* ctx, CKParameterOperation* cache, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void proc_pOper(CKContext* ctx, CKParameterOperation* cache, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pOper->thisobj = cache->GetID();
 	helper->_db_pOper->op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
 	copyGuid(cache->GetOperationGuid(), helper->_db_pOper->op_guid);
 	helper->_db_pOper->belong_to = parents;
 
-	db->write_pOper(helper->_db_pOper);
+	mDb->write_script_pOper(helper->_db_pOper);
 
 	//export 2 input param and 1 output param
-	proc_pIn(ctx, cache->GetInParameter1(), db, helper, cache->GetID(), parents, 0, FALSE);
-	proc_pIn(ctx, cache->GetInParameter2(), db, helper, cache->GetID(), parents, 1, FALSE);
-	proc_pOut(ctx, cache->GetOutParameter(), db, helper, cache->GetID(), parents, 0, FALSE);
+	proc_pIn(ctx, cache->GetInParameter1(), mDb, helper, cache->GetID(), parents, 0, FALSE);
+	proc_pIn(ctx, cache->GetInParameter2(), mDb, helper, cache->GetID(), parents, 1, FALSE);
+	proc_pOut(ctx, cache->GetOutParameter(), mDb, helper, cache->GetID(), parents, 0, FALSE);
 }
 
-void proc_pAttr(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper* helper, CKParameter* cache) {
+void proc_pAttr(CKContext* ctx, DocumentDatabase* mDb, dbDocDataStructHelper* helper, CKParameter* cache) {
 	//write self first to detect conflict
 	helper->_db_pAttr->thisobj = cache->GetID();
 	safeStringCopy(helper->_db_pAttr->name, cache->GetName());
@@ -291,32 +291,32 @@ void proc_pAttr(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper* he
 	else helper->_db_pAttr->type = "!!UNKNOW TYPE!!"; //unknow type
 	copyGuid(cache->GetGUID(), helper->_db_pAttr->type_guid);
 
-	if (!db->write_pAttr(helper->_db_pAttr))
+	if (!mDb->write_script_pAttr(helper->_db_pAttr))
 		return;
 
 	//not duplicated, continue write property
 	CKObject* host = cache->GetOwner();
-	helper_pDataExport("attr.host_id", (long)host->GetID(), db, helper, cache->GetID());
-	helper_pDataExport("attr.host_name", host->GetName(), db, helper, cache->GetID());
+	helper_pDataExport("attr.host_id", (long)host->GetID(), mDb, helper, cache->GetID());
+	helper_pDataExport("attr.host_name", host->GetName(), mDb, helper, cache->GetID());
 }
 
 //============================helper for pLocal data export
-void helper_pDataExport(const char* field, const char* data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void helper_pDataExport(const char* field, const char* data, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	helper->_db_pData->field = field;
 	helper->_db_pData->data = data;
 	helper->_db_pData->belong_to = parents;
 
-	db->write_pData(helper->_db_pData);
+	mDb->write_pData(helper->_db_pData);
 }
-void helper_pDataExport(const char* field, float data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void helper_pDataExport(const char* field, float data, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	sprintf(str, "%f", data);
-	helper_pDataExport(field, str, db, helper, parents);
+	helper_pDataExport(field, str, mDb, helper, parents);
 }
-void helper_pDataExport(const char* field, long data, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void helper_pDataExport(const char* field, long data, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	char str[32];
 	ltoa(data, str, 10);
-	helper_pDataExport(field, str, db, helper, parents);
+	helper_pDataExport(field, str, mDb, helper, parents);
 }
 
 
@@ -325,7 +325,7 @@ void helper_pDataExport(const char* field, long data, scriptDatabase* db, dbScri
 
 #pragma region normal func
 
-void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper* helper) {
+void IterateScript(CKContext* ctx, DocumentDatabase* mDb, dbDocDataStructHelper* helper) {
 	CKBeObject* beobj = NULL;
 	CKBehavior* beh = NULL;
 	XObjectPointerArray objArray = ctx->GetObjectListByType(CKCID_BEOBJECT, TRUE);
@@ -342,15 +342,15 @@ void IterateScript(CKContext* ctx, scriptDatabase* db, dbScriptDataStructHelper*
 			helper->_db_script->host_name = beobj->GetName();
 			helper->_db_script->index = j;
 			helper->_db_script->behavior = beh->GetID();
-			db->write_script(helper->_db_script);
+			mDb->write_script(helper->_db_script);
 
 			//iterate script
-			IterateBehavior(ctx, beh, db, helper, -1);
+			IterateBehavior(ctx, beh, mDb, helper, -1);
 		}
 	}
 }
 
-void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void IterateBehavior(CKContext* ctx, CKBehavior* bhv, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	//write self data
 	helper->_db_behavior->thisobj = bhv->GetID();
 	helper->_db_behavior->name = bhv->GetName();
@@ -368,42 +368,42 @@ void IterateBehavior(CKContext* ctx, CKBehavior* bhv, scriptDatabase* db, dbScri
 		bhv->GetInputCount(),
 		bhv->GetOutputCount());
 	helper->_db_behavior->pin_count = helper->_stringCache;
-	db->write_behavior(helper->_db_behavior);
+	mDb->write_script_behavior(helper->_db_behavior);
 
 	//write target
 	if (bhv->IsUsingTarget())
-		proc_pTarget(ctx, bhv->GetTargetParameter(), db, helper, bhv->GetID(), parents);
+		proc_pTarget(ctx, bhv->GetTargetParameter(), mDb, helper, bhv->GetID(), parents);
 
 	int count = 0, i = 0;
 	//pIn
 	for (i = 0, count = bhv->GetInputParameterCount(); i < count; i++)
-		proc_pIn(ctx, bhv->GetInputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
+		proc_pIn(ctx, bhv->GetInputParameter(i), mDb, helper, bhv->GetID(), parents, i, TRUE);
 	//pOut
 	for (i = 0, count = bhv->GetOutputParameterCount(); i < count; i++)
-		proc_pOut(ctx, bhv->GetOutputParameter(i), db, helper, bhv->GetID(), parents, i, TRUE);
+		proc_pOut(ctx, bhv->GetOutputParameter(i), mDb, helper, bhv->GetID(), parents, i, TRUE);
 	//bIn
 	for (i = 0, count = bhv->GetInputCount(); i < count; i++)
-		proc_bIn(bhv->GetInput(i), db, helper, bhv->GetID(), i);
+		proc_bIn(bhv->GetInput(i), mDb, helper, bhv->GetID(), i);
 	//bOut
 	for (i = 0, count = bhv->GetOutputCount(); i < count; i++)
-		proc_bOut(bhv->GetOutput(i), db, helper, bhv->GetID(), i);
+		proc_bOut(bhv->GetOutput(i), mDb, helper, bhv->GetID(), i);
 	//bLink
 	for (i = 0, count = bhv->GetSubBehaviorLinkCount(); i < count; i++)
-		proc_bLink(bhv->GetSubBehaviorLink(i), db, helper, bhv->GetID());
+		proc_bLink(bhv->GetSubBehaviorLink(i), mDb, helper, bhv->GetID());
 	//pLocal
 	for (i = 0, count = bhv->GetLocalParameterCount(); i < count; i++)
-		proc_pLocal(bhv->GetLocalParameter(i), db, helper, bhv->GetID(),
+		proc_pLocal(bhv->GetLocalParameter(i), mDb, helper, bhv->GetID(),
 			bhv->IsLocalParameterSetting(i));
 	//pOper
 	for (i = 0, count = bhv->GetParameterOperationCount(); i < count; i++)
-		proc_pOper(ctx, bhv->GetParameterOperation(i), db, helper, bhv->GetID());
+		proc_pOper(ctx, bhv->GetParameterOperation(i), mDb, helper, bhv->GetID());
 
 	//iterate sub bb
 	for (i = 0, count = bhv->GetSubBehaviorCount(); i < count; i++)
-		IterateBehavior(ctx, bhv->GetSubBehavior(i), db, helper, bhv->GetID());
+		IterateBehavior(ctx, bhv->GetSubBehavior(i), mDb, helper, bhv->GetID());
 }
 
-void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStructHelper* helper, EXPAND_CK_ID parents) {
+void DigParameterData(CKParameterLocal* p, DocumentDatabase* mDb, dbDocDataStructHelper* helper, EXPAND_CK_ID parents) {
 	CKGUID t = p->GetGUID();
 	BOOL unknowType = FALSE;
 
@@ -412,12 +412,12 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 	//nothing
 	if (t == CKPGUID_NONE) return;
 	if (p->GetParameterClassID() && p->GetValueObject(false)) {
-		helper_pDataExport("id", (long)p->GetValueObject(false)->GetID(), db, helper, parents);
-		helper_pDataExport("name", p->GetValueObject(false)->GetName(), db, helper, parents);
+		helper_pDataExport("id", (long)p->GetValueObject(false)->GetID(), mDb, helper, parents);
+		helper_pDataExport("name", p->GetValueObject(false)->GetName(), mDb, helper, parents);
 
 		CK_CLASSID none_classid = p->GetValueObject(false)->GetClassID();
 		CKParameterType none_type = helper->_parameterManager->ClassIDToType(none_classid);
-		helper_pDataExport("type",helper->_parameterManager->ParameterTypeToName(none_type), db, helper, parents);
+		helper_pDataExport("type",helper->_parameterManager->ParameterTypeToName(none_type), mDb, helper, parents);
 		return;
 	}
 	//float
@@ -426,7 +426,7 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		|| t == CKPGUID_FLOATSLIDER
 #endif
 		) {
-		helper_pDataExport("float-data", *(float*)(p->GetReadDataPtr(false)), db, helper, parents);
+		helper_pDataExport("float-data", *(float*)(p->GetReadDataPtr(false)), mDb, helper, parents);
 		return;
 	}
 	//int
@@ -437,22 +437,22 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		|| t == CKPGUID_LIGHTTYPE || t == CKPGUID_SPRITEALIGN || t == CKPGUID_DIRECTION || t == CKPGUID_LAYERTYPE
 		|| t == CKPGUID_COMPOPERATOR || t == CKPGUID_BINARYOPERATOR || t == CKPGUID_SETOPERATOR
 		|| t == CKPGUID_OBSTACLEPRECISION || t == CKPGUID_OBSTACLEPRECISIONBEH) {
-		helper_pDataExport("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), db, helper, parents);
+		helper_pDataExport("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), mDb, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_VECTOR) {
 		VxVector vec;
 		memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-		helper_pDataExport("vector.x", vec.x, db, helper, parents);
-		helper_pDataExport("vector.y", vec.y, db, helper, parents);
-		helper_pDataExport("vector.z", vec.z, db, helper, parents);
+		helper_pDataExport("vector.x", vec.x, mDb, helper, parents);
+		helper_pDataExport("vector.y", vec.y, mDb, helper, parents);
+		helper_pDataExport("vector.z", vec.z, mDb, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_2DVECTOR) {
 		Vx2DVector vec;
 		memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-		helper_pDataExport("2dvector.x", vec.x, db, helper, parents);
-		helper_pDataExport("2dvector.y", vec.y, db, helper, parents);
+		helper_pDataExport("2dvector.x", vec.x, mDb, helper, parents);
+		helper_pDataExport("2dvector.y", vec.y, mDb, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_MATRIX) {
@@ -463,7 +463,7 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
 				sprintf(position, "matrix[%d][%d]", i, j);
-				helper_pDataExport(position, mat[i][j], db, helper, parents);
+				helper_pDataExport(position, mat[i][j], mDb, helper, parents);
 			}
 		}
 		return;
@@ -471,10 +471,10 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 	if (t == CKPGUID_COLOR) {
 		VxColor col;
 		memcpy(&col, p->GetReadDataPtr(false), sizeof(col));
-		helper_pDataExport("color.r", col.r, db, helper, parents);
-		helper_pDataExport("color.g", col.g, db, helper, parents);
-		helper_pDataExport("color.b", col.b, db, helper, parents);
-		helper_pDataExport("color.a", col.a, db, helper, parents);
+		helper_pDataExport("color.r", col.r, mDb, helper, parents);
+		helper_pDataExport("color.g", col.g, mDb, helper, parents);
+		helper_pDataExport("color.b", col.b, mDb, helper, parents);
+		helper_pDataExport("color.a", col.a, mDb, helper, parents);
 		return;
 	}
 	if (t == CKPGUID_2DCURVE) {
@@ -488,27 +488,27 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 			endIndex = strlen(prefix);
 
 			changeSuffix(".pos.x");
-			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().x, db, helper, parents);
+			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().x, mDb, helper, parents);
 			changeSuffix(".pos.y");
-			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().y, db, helper, parents);
+			helper_pDataExport(prefix, c->GetControlPoint(i)->GetPosition().y, mDb, helper, parents);
 			changeSuffix(".islinear");
-			helper_pDataExport(prefix, (long)c->GetControlPoint(i)->IsLinear(), db, helper, parents);
+			helper_pDataExport(prefix, (long)c->GetControlPoint(i)->IsLinear(), mDb, helper, parents);
 			if (c->GetControlPoint(i)->IsTCB()) {
 				changeSuffix(".bias");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetBias(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetBias(), mDb, helper, parents);
 				changeSuffix(".continuity");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetContinuity(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetContinuity(), mDb, helper, parents);
 				changeSuffix(".tension");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetTension(), db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetTension(), mDb, helper, parents);
 			} else {
 				changeSuffix(".intangent.x");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().x, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().x, mDb, helper, parents);
 				changeSuffix(".intangent.y");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().y, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetInTangent().y, mDb, helper, parents);
 				changeSuffix(".outtangent.x");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().x, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().x, mDb, helper, parents);
 				changeSuffix(".outtangent.y");
-				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().y, db, helper, parents);
+				helper_pDataExport(prefix, c->GetControlPoint(i)->GetOutTangent().y, mDb, helper, parents);
 			}
 		}
 		return;
@@ -521,7 +521,7 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		helper->_db_pData->data.insert(0, cptr, 0, cc);
 		helper->_db_pData->field = "str";
 		helper->_db_pData->belong_to = p->GetID();
-		db->write_pData(helper->_db_pData);
+		mDb->write_pData(helper->_db_pData);
 		return;
 	}
 
@@ -554,10 +554,10 @@ void DigParameterData(CKParameterLocal* p, scriptDatabase* db, dbScriptDataStruc
 		else
 			helper->_db_pData->field = "dump.partial_data";
 		helper->_db_pData->belong_to = p->GetID();
-		db->write_pData(helper->_db_pData);
+		mDb->write_pData(helper->_db_pData);
 
 		//dump data length
-		helper_pDataExport("dump.length", (long)cc, db, helper, parents);
+		helper_pDataExport("dump.length", (long)cc, mDb, helper, parents);
 		return;
 	}
 }

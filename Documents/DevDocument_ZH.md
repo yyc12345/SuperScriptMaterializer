@@ -39,8 +39,7 @@
 SuperScriptMaterializer处理流程里会涉及很多不同的数据库文件，以下是这些数据库和其内表的格式。  
 其中这些是Materializer直接输出的基于文档的数据库：
 
-* script.db
-* data.db
+* doc.db
 * env.db
 
 这些数据库是上面数据库经过Decorator处理可以被Viewer接受的数据库：
@@ -50,9 +49,9 @@ SuperScriptMaterializer处理流程里会涉及很多不同的数据库文件，
 * query.db
 * composition.db
 
-## script.db 格式
+## doc.db 格式
 
-script.db导出的是当前Virtools文档内的脚本及其它重要数据。
+doc.db导出的是当前Virtools文档内的脚本及其它重要数据。
 
 表列表：
 
