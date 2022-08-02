@@ -108,11 +108,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="database.h" />
+    <ClInclude Include="database.hpp" />
     <ClInclude Include="data_export.h" />
     <ClInclude Include="env_export.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="script_export.h" />
+    <ClInclude Include="doc_export.hpp" />
     <ClInclude Include="shared_export.h" />
     <ClInclude Include="string_helper.hpp" />
     <ClInclude Include="virtools_compatible.h" />
@@ -124,7 +124,7 @@
     <ClCompile Include="data_export.cpp" />
     <ClCompile Include="env_export.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="script_export.cpp" />
+    <ClCompile Include="doc_export.cpp" />
     <ClCompile Include="shared_export.cpp" />
     <ClCompile Include="string_helper.cpp" />
     <ClCompile Include="virtools_compatible.cpp" />

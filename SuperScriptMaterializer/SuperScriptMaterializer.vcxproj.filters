@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="database.h">
+    <ClInclude Include="database.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="env_export.h">
@@ -24,7 +24,7 @@
     <ClInclude Include="resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="script_export.h">
+    <ClInclude Include="doc_export.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -56,7 +56,7 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="script_export.cpp">
+    <ClCompile Include="doc_export.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="vt_menu.cpp">
