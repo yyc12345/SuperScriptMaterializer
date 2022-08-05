@@ -1,10 +1,18 @@
 import locale
 
-# encoding list
-# https://docs.python.org/3/library/codecs.html#standard-encodings
-database_encoding = locale.getpreferredencoding()
-export_db = "export.db"
-decorated_db = "decorate.db"
-env_db = "env.db"
-force_regenerate = False
+class DatabaseType:
+    SQLite = 0
+    MySQL = 1
+
+database_type = DatabaseType.SQLite
+sqlite_path = "decorated.db"
+
+'''
+database_type = DatabaseType.MySQL
+mysql_url = "http://yyc.bkt.moe:10000"
+mysql_username = "test"
+mysql_password = "test"
+mysql_database = "test_database"
+'''
+
 debug_mode = False
