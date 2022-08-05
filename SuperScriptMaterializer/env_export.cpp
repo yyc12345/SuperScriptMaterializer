@@ -2,8 +2,8 @@
 //disable shit tip
 #pragma warning(disable:26812)
 
-#define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
-#define safeStringCopy(storage,str) storage=(str)?(str):"";
+#define CopyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
+#define CopyCKString(storage,str) storage=(str)?(str):"";
 
 void IterateParameterOperation(CKParameterManager* parameterManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
 	int count = parameterManager->GetParameterOperationCount();
@@ -14,7 +14,7 @@ void IterateParameterOperation(CKParameterManager* parameterManager, Environment
 		//fill basic data
 		helper->_db_op->op_code = i;
 		_guid = parameterManager->OperationCodeToGuid(i);
-		copyGuid(_guid,helper->_db_op->op_guid);
+		CopyGuid(_guid,helper->_db_op->op_guid);
 		helper->_db_op->op_name = parameterManager->OperationCodeToName(i);
 
 		//allocate mem
@@ -27,9 +27,9 @@ void IterateParameterOperation(CKParameterManager* parameterManager, Environment
 
 		parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, opList);
 		for (int j = 0; j < cacheListCount; j++) {
-			copyGuid(opList[j].P1Guid, helper->_db_op->in1_guid);
-			copyGuid(opList[j].P2Guid, helper->_db_op->in2_guid);
-			copyGuid(opList[j].ResGuid, helper->_db_op->out_guid);
+			CopyGuid(opList[j].P1Guid, helper->_db_op->in1_guid);
+			CopyGuid(opList[j].P2Guid, helper->_db_op->in2_guid);
+			CopyGuid(opList[j].ResGuid, helper->_db_op->out_guid);
 			helper->_db_op->funcPtr = opList[j].Fct;
 
 			mDb->write_op(helper->_db_op);
@@ -46,8 +46,8 @@ void IterateParameter(CKParameterManager* parameterManager, EnvironmentDatabase*
 		desc = parameterManager->GetParameterTypeDescription(i);
 
 		helper->_db_param->index = desc->Index;
-		copyGuid(desc->Guid, helper->_db_param->guid);
-		copyGuid(desc->DerivedFrom, helper->_db_param->derived_from);
+		CopyGuid(desc->Guid, helper->_db_param->guid);
+		CopyGuid(desc->DerivedFrom, helper->_db_param->derived_from);
 		helper->_db_param->type_name = desc->TypeName.CStr();
 		helper->_db_param->default_size = desc->DefaultSize;
 		helper->_db_param->func_CreateDefault = desc->CreateDefaultFunction;
@@ -68,7 +68,7 @@ void IterateParameter(CKParameterManager* parameterManager, EnvironmentDatabase*
 		helper->_db_param->dw_param = desc->dwParam;
 		helper->_db_param->dw_flags = desc->dwFlags;
 		helper->_db_param->cid = desc->Cid;
-		copyGuid(desc->Saver_Manager, helper->_db_param->saver_manager);
+		CopyGuid(desc->Saver_Manager, helper->_db_param->saver_manager);
 
 		mDb->write_param(helper->_db_param);
 	}
@@ -113,7 +113,7 @@ void IteratePlugin(CKPluginManager* plgManager, EnvironmentDatabase* mDb, dbEnvD
 			helper->_db_plugin->active = plgEntry->m_Active;
 			helper->_db_plugin->needed_by_file = plgEntry->m_NeededByFile;
 			CKPluginInfo* plgInfo = &(plgEntry->m_PluginInfo);
-			copyGuid(plgInfo->m_GUID, helper->_db_plugin->guid);
+			CopyGuid(plgInfo->m_GUID, helper->_db_plugin->guid);
 			helper->_db_plugin->desc = plgInfo->m_Description.CStr();
 			helper->_db_plugin->author = plgInfo->m_Author.CStr();
 			helper->_db_plugin->summary = plgInfo->m_Summary.CStr();
@@ -134,10 +134,10 @@ void IterateVariable(CKVariableManager* varManager, EnvironmentDatabase* mDb, db
 	for (; !it.End(); it++) {
 		varobj = it.GetVariable();
 		helper->_db_variable->name = it.GetName();
-		safeStringCopy(helper->_db_variable->desciption, varobj->GetDescription());
+		CopyCKString(helper->_db_variable->desciption, varobj->GetDescription());
 		helper->_db_variable->flags = varobj->GetFlags();
 		helper->_db_variable->type = varobj->GetType();
-		safeStringCopy(helper->_db_variable->representation, varobj->GetRepresentation());
+		CopyCKString(helper->_db_variable->representation, varobj->GetRepresentation());
 		varobj->GetStringValue(dataCopyCache);
 		helper->_db_variable->data = dataCopyCache.CStr();
 

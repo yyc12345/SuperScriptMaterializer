@@ -36,9 +36,6 @@
     <ClInclude Include="virtools_compatible.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="shared_export.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="data_export.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -66,9 +63,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="virtools_compatible.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="shared_export.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="data_export.cpp">

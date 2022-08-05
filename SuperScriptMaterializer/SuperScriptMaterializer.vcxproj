@@ -113,7 +113,6 @@
     <ClInclude Include="env_export.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="doc_export.hpp" />
-    <ClInclude Include="shared_export.h" />
     <ClInclude Include="string_helper.hpp" />
     <ClInclude Include="virtools_compatible.h" />
     <ClInclude Include="vt_menu.h" />
@@ -125,7 +124,6 @@
     <ClCompile Include="env_export.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="doc_export.cpp" />
-    <ClCompile Include="shared_export.cpp" />
     <ClCompile Include="string_helper.cpp" />
     <ClCompile Include="virtools_compatible.cpp" />
     <ClCompile Include="vt_menu.cpp" />

@@ -8,305 +8,403 @@
 #undef GetClassName
 
 #define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
-#define copyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
-#define safeStringCopy(storage,str) storage=(str)?(str):"";
 
 namespace SSMaterializer {
 	namespace DocumentExporter {
 
 #pragma region script
 
-		void generate_pLink_in_pIn(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB, BOOL isTarget) {
-			//WARNING: i only choose one between [DirectSource] and [SharedSource] bucause i don't find any pIn both have these two field
+		/*
+		* `Generate` mean that this function will analyse something to generate some objects which are not existed in original Virtools document.
+		* `Proc` meath that this function only just export something which is already existed in original Virtools document, or with slight modifications.
+		*/
+
+		/// <summary>
+		/// Generate pLink and eLink from pIn
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="analysed_pin"></param>
+		/// <param name="mDb"></param>
+		/// <param name="parents"></param>
+		/// <param name="grandparents"></param>
+		/// <param name="pin_index"></param>
+		/// <param name="executedFromBB"></param>
+		/// <param name="isTarget"></param>
+		void Generate_pLink(CKContext* ctx, CKParameterIn* analysed_pin, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int pin_index, BOOL executedFromBB, BOOL isTarget) {
 			CKParameter* directSource = NULL;
 			CKObject* ds_Owner = NULL;
 			CKParameterIn* sharedSource = NULL;
 			CKBehavior* ss_Owner = NULL;
-			if (directSource = cache->GetDirectSource()) {
-				helper->_db_pLink->input = directSource->GetID();
+
+			// first, we analyse eLink
+			// check whether this is export parameter and write to database
+			// if the behavior graph where this pIn locate, also include this pIn, we can simply
+			// assume there is a eLink between them
+			if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(analysed_pin) != -1) {
+				mDb->mDbHelper.script_eLink.export_obj = analysed_pin->GetID();
+				mDb->mDbHelper.script_eLink.internal_obj = parents;
+				mDb->mDbHelper.script_eLink.is_in = TRUE;
+				mDb->mDbHelper.script_eLink.index = pin_index;
+				mDb->mDbHelper.script_eLink.parent = grandparents;
+
+				mDb->write_script_eLink(mDb->mDbHelper.script_eLink);
+				// if a eLink has been detected successfully, we returned immediately
+				// and do not analyse any pLink anymore.
+				return;
+			}
+
+			// start to analyse pLink
+			// first, analyse direct_src
+			if (directSource = analysed_pin->GetDirectSource()) {
+				mDb->mDbHelper.script_pLink.input = directSource->GetID();
+				// for almost pin, it is connected to a pLocal, so we use a if to test it first
 				if (directSource->GetClassID() == CKCID_PARAMETERLOCAL || directSource->GetClassID() == CKCID_PARAMETERVARIABLE) {
 					//pLocal
-					helper->_db_pLink->input_obj = directSource->GetID();
-					helper->_db_pLink->input_type = pLinkInputOutputType_PLOCAL;
-					helper->_db_pLink->input_is_bb = FALSE;
-					helper->_db_pLink->input_index = -1;
+					mDb->mDbHelper.script_pLink.input_obj = directSource->GetID();	// the owner of pLocal is itself.
+					mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PLOCAL;
+					mDb->mDbHelper.script_pLink.input_is_bb = FALSE;
+					mDb->mDbHelper.script_pLink.input_index = -1;
 				} else {
-					//WARNING: when GetClassID() return CKDataArray there are untested code
-					//pParam from bb pOut / pOper pOut / object Attribute / CKDataArray
+					// according to Virtools SDK document, there are 4 possible value gotten by us:
+					// bb pOut / pOper pOut / CKObject Attribute / CKDataArray
+					// however, the last 2 returned values have NOT been tested perfectly.
 					ds_Owner = directSource->GetOwner();
 					switch (ds_Owner->GetClassID()) {
 						case CKCID_BEHAVIOR:
-							helper->_db_pLink->input_obj = ds_Owner->GetID();
-							helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
-							helper->_db_pLink->input_is_bb = TRUE;
-							helper->_db_pLink->input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
+							mDb->mDbHelper.script_pLink.input_obj = ds_Owner->GetID();
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_POUT;
+							mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+							mDb->mDbHelper.script_pLink.input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)directSource);
 							break;
 						case CKCID_PARAMETEROPERATION:
-							helper->_db_pLink->input_obj = ds_Owner->GetID();
-							helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
-							helper->_db_pLink->input_is_bb = FALSE;
-							helper->_db_pLink->input_index = 0;
+							mDb->mDbHelper.script_pLink.input_obj = ds_Owner->GetID();
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_POUT;
+							mDb->mDbHelper.script_pLink.input_is_bb = FALSE;
+							mDb->mDbHelper.script_pLink.input_index = 0;	// pOper only have 1 pOut
 							break;
 						case CKCID_DATAARRAY:
-							// dataarray, see as virtual bb pLocal shortcut
-							helper->_db_pLink->input_obj = directSource->GetID();
-							helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
-							helper->_db_pLink->input_is_bb = FALSE;
-							helper->_db_pLink->input_index = -1;
-							proc_pAttr(ctx, mDb, helper, directSource);
+							// CKDataArray, see as virtual bb pLocal shortcut
+							mDb->mDbHelper.script_pLink.input_obj = directSource->GetID();
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PATTR;
+							mDb->mDbHelper.script_pLink.input_is_bb = FALSE;	// omit
+							mDb->mDbHelper.script_pLink.input_index = -1;	// omit
+							Proc_pAttr(ctx, mDb, directSource);
 							break;
 						default:
-							//normal object, see as virtual bb pLocal shortcut
-							helper->_db_pLink->input_obj = directSource->GetID();
-							helper->_db_pLink->input_type = pLinkInputOutputType_PATTR;
-							helper->_db_pLink->input_is_bb = FALSE;
-							helper->_db_pLink->input_index = -1;
-							proc_pAttr(ctx, mDb, helper, directSource);
+							// CKObject, because CKDataArray also a CKObject, so we test it first.
+							// see as virtual bb pLocal shortcut
+							mDb->mDbHelper.script_pLink.input_obj = directSource->GetID();
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PATTR;
+							mDb->mDbHelper.script_pLink.input_is_bb = FALSE;	// omit
+							mDb->mDbHelper.script_pLink.input_index = -1;	// omit
+							Proc_pAttr(ctx, mDb, directSource);
 							break;
 					}
 				}
 			}
-			if (sharedSource = cache->GetSharedSource()) {
+			// direct_src reflect the real source of current analysed pIn,
+			// however direct_src do not reflact export link
+			// so we need to analyse shared_src now.
+			// 
+			// if this pIn has established some export relation, its shared_src must be filled.
+			// so we can detect it here. once its shared_src is not NULL
+			// we should consider export link here.
+			// 
+			// we do not need to analyse any export link here, we just need to export some info 
+			// to indicate this phenomeno.
+			if (sharedSource = analysed_pin->GetSharedSource()) {
 				//pIn from BB
-				helper->_db_pLink->input = sharedSource->GetID();
+				mDb->mDbHelper.script_pLink.input = sharedSource->GetID();
 				ss_Owner = (CKBehavior*)sharedSource->GetOwner();
-				helper->_db_pLink->input_obj = ss_Owner->GetID();
+				mDb->mDbHelper.script_pLink.input_obj = ss_Owner->GetID();
 
 				if (ss_Owner->IsUsingTarget() && (ss_Owner->GetTargetParameter() == sharedSource)) {
 					//pTarget
-					helper->_db_pLink->input_type = pLinkInputOutputType_PTARGET;
-					helper->_db_pLink->input_is_bb = TRUE;
-					helper->_db_pLink->input_index = -1;
+					mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PTARGET;
+					mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+					mDb->mDbHelper.script_pLink.input_index = -1;	// omit
 
 				} else {
 					//pIn
-					helper->_db_pLink->input_type = pLinkInputOutputType_PIN;
-					helper->_db_pLink->input_is_bb = TRUE;
-					helper->_db_pLink->input_index = ss_Owner->GetInputParameterPosition(sharedSource);
+					mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
+					mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+					mDb->mDbHelper.script_pLink.input_index = ss_Owner->GetInputParameterPosition(sharedSource);
 				}
 
 
 			}
 
+			// if the header of pLink has been analysed successfully, 
+			// we can add tail info and push into database
 			if (sharedSource != NULL || directSource != NULL) {
-				helper->_db_pLink->output = cache->GetID();
-				helper->_db_pLink->output_obj = parents;
-				helper->_db_pLink->output_type = isTarget ? pLinkInputOutputType_PTARGET : pLinkInputOutputType_PIN;
-				helper->_db_pLink->output_is_bb = executedFromBB;
-				helper->_db_pLink->output_index = index;
-				helper->_db_pLink->belong_to = grandparents;
+				mDb->mDbHelper.script_pLink.output = analysed_pin->GetID();
+				mDb->mDbHelper.script_pLink.output_obj = parents;
+				mDb->mDbHelper.script_pLink.output_type = isTarget ? DataStruct::pLinkInputOutputType_PTARGET : DataStruct::pLinkInputOutputType_PIN;
+				mDb->mDbHelper.script_pLink.output_is_bb = executedFromBB;
+				mDb->mDbHelper.script_pLink.output_index = pin_index;
+				mDb->mDbHelper.script_pLink.parent = grandparents;
 
-				mDb->write_script_pLink(helper->_db_pLink);
+				mDb->write_script_pLink(mDb->mDbHelper.script_pLink);
 			}
 		}
 
-		void proc_pTarget(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents) {
-			helper->_db_pTarget->thisobj = cache->GetID();
-			helper->_db_pTarget->name = cache->GetName();
-			helper->_db_pTarget->type = helper->_parameterManager->ParameterTypeToName(cache->GetType());
-			copyGuid(cache->GetGUID(), helper->_db_pTarget->type_guid);
-			helper->_db_pTarget->belong_to = parents;
-			helper->_db_pTarget->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
-			helper->_db_pTarget->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
+		void Generate_pLink(CKContext* ctx, CKParameterOut* analysed_pout, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int pout_index, BOOL executedFromBB) {
+			// check eLink first
+			// check whether expoer parameter and write to database
+			if (((CKBehavior*)ctx->GetObject(grandparents))->GetOutputParameterPosition(analysed_pout) != -1) {
+				mDb->mDbHelper.script_eLink.export_obj = analysed_pout->GetID();
+				mDb->mDbHelper.script_eLink.internal_obj = parents;
+				mDb->mDbHelper.script_eLink.is_in = FALSE;
+				mDb->mDbHelper.script_eLink.index = pout_index;
+				mDb->mDbHelper.script_eLink.parent = grandparents;
 
-			mDb->write_script_pTarget(helper->_db_pTarget);
-
-			//judge whether expoer parameter and write SSMaterializerDatabase
-			if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
-				helper->_db_eLink->export_obj = cache->GetID();
-				helper->_db_eLink->internal_obj = parents;
-				helper->_db_eLink->is_in = TRUE;
-				helper->_db_eLink->index = -1;
-				helper->_db_eLink->belong_to = grandparents;
-
-				mDb->write_script_eLink(helper->_db_eLink);
+				mDb->write_script_eLink(mDb->mDbHelper.script_eLink);
+				// if an eLink has been generated, skip following pLink generation
 				return;
 			}
 
-			//=========try generate pLink
-			generate_pLink_in_pIn(ctx, cache, mDb, helper, parents, grandparents, -1, TRUE, TRUE);
-		}
-
-		void proc_pIn(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
-			helper->_db_pIn->thisobj = cache->GetID();
-			helper->_db_pIn->index = index;
-			helper->_db_pIn->name = cache->GetName();
-			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) helper->_db_pIn->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else helper->_db_pIn->type = "!!UNKNOW TYPE!!"; //unknow type
-			copyGuid(cache->GetGUID(), helper->_db_pIn->type_guid);
-			helper->_db_pIn->belong_to = parents;
-			helper->_db_pIn->direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
-			helper->_db_pIn->shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
-
-			mDb->write_script_pIn(helper->_db_pIn);
-
-			//judge whether expoer parameter and write SSMaterializerDatabase
-			if (((CKBehavior*)ctx->GetObject(grandparents))->GetInputParameterPosition(cache) != -1) {
-				helper->_db_eLink->export_obj = cache->GetID();
-				helper->_db_eLink->internal_obj = parents;
-				helper->_db_eLink->is_in = TRUE;
-				helper->_db_eLink->index = index;
-				helper->_db_eLink->belong_to = grandparents;
-
-				mDb->write_script_eLink(helper->_db_eLink);
-				return;
-			}
-
-			//=========try generate pLink
-			generate_pLink_in_pIn(ctx, cache, mDb, helper, parents, grandparents, index, executedFromBB, FALSE);
-
-		}
-
-		void proc_pOut(CKContext* ctx, CKParameterOut* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
-			helper->_db_pOut->thisobj = cache->GetID();
-			helper->_db_pOut->index = index;
-			helper->_db_pOut->name = cache->GetName();
-			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) helper->_db_pOut->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else helper->_db_pOut->type = "!!UNKNOW TYPE!!"; //unknow type
-			copyGuid(cache->GetGUID(), helper->_db_pOut->type_guid);
-			helper->_db_pOut->belong_to = parents;
-
-			mDb->write_script_pOut(helper->_db_pOut);
-
-			//judge whether expoer parameter and write SSMaterializerDatabase
-			if (((CKBehavior*)ctx->GetObject(grandparents))->GetOutputParameterPosition(cache) != -1) {
-				helper->_db_eLink->export_obj = cache->GetID();
-				helper->_db_eLink->internal_obj = parents;
-				helper->_db_eLink->is_in = FALSE;
-				helper->_db_eLink->index = index;
-				helper->_db_eLink->belong_to = grandparents;
-
-				mDb->write_script_eLink(helper->_db_eLink);
-				return;
-			}
-
-			//=========try generate pLink
+			// try generate pLink
 			CKParameter* cache_Dest = NULL;
 			CKObject* cache_DestOwner = NULL;
-			for (int j = 0, jCount = cache->GetDestinationCount(); j < jCount; j++) {
-				cache_Dest = cache->GetDestination(j);
+			for (int j = 0, jCount = analysed_pout->GetDestinationCount(); j < jCount; j++) {
+				cache_Dest = analysed_pout->GetDestination(j);
 
-				helper->_db_pLink->input = cache->GetID();
-				helper->_db_pLink->input_obj = parents;
-				helper->_db_pLink->input_type = pLinkInputOutputType_POUT;
-				helper->_db_pLink->input_is_bb = executedFromBB;
-				helper->_db_pLink->input_index = index;
+				mDb->mDbHelper.script_pLink.input = analysed_pout->GetID();
+				mDb->mDbHelper.script_pLink.input_obj = parents;
+				mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_POUT;
+				mDb->mDbHelper.script_pLink.input_is_bb = executedFromBB;
+				mDb->mDbHelper.script_pLink.input_index = pout_index;
 
-				helper->_db_pLink->output = cache_Dest->GetID();
+				mDb->mDbHelper.script_pLink.output = cache_Dest->GetID();
 				if (cache_Dest->GetClassID() == CKCID_PARAMETERLOCAL) {
 					//pLocal
-					helper->_db_pLink->output_obj = cache_Dest->GetID();
-					helper->_db_pLink->output_type = pLinkInputOutputType_PLOCAL;
-					helper->_db_pLink->output_is_bb = FALSE;
-					helper->_db_pLink->output_index = -1;
+					mDb->mDbHelper.script_pLink.output_obj = cache_Dest->GetID();
+					mDb->mDbHelper.script_pLink.output_type = DataStruct::pLinkInputOutputType_PLOCAL;
+					mDb->mDbHelper.script_pLink.output_is_bb = FALSE;	// omit
+					mDb->mDbHelper.script_pLink.output_index = -1;		// omit
 
 				} else {
-					//pOut, it must belong to a BB
-
+					//pOut, it must belong to a graph BB (pOut can not be shared, and prototype bb or pOper do not have link-able pOut).
 					cache_DestOwner = cache_Dest->GetOwner();
-					helper->_db_pLink->output_obj = cache_DestOwner->GetID();
-					helper->_db_pLink->output_type = pLinkInputOutputType_POUT;
-					helper->_db_pLink->output_is_bb = TRUE;
-					helper->_db_pLink->output_index = ((CKBehavior*)cache_DestOwner)->GetOutputParameterPosition((CKParameterOut*)cache_Dest);
-
+					switch (cache_DestOwner->GetClassID()) {
+						case CKCID_BEHAVIOR:
+							mDb->mDbHelper.script_pLink.output_obj = cache_DestOwner->GetID();
+							mDb->mDbHelper.script_pLink.output_type = DataStruct::pLinkInputOutputType_POUT;
+							mDb->mDbHelper.script_pLink.output_is_bb = TRUE;
+							mDb->mDbHelper.script_pLink.output_index = ((CKBehavior*)cache_DestOwner)->GetOutputParameterPosition((CKParameterOut*)cache_Dest);
+							break;
+						case CKCID_DATAARRAY:
+							// CKDataArray, see as virtual bb pLocal shortcut
+							mDb->mDbHelper.script_pLink.output_obj = cache_Dest->GetID();
+							mDb->mDbHelper.script_pLink.output_type = DataStruct::pLinkInputOutputType_PATTR;
+							mDb->mDbHelper.script_pLink.input_is_bb = FALSE;	// omit
+							mDb->mDbHelper.script_pLink.input_index = -1;	// omit
+							Proc_pAttr(ctx, mDb, cache_Dest);
+							break;
+						default:
+							// CKObject, because CKDataArray also a CKObject, so we test it first.
+							// see as virtual bb pLocal shortcut
+							mDb->mDbHelper.script_pLink.output_obj = cache_Dest->GetID();
+							mDb->mDbHelper.script_pLink.output_type = DataStruct::pLinkInputOutputType_PATTR;
+							mDb->mDbHelper.script_pLink.input_is_bb = FALSE;	// omit
+							mDb->mDbHelper.script_pLink.input_index = -1;	// omit
+							Proc_pAttr(ctx, mDb, cache_Dest);
+							break;
+					}
 				}
 
-				helper->_db_pLink->belong_to = grandparents;
+				mDb->mDbHelper.script_pLink.parent = grandparents;
 
-				mDb->write_script_pLink(helper->_db_pLink);
+				mDb->write_script_pLink(mDb->mDbHelper.script_pLink);
 			}
 		}
 
-		void proc_bIn(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
-			helper->_db_bIn->thisobj = cache->GetID();
-			helper->_db_bIn->index = index;
-			helper->_db_bIn->name = cache->GetName();
-			helper->_db_bIn->belong_to = parents;
+		void Proc_pTarget(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents) {
+			mDb->mDbHelper.script_pTarget.thisobj = cache->GetID();
+			mDb->mDbHelper.script_pTarget.name = cache->GetName();
+			CopyCKParamTypeStr(mDb->mDbHelper.script_pTarget.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			CopyGuid(mDb->mDbHelper.script_pTarget.type_guid, cache->GetGUID());
+			mDb->mDbHelper.script_pTarget.parent = parents;
+			mDb->mDbHelper.script_pTarget.direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
+			mDb->mDbHelper.script_pTarget.shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
-			mDb->write_script_bIn(helper->_db_bIn);
+			mDb->write_script_pTarget(mDb->mDbHelper.script_pTarget);
+			
+			// try generate pLink and eLink
+			Generate_pLink(ctx, cache, mDb, parents, grandparents, -1, TRUE, TRUE);
 		}
 
-		void proc_bOut(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
-			helper->_db_bOut->thisobj = cache->GetID();
-			helper->_db_bOut->index = index;
-			helper->_db_bOut->name = cache->GetName();
-			helper->_db_bOut->belong_to = parents;
+		void Proc_pIn(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+			mDb->mDbHelper.script_pIn.thisobj = cache->GetID();
+			mDb->mDbHelper.script_pIn.index = index;
+			mDb->mDbHelper.script_pIn.name = cache->GetName();
+			CopyCKParamTypeStr(mDb->mDbHelper.script_pIn.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			CopyGuid(mDb->mDbHelper.script_pIn.type_guid, cache->GetGUID());
+			mDb->mDbHelper.script_pIn.parent = parents;
+			mDb->mDbHelper.script_pIn.direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
+			mDb->mDbHelper.script_pIn.shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
-			mDb->write_script_bOut(helper->_db_bOut);
+			mDb->write_script_pIn(mDb->mDbHelper.script_pIn);
+
+			// try generate pLink and eLink
+			Generate_pLink(ctx, cache, mDb, parents, grandparents, index, executedFromBB, FALSE);
+
 		}
 
-		void proc_bLink(CKBehaviorLink* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+		void Proc_pOut(CKContext* ctx, CKParameterOut* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
+			mDb->mDbHelper.script_pOut.thisobj = cache->GetID();
+			mDb->mDbHelper.script_pOut.index = index;
+			mDb->mDbHelper.script_pOut.name = cache->GetName();
+			CopyCKParamTypeStr(mDb->mDbHelper.script_pOut.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			CopyGuid(mDb->mDbHelper.script_pOut.type_guid, cache->GetGUID());
+			mDb->mDbHelper.script_pOut.parent = parents;
+
+			mDb->write_script_pOut(mDb->mDbHelper.script_pOut);
+
+			// try generate pLink and eLink
+			Generate_pLink(ctx, cache, mDb, parents, grandparents, index, executedFromBB);
+		}
+
+		void Proc_bIn(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
+			mDb->mDbHelper.script_bIn.thisobj = cache->GetID();
+			mDb->mDbHelper.script_bIn.index = index;
+			mDb->mDbHelper.script_bIn.name = cache->GetName();
+			mDb->mDbHelper.script_bIn.parent = parents;
+
+			mDb->write_script_bIn(mDb->mDbHelper.script_bIn);
+		}
+
+		void Proc_bOut(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
+			mDb->mDbHelper.script_bOut.thisobj = cache->GetID();
+			mDb->mDbHelper.script_bOut.index = index;
+			mDb->mDbHelper.script_bOut.name = cache->GetName();
+			mDb->mDbHelper.script_bOut.parent = parents;
+
+			mDb->write_script_bOut(mDb->mDbHelper.script_bOut);
+		}
+
+		void Proc_bLink(CKBehaviorLink* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			CKBehaviorIO* io = cache->GetInBehaviorIO();
 			CKBehavior* beh = io->GetOwner();
-			helper->_db_bLink->input = io->GetID();
-			helper->_db_bLink->input_obj = beh->GetID();
-			helper->_db_bLink->input_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
-			helper->_db_bLink->input_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
+			mDb->mDbHelper.script_bLink.input = io->GetID();
+			mDb->mDbHelper.script_bLink.input_obj = beh->GetID();
+			mDb->mDbHelper.script_bLink.input_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+			mDb->mDbHelper.script_bLink.input_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 			io = cache->GetOutBehaviorIO();
 			beh = io->GetOwner();
-			helper->_db_bLink->output = io->GetID();
-			helper->_db_bLink->output_obj = beh->GetID();
-			helper->_db_bLink->output_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
-			helper->_db_bLink->output_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
+			mDb->mDbHelper.script_bLink.output = io->GetID();
+			mDb->mDbHelper.script_bLink.output_obj = beh->GetID();
+			mDb->mDbHelper.script_bLink.output_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+			mDb->mDbHelper.script_bLink.output_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 
-			helper->_db_bLink->delay = cache->GetActivationDelay();
-			helper->_db_bLink->belong_to = parents;
+			mDb->mDbHelper.script_bLink.delay = cache->GetActivationDelay();
+			mDb->mDbHelper.script_bLink.belong_to = parents;
 
-			mDb->write_script_bLink(helper->_db_bLink);
+			mDb->write_script_bLink(mDb->mDbHelper.script_bLink);
 		}
 
-		void proc_pLocal(CKParameterLocal* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, BOOL is_setting) {
-			helper->_db_pLocal->thisobj = cache->GetID();
-			helper->_db_pLocal->name = cache->GetName() ? cache->GetName() : "";
+		void Proc_pLocal(CKParameterLocal* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, BOOL is_setting) {
+			mDb->mDbHelper.script_pLocal.thisobj = cache->GetID();
+			mDb->mDbHelper.script_pLocal.name = cache->GetName() ? cache->GetName() : "";
 			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) helper->_db_pLocal->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else helper->_db_pLocal->type = "!!UNKNOW TYPE!!"; //unknow type
-			copyGuid(cache->GetGUID(), helper->_db_pLocal->type_guid);
-			helper->_db_pLocal->is_setting = is_setting;
-			helper->_db_pLocal->belong_to = parents;
+			if (vaildTypeChecker != -1) mDb->mDbHelper.script_pLocal.type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+			else mDb->mDbHelper.script_pLocal.type = "!!UNKNOW TYPE!!"; //unknow type
+			CopyGuid(cache->GetGUID(), mDb->mDbHelper.script_pLocal.type_guid);
+			mDb->mDbHelper.script_pLocal.is_setting = is_setting;
+			mDb->mDbHelper.script_pLocal.belong_to = parents;
 
-			mDb->write_script_pLocal(helper->_db_pLocal);
+			mDb->write_script_pLocal(mDb->mDbHelper.script_pLocal);
 
 			//export plocal metadata
-			DigParameterData(cache, mDb, helper, cache->GetID());
+			DigParameterData(cache, mDb, cache->GetID());
 		}
 
-		void proc_pOper(CKContext* ctx, CKParameterOperation* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
-			helper->_db_pOper->thisobj = cache->GetID();
-			helper->_db_pOper->op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
-			copyGuid(cache->GetOperationGuid(), helper->_db_pOper->op_guid);
-			helper->_db_pOper->belong_to = parents;
+		void Proc_pOper(CKContext* ctx, CKParameterOperation* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+			mDb->mDbHelper.script_pOper.thisobj = cache->GetID();
+			mDb->mDbHelper.script_pOper.op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
+			CopyGuid(cache->GetOperationGuid(), mDb->mDbHelper.script_pOper.op_guid);
+			mDb->mDbHelper.script_pOper.belong_to = parents;
 
-			mDb->write_script_pOper(helper->_db_pOper);
+			mDb->write_script_pOper(mDb->mDbHelper.script_pOper);
 
 			//export 2 input param and 1 output param
-			proc_pIn(ctx, cache->GetInParameter1(), mDb, helper, cache->GetID(), parents, 0, FALSE);
-			proc_pIn(ctx, cache->GetInParameter2(), mDb, helper, cache->GetID(), parents, 1, FALSE);
-			proc_pOut(ctx, cache->GetOutParameter(), mDb, helper, cache->GetID(), parents, 0, FALSE);
+			Proc_pIn(ctx, cache->GetInParameter1(), mDb, cache->GetID(), parents, 0, FALSE);
+			Proc_pIn(ctx, cache->GetInParameter2(), mDb, cache->GetID(), parents, 1, FALSE);
+			Proc_pOut(ctx, cache->GetOutParameter(), mDb, cache->GetID(), parents, 0, FALSE);
 		}
 
-		void proc_pAttr(CKContext* ctx, Database::DocumentDatabase* mDb, CKParameter* cache) {
+		void Proc_pAttr(CKContext* ctx, Database::DocumentDatabase* mDb, CKParameter* cache) {
 			//write self first to detect conflict
-			helper->_db_pAttr->thisobj = cache->GetID();
-			safeStringCopy(helper->_db_pAttr->name, cache->GetName());
+			mDb->mDbHelper.script_pAttr.thisobj = cache->GetID();
+			CopyCKString(mDb->mDbHelper.script_pAttr.name, cache->GetName());
 			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) helper->_db_pAttr->type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else helper->_db_pAttr->type = "!!UNKNOW TYPE!!"; //unknow type
-			copyGuid(cache->GetGUID(), helper->_db_pAttr->type_guid);
+			if (vaildTypeChecker != -1) mDb->mDbHelper.script_pAttr.type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
+			else mDb->mDbHelper.script_pAttr.type = "!!UNKNOW TYPE!!"; //unknow type
+			CopyGuid(cache->GetGUID(), mDb->mDbHelper.script_pAttr.type_guid);
 
 			BOOL already_exist = FALSE;
-			mDb->write_script_pAttr(helper->_db_pAttr, &already_exist);
+			mDb->write_script_pAttr(mDb->mDbHelper.script_pAttr, &already_exist);
 			if (!already_exist) {
 				//not duplicated, continue write property
 				CKObject* host = cache->GetOwner();
-				DataDictWritter("attr.host_id", (long)host->GetID(), mDb, helper, cache->GetID());
-				DataDictWritter("attr.host_name", host->GetName(), mDb, helper, cache->GetID());
+				DataDictWritter("attr.host_id", (long)host->GetID(), mDb, cache->GetID());
+				DataDictWritter("attr.host_name", host->GetName(), mDb, cache->GetID());
 			}
 
 		}
 
+		void Proc_Behavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+			//write self data
+			mDb->mDbHelper.script_behavior.thisobj = bhv->GetID();
+			mDb->mDbHelper.script_behavior.name = bhv->GetName();
+			mDb->mDbHelper.script_behavior.type = bhv->GetType();
+			mDb->mDbHelper.script_behavior.proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
+			CopyGuid(bhv->GetPrototypeGuid(), mDb->mDbHelper.script_behavior.proto_guid);
+			mDb->mDbHelper.script_behavior.flags = bhv->GetFlags();
+			mDb->mDbHelper.script_behavior.priority = bhv->GetPriority();
+			mDb->mDbHelper.script_behavior.version = bhv->GetVersion();
+			mDb->mDbHelper.script_behavior.parent = parents;
+			sprintf(helper->_stringCache, "%d,%d,%d,%d,%d",
+				(bhv->IsUsingTarget() ? 1 : 0),
+				bhv->GetInputParameterCount(),
+				bhv->GetOutputParameterCount(),
+				bhv->GetInputCount(),
+				bhv->GetOutputCount());
+			mDb->mDbHelper.script_behavior.pin_count = helper->_stringCache;
+			mDb->write_script_behavior(mDb->mDbHelper.script_behavior);
+
+			//write target
+			if (bhv->IsUsingTarget())
+				Proc_pTarget(ctx, bhv->GetTargetParameter(), mDb, bhv->GetID(), parents);
+
+			int count = 0, i = 0;
+			//pIn
+			for (i = 0, count = bhv->GetInputParameterCount(); i < count; i++)
+				Proc_pIn(ctx, bhv->GetInputParameter(i), mDb, bhv->GetID(), parents, i, TRUE);
+			//pOut
+			for (i = 0, count = bhv->GetOutputParameterCount(); i < count; i++)
+				Proc_pOut(ctx, bhv->GetOutputParameter(i), mDb, bhv->GetID(), parents, i, TRUE);
+			//bIn
+			for (i = 0, count = bhv->GetInputCount(); i < count; i++)
+				Proc_bIn(bhv->GetInput(i), mDb, bhv->GetID(), i);
+			//bOut
+			for (i = 0, count = bhv->GetOutputCount(); i < count; i++)
+				Proc_bOut(bhv->GetOutput(i), mDb, bhv->GetID(), i);
+			//bLink
+			for (i = 0, count = bhv->GetSubBehaviorLinkCount(); i < count; i++)
+				Proc_bLink(bhv->GetSubBehaviorLink(i), mDb, bhv->GetID());
+			//pLocal
+			for (i = 0, count = bhv->GetLocalParameterCount(); i < count; i++)
+				Proc_pLocal(bhv->GetLocalParameter(i), mDb, bhv->GetID(),
+				bhv->IsLocalParameterSetting(i));
+			//pOper
+			for (i = 0, count = bhv->GetParameterOperationCount(); i < count; i++)
+				Proc_pOper(ctx, bhv->GetParameterOperation(i), mDb, bhv->GetID());
+
+			//iterate sub bb
+			for (i = 0, count = bhv->GetSubBehaviorCount(); i < count; i++)
+				Proc_Behavior(ctx, bhv->GetSubBehavior(i), mDb, bhv->GetID());
+		}
 
 		void IterateScript(CKContext* ctx, Database::DocumentDatabase* mDb) {
 			CKBeObject* beobj = NULL;
@@ -321,69 +419,16 @@ namespace SSMaterializer {
 					//write script table
 					beh = beobj->GetScript(j);
 
-					helper->_db_script->thisobj = beobj->GetID();
-					helper->_db_script->host_name = beobj->GetName();
-					helper->_db_script->index = j;
-					helper->_db_script->behavior = beh->GetID();
-					mDb->write_script(helper->_db_script);
+					mDb->mDbHelper.script.thisobj = beobj->GetID();
+					mDb->mDbHelper.script.host_name = beobj->GetName();
+					mDb->mDbHelper.script.index = j;
+					mDb->mDbHelper.script.behavior = beh->GetID();
+					mDb->write_script(mDb->mDbHelper.script);
 
 					//iterate script
-					IterateBehavior(ctx, beh, mDb, helper, -1);
+					Proc_Behavior(ctx, beh, mDb, -1);
 				}
 			}
-		}
-
-		void IterateBehavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
-			//write self data
-			helper->_db_behavior->thisobj = bhv->GetID();
-			helper->_db_behavior->name = bhv->GetName();
-			helper->_db_behavior->type = bhv->GetType();
-			helper->_db_behavior->proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
-			copyGuid(bhv->GetPrototypeGuid(), helper->_db_behavior->proto_guid);
-			helper->_db_behavior->flags = bhv->GetFlags();
-			helper->_db_behavior->priority = bhv->GetPriority();
-			helper->_db_behavior->version = bhv->GetVersion();
-			helper->_db_behavior->parent = parents;
-			sprintf(helper->_stringCache, "%d,%d,%d,%d,%d",
-				(bhv->IsUsingTarget() ? 1 : 0),
-				bhv->GetInputParameterCount(),
-				bhv->GetOutputParameterCount(),
-				bhv->GetInputCount(),
-				bhv->GetOutputCount());
-			helper->_db_behavior->pin_count = helper->_stringCache;
-			mDb->write_script_behavior(helper->_db_behavior);
-
-			//write target
-			if (bhv->IsUsingTarget())
-				proc_pTarget(ctx, bhv->GetTargetParameter(), mDb, helper, bhv->GetID(), parents);
-
-			int count = 0, i = 0;
-			//pIn
-			for (i = 0, count = bhv->GetInputParameterCount(); i < count; i++)
-				proc_pIn(ctx, bhv->GetInputParameter(i), mDb, helper, bhv->GetID(), parents, i, TRUE);
-			//pOut
-			for (i = 0, count = bhv->GetOutputParameterCount(); i < count; i++)
-				proc_pOut(ctx, bhv->GetOutputParameter(i), mDb, helper, bhv->GetID(), parents, i, TRUE);
-			//bIn
-			for (i = 0, count = bhv->GetInputCount(); i < count; i++)
-				proc_bIn(bhv->GetInput(i), mDb, helper, bhv->GetID(), i);
-			//bOut
-			for (i = 0, count = bhv->GetOutputCount(); i < count; i++)
-				proc_bOut(bhv->GetOutput(i), mDb, helper, bhv->GetID(), i);
-			//bLink
-			for (i = 0, count = bhv->GetSubBehaviorLinkCount(); i < count; i++)
-				proc_bLink(bhv->GetSubBehaviorLink(i), mDb, helper, bhv->GetID());
-			//pLocal
-			for (i = 0, count = bhv->GetLocalParameterCount(); i < count; i++)
-				proc_pLocal(bhv->GetLocalParameter(i), mDb, helper, bhv->GetID(),
-				bhv->IsLocalParameterSetting(i));
-			//pOper
-			for (i = 0, count = bhv->GetParameterOperationCount(); i < count; i++)
-				proc_pOper(ctx, bhv->GetParameterOperation(i), mDb, helper, bhv->GetID());
-
-			//iterate sub bb
-			for (i = 0, count = bhv->GetSubBehaviorCount(); i < count; i++)
-				IterateBehavior(ctx, bhv->GetSubBehavior(i), mDb, helper, bhv->GetID());
 		}
 
 #pragma endregion
@@ -403,12 +448,12 @@ namespace SSMaterializer {
 			//nothing
 			if (t == CKPGUID_NONE) return;
 			if (p->GetParameterClassID() && p->GetValueObject(false)) {
-				DataDictWritter("id", (long)p->GetValueObject(false)->GetID(), mDb, helper, parents);
-				DataDictWritter("name", p->GetValueObject(false)->GetName(), mDb, helper, parents);
+				DataDictWritter("id", (long)p->GetValueObject(false)->GetID(), mDb, parents);
+				DataDictWritter("name", p->GetValueObject(false)->GetName(), mDb, parents);
 
 				CK_CLASSID none_classid = p->GetValueObject(false)->GetClassID();
 				CKParameterType none_type = helper->_parameterManager->ClassIDToType(none_classid);
-				DataDictWritter("type", helper->_parameterManager->ParameterTypeToName(none_type), mDb, helper, parents);
+				DataDictWritter("type", helper->_parameterManager->ParameterTypeToName(none_type), mDb, parents);
 				return;
 			}
 			//float
@@ -417,7 +462,7 @@ namespace SSMaterializer {
 				|| t == CKPGUID_FLOATSLIDER
 #endif
 				) {
-				DataDictWritter("float-data", *(float*)(p->GetReadDataPtr(false)), mDb, helper, parents);
+				DataDictWritter("float-data", *(float*)(p->GetReadDataPtr(false)), mDb, parents);
 				return;
 			}
 			//int
@@ -428,22 +473,22 @@ namespace SSMaterializer {
 				|| t == CKPGUID_LIGHTTYPE || t == CKPGUID_SPRITEALIGN || t == CKPGUID_DIRECTION || t == CKPGUID_LAYERTYPE
 				|| t == CKPGUID_COMPOPERATOR || t == CKPGUID_BINARYOPERATOR || t == CKPGUID_SETOPERATOR
 				|| t == CKPGUID_OBSTACLEPRECISION || t == CKPGUID_OBSTACLEPRECISIONBEH) {
-				DataDictWritter("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), mDb, helper, parents);
+				DataDictWritter("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_VECTOR) {
 				VxVector vec;
 				memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-				DataDictWritter("vector.x", vec.x, mDb, helper, parents);
-				DataDictWritter("vector.y", vec.y, mDb, helper, parents);
-				DataDictWritter("vector.z", vec.z, mDb, helper, parents);
+				DataDictWritter("vector.x", vec.x, mDb, parents);
+				DataDictWritter("vector.y", vec.y, mDb, parents);
+				DataDictWritter("vector.z", vec.z, mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_2DVECTOR) {
 				Vx2DVector vec;
 				memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-				DataDictWritter("2dvector.x", vec.x, mDb, helper, parents);
-				DataDictWritter("2dvector.y", vec.y, mDb, helper, parents);
+				DataDictWritter("2dvector.x", vec.x, mDb, parents);
+				DataDictWritter("2dvector.y", vec.y, mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_MATRIX) {
@@ -454,7 +499,7 @@ namespace SSMaterializer {
 				for (int i = 0; i < 4; ++i) {
 					for (int j = 0; j < 4; ++j) {
 						sprintf(position, "matrix[%d][%d]", i, j);
-						DataDictWritter(position, mat[i][j], mDb, helper, parents);
+						DataDictWritter(position, mat[i][j], mDb, parents);
 					}
 				}
 				return;
@@ -462,10 +507,10 @@ namespace SSMaterializer {
 			if (t == CKPGUID_COLOR) {
 				VxColor col;
 				memcpy(&col, p->GetReadDataPtr(false), sizeof(col));
-				DataDictWritter("color.r", col.r, mDb, helper, parents);
-				DataDictWritter("color.g", col.g, mDb, helper, parents);
-				DataDictWritter("color.b", col.b, mDb, helper, parents);
-				DataDictWritter("color.a", col.a, mDb, helper, parents);
+				DataDictWritter("color.r", col.r, mDb, parents);
+				DataDictWritter("color.g", col.g, mDb, parents);
+				DataDictWritter("color.b", col.b, mDb, parents);
+				DataDictWritter("color.a", col.a, mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_2DCURVE) {
@@ -479,27 +524,27 @@ namespace SSMaterializer {
 					endIndex = strlen(prefix);
 
 					changeSuffix(".pos.x");
-					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().x, mDb, helper, parents);
+					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().x, mDb, parents);
 					changeSuffix(".pos.y");
-					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().y, mDb, helper, parents);
+					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().y, mDb, parents);
 					changeSuffix(".islinear");
-					DataDictWritter(prefix, (long)c->GetControlPoint(i)->IsLinear(), mDb, helper, parents);
+					DataDictWritter(prefix, (long)c->GetControlPoint(i)->IsLinear(), mDb, parents);
 					if (c->GetControlPoint(i)->IsTCB()) {
 						changeSuffix(".bias");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetBias(), mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetBias(), mDb, parents);
 						changeSuffix(".continuity");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetContinuity(), mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetContinuity(), mDb, parents);
 						changeSuffix(".tension");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetTension(), mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetTension(), mDb, parents);
 					} else {
 						changeSuffix(".intangent.x");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().x, mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().x, mDb, parents);
 						changeSuffix(".intangent.y");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().y, mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().y, mDb, parents);
 						changeSuffix(".outtangent.x");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().x, mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().x, mDb, parents);
 						changeSuffix(".outtangent.y");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().y, mDb, helper, parents);
+						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().y, mDb, parents);
 					}
 				}
 				return;
@@ -548,7 +593,7 @@ namespace SSMaterializer {
 				mDb->write_pData(helper->_db_pData);
 
 				//dump data length
-				DataDictWritter("dump.length", (long)cc, mDb, helper, parents);
+				DataDictWritter("dump.length", (long)cc, mDb, parents);
 				return;
 			}
 		}

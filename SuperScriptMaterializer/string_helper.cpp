@@ -23,9 +23,5 @@ namespace SSMaterializer {
 			}
 		}
 
-		void CopyGUID(std::string& strl, CKGUID& guid) {
-			StdstringPrintf(strl, "0x%08x, 0x%08x", guid.d1, guid.d2);
-		}
-
 	}
 }

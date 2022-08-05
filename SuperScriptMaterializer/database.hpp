@@ -20,9 +20,9 @@ namespace SSMaterializer {
 		enum pLinkInputOutputType {
 			pLinkInputOutputType_PIN,
 			pLinkInputOutputType_POUT,
-			pLinkInputOutputType_PLOCAL, //when using pLocal, omit [index] and [input_is_bb], [input_index] set -1
-			pLinkInputOutputType_PTARGET, //when using pTarget, omit [index] and [input_is_bb], [input_index] set -1
-			pLinkInputOutputType_PATTR //when using pAttr, omit [index] and [input_is_bb], [input_index] set -1
+			pLinkInputOutputType_PLOCAL,	//when using pLocal, omit [index] and [input_is_bb], [input_index] set -1
+			pLinkInputOutputType_PTARGET,	//when using pTarget, omit [index] and [input_is_bb], [input_index] set -1
+			pLinkInputOutputType_PATTR		//when using pAttr, omit [index], and [input_is_bb] will become [input_is_dataarray]
 		};
 
 		// =================== doc mDb
