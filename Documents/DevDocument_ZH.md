@@ -253,7 +253,7 @@ doc.db导出的是当前Virtools文档内的脚本及其它重要数据。
 |param_type_guid|TEXT|列的类型的GUID|
 |parent|INTEGER|表头所属表的`CK_ID`|
 
-当列类型为Parameter时，`param_type`和`param_type_guid`为其所属CKParameterType的类型文本和GUID，当列类型为Object时，`param_type`为其对应的Class id，`param_type_guid`无效。列类型为其它类型时，`param_type`和`param_type_guid`均无效。
+当列类型为Parameter时，`param_type`和`param_type_guid`为其所属CKParameterType的类型文本和GUID，当列类型为Object时，`param_type`和`param_type_guid`均无效，因为无法确认对应CKObject的类型。列类型为其它类型时，`param_type`和`param_type_guid`也均无效。
 
 ### array_cell
 
@@ -340,7 +340,7 @@ env.db导出的是当前Virtools环境的数据，与文档无关，这部分如
 |字段|类型|含义|
 |:---|:---|:---|
 |dll_index|INTEGER|`CKPluginEntry::m_PluginDllIndex`|
-|dll_name|TEXT|`CKPluginEntry::m_PluginInfo`的`CKPluginInfo::m_DllFileName`|
+|dll_name|TEXT|以`CKPluginEntry::m_PluginDllIndex`为参，使用`CKPluginManager::GetPluginDllInfo()`，获得的`CKPluginDll::m_DllFileName`|
 |plugin_index|INTEGER|`CKPluginEntry::m_PositionInDll`|
 |active|INTEGER|`CKPluginEntry::m_Active`|
 |guid|TEXT|`CKPluginEntry::m_PluginInfo`的`CKPluginInfo::m_GUID`|

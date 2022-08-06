@@ -18,7 +18,7 @@
     <ClInclude Include="database.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="env_export.h">
+    <ClInclude Include="env_export.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -33,10 +33,7 @@
     <ClInclude Include="vt_menu.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="virtools_compatible.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="data_export.h">
+    <ClInclude Include="virtools_compatible.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="string_helper.hpp">
@@ -63,9 +60,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="virtools_compatible.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="data_export.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="string_helper.cpp">

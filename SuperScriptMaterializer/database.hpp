@@ -2,7 +2,7 @@
 
 #include <sqlite3.h>
 #include "stdafx.h"
-#include "virtools_compatible.h"
+#include "virtools_compatible.hpp"
 #include <string>
 #include <vector>
 #include <set>

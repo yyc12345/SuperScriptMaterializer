@@ -1,147 +1,145 @@
-#include "env_export.h"
+#include "env_export.hpp"
+#include "string_helper.hpp"
+
 //disable shit tip
 #pragma warning(disable:26812)
 
-#define CopyGuid(guid,str) sprintf(helper->_stringCache,"%d,%d",guid.d1,guid.d2);str=helper->_stringCache;
-#define CopyCKString(storage,str) storage=(str)?(str):"";
+namespace SSMaterializer {
+	namespace EnvironmentExporter {
 
-void IterateParameterOperation(CKParameterManager* parameterManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	int count = parameterManager->GetParameterOperationCount();
-	CKOperationDesc* opList = NULL;
-	int listCount = 0, cacheListCount = 0;
-	CKGUID _guid;
-	for (int i = 0; i < count; i++) {
-		//fill basic data
-		helper->_db_op->op_code = i;
-		_guid = parameterManager->OperationCodeToGuid(i);
-		CopyGuid(_guid,helper->_db_op->op_guid);
-		helper->_db_op->op_name = parameterManager->OperationCodeToName(i);
+		void IterateParameterOperation(CKParameterManager* parameterManager, Database::EnvironmentDatabase* mDb) {
+			int count = parameterManager->GetParameterOperationCount();
+			CKOperationDesc* opList = NULL;
+			CKGUID _guid;
+			int listCount = 0, cacheListCount = 0;
+			for (int i = 0; i < count; i++) {
+				//fill basic data
+				mDb->mDbHelper.op.op_code = i;
+				_guid = parameterManager->OperationCodeToGuid(i);
+				CopyGuid(mDb->mDbHelper.op.op_guid, _guid);
+				mDb->mDbHelper.op.op_name = parameterManager->OperationCodeToName(i);
 
-		//allocate mem
-		cacheListCount = parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, NULL);
-		if (cacheListCount > listCount) {
-			listCount = cacheListCount;
-			opList = (CKOperationDesc*)realloc(opList, listCount * sizeof(CKOperationDesc));
-			assert(opList != NULL);
+				//allocate mem
+				cacheListCount = parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, NULL);
+				if (cacheListCount > listCount) {
+					listCount = cacheListCount;
+					opList = (CKOperationDesc*)realloc(opList, listCount * sizeof(CKOperationDesc));
+					if (opList == NULL) return;
+				}
+
+				parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, opList);
+				for (int j = 0; j < cacheListCount; j++) {
+					CopyGuid(mDb->mDbHelper.op.in1_guid, opList[j].P1Guid);
+					CopyGuid(mDb->mDbHelper.op.in2_guid, opList[j].P2Guid);
+					CopyGuid(mDb->mDbHelper.op.out_guid, opList[j].ResGuid);
+					mDb->mDbHelper.op.funcPtr = opList[j].Fct;
+
+					mDb->write_op(mDb->mDbHelper.op);
+				}
+			}
+			if (opList != NULL) free(opList);
+
 		}
 
-		parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, opList);
-		for (int j = 0; j < cacheListCount; j++) {
-			CopyGuid(opList[j].P1Guid, helper->_db_op->in1_guid);
-			CopyGuid(opList[j].P2Guid, helper->_db_op->in2_guid);
-			CopyGuid(opList[j].ResGuid, helper->_db_op->out_guid);
-			helper->_db_op->funcPtr = opList[j].Fct;
+		void IterateParameter(CKParameterManager* parameterManager, Database::EnvironmentDatabase* mDb) {
+			int count = parameterManager->GetParameterTypesCount();
+			CKParameterTypeDesc* desc = NULL;
+			for (int i = 0; i < count; i++) {
+				desc = parameterManager->GetParameterTypeDescription(i);
 
-			mDb->write_op(helper->_db_op);
+				mDb->mDbHelper.param.index = desc->Index;
+				CopyGuid(mDb->mDbHelper.param.guid, desc->Guid);
+				CopyGuid(mDb->mDbHelper.param.derived_from, desc->DerivedFrom);
+				mDb->mDbHelper.param.type_name = desc->TypeName.CStr();
+				mDb->mDbHelper.param.default_size = desc->DefaultSize;
+				mDb->mDbHelper.param.func_CreateDefault = desc->CreateDefaultFunction;
+				mDb->mDbHelper.param.func_Delete = desc->DeleteFunction;
+				mDb->mDbHelper.param.func_SaveLoad = desc->SaveLoadFunction;
+				mDb->mDbHelper.param.func_Check = desc->CheckFunction;
+				mDb->mDbHelper.param.func_Copy = desc->CopyFunction;
+				mDb->mDbHelper.param.func_String = desc->StringFunction;
+				mDb->mDbHelper.param.func_UICreator = desc->UICreatorFunction;
+				CKPluginEntry* plgEntry = desc->CreatorDll;
+				if (plgEntry != NULL) {
+					mDb->mDbHelper.param.creator_dll_index = plgEntry->m_PluginDllIndex;
+					mDb->mDbHelper.param.creator_plugin_index = plgEntry->m_PositionInDll;
+				} else {
+					mDb->mDbHelper.param.creator_dll_index = -1;
+					mDb->mDbHelper.param.creator_plugin_index = -1;
+				}
+				mDb->mDbHelper.param.dw_param = desc->dwParam;
+				mDb->mDbHelper.param.dw_flags = desc->dwFlags;
+				mDb->mDbHelper.param.cid = desc->Cid;
+				CopyGuid(mDb->mDbHelper.param.saver_manager, desc->Saver_Manager);
+
+				mDb->write_param(mDb->mDbHelper.param);
+			}
 		}
-	}
-	if (opList != NULL) free(opList);
 
-}
+		void IterateAttribute(CKAttributeManager* attrManager, Database::EnvironmentDatabase* mDb) {
+			int count = attrManager->GetAttributeCount();
+			for (int i = 0; i < count; i++) {
+				mDb->mDbHelper.attr.index = i;
+				mDb->mDbHelper.attr.name = attrManager->GetAttributeNameByType(i);
+				mDb->mDbHelper.attr.category_index = attrManager->GetAttributeCategoryIndex(i);
+				CopyCKString(mDb->mDbHelper.attr.category_name, attrManager->GetAttributeCategory(i));
+				mDb->mDbHelper.attr.flags = attrManager->GetAttributeFlags(i);
+				mDb->mDbHelper.attr.param_index = attrManager->GetAttributeParameterType(i);
+				mDb->mDbHelper.attr.compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
+				CopyCKString(mDb->mDbHelper.attr.default_value, attrManager->GetAttributeDefaultValue(i));
 
-void IterateParameter(CKParameterManager* parameterManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	int count = parameterManager->GetParameterTypesCount();
-	CKParameterTypeDesc* desc = NULL;
-	for (int i = 0; i < count; i++) {
-		desc = parameterManager->GetParameterTypeDescription(i);
-
-		helper->_db_param->index = desc->Index;
-		CopyGuid(desc->Guid, helper->_db_param->guid);
-		CopyGuid(desc->DerivedFrom, helper->_db_param->derived_from);
-		helper->_db_param->type_name = desc->TypeName.CStr();
-		helper->_db_param->default_size = desc->DefaultSize;
-		helper->_db_param->func_CreateDefault = desc->CreateDefaultFunction;
-		helper->_db_param->func_Delete = desc->DeleteFunction;
-		helper->_db_param->func_SaveLoad = desc->SaveLoadFunction;
-		helper->_db_param->func_Check = desc->CheckFunction;
-		helper->_db_param->func_Copy = desc->CopyFunction;
-		helper->_db_param->func_String = desc->StringFunction;
-		helper->_db_param->func_UICreator = desc->UICreatorFunction;
-		CKPluginEntry* plgEntry = desc->CreatorDll;
-		if (plgEntry != NULL) {
-			helper->_db_param->creator_dll_index = plgEntry->m_PluginDllIndex;
-			helper->_db_param->creator_plugin_index = plgEntry->m_PositionInDll;
-		} else {
-			helper->_db_param->creator_dll_index =-1;
-			helper->_db_param->creator_plugin_index =-1;
+				mDb->write_attr(mDb->mDbHelper.attr);
+			}
 		}
-		helper->_db_param->dw_param = desc->dwParam;
-		helper->_db_param->dw_flags = desc->dwFlags;
-		helper->_db_param->cid = desc->Cid;
-		CopyGuid(desc->Saver_Manager, helper->_db_param->saver_manager);
 
-		mDb->write_param(helper->_db_param);
-	}
-}
+		void IteratePlugin(CKPluginManager* plgManager, Database::EnvironmentDatabase* mDb) {
+			for (int i = 0; i <= 7; i++) {
+				int catCount = plgManager->GetPluginCount(i);
+				mDb->mDbHelper.plugin.category = plgManager->GetCategoryName(i);
+				for (int j = 0; j < catCount; j++) {
+					CKPluginEntry* plgEntry = plgManager->GetPluginInfo(i, j);
+					CKPluginInfo* plgInfo = &(plgEntry->m_PluginInfo);
+					CKPluginDll* plgDll = plgManager->GetPluginDllInfo(plgEntry->m_PluginDllIndex);
 
-void IterateMessage(CKMessageManager* msgManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	int count = msgManager->GetMessageTypeCount();
-	for (int i = 0; i < count; i++) {
-		helper->_db_envMsg->index = i;
-		helper->_db_envMsg->name = msgManager->GetMessageTypeName(i);
+					mDb->mDbHelper.plugin.dll_index = plgEntry->m_PluginDllIndex;
 
-		mDb->write_msg(helper->_db_envMsg);
-	}
-}
+					mDb->mDbHelper.plugin.dll_name = plgDll->m_DllFileName.CStr();
 
-void IterateAttribute(CKAttributeManager* attrManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	int count = attrManager->GetAttributeCount();
-	for (int i = 0; i < count; i++) {
-		helper->_db_attr->index = i;
-		helper->_db_attr->name = attrManager->GetAttributeNameByType(i);
-		helper->_db_attr->category_index = attrManager->GetAttributeCategoryIndex(i);
-		helper->_db_attr->category_name = attrManager->GetAttributeCategory(i) != NULL ? attrManager->GetAttributeCategory(i) : "";
-		helper->_db_attr->flags = attrManager->GetAttributeFlags(i);
-		helper->_db_attr->param_index = attrManager->GetAttributeParameterType(i);
-		helper->_db_attr->compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
-		helper->_db_attr->default_value = attrManager->GetAttributeDefaultValue(i) != NULL ? attrManager->GetAttributeDefaultValue(i) : "";
+					mDb->mDbHelper.plugin.plugin_index = plgEntry->m_PositionInDll;
+					mDb->mDbHelper.plugin.active = plgEntry->m_Active;
 
-		mDb->write_attr(helper->_db_attr);
-	}
-}
+					CopyGuid(mDb->mDbHelper.plugin.guid, plgInfo->m_GUID);
+					mDb->mDbHelper.plugin.desc = plgInfo->m_Description.CStr();
+					mDb->mDbHelper.plugin.author = plgInfo->m_Author.CStr();
+					mDb->mDbHelper.plugin.summary = plgInfo->m_Summary.CStr();
+					mDb->mDbHelper.plugin.version = plgInfo->m_Version;
+					mDb->mDbHelper.plugin.func_init = plgInfo->m_InitInstanceFct;
+					mDb->mDbHelper.plugin.func_exit = plgInfo->m_ExitInstanceFct;
 
-void IteratePlugin(CKPluginManager* plgManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	for (int i = 0; i <= 7; i++) {
-		int catCount = plgManager->GetPluginCount(i);
-		helper->_db_plugin->category = plgManager->GetCategoryName(i);
-		for (int j = 0; j < catCount; j++) {
-			CKPluginEntry* plgEntry = plgManager->GetPluginInfo(i, j);
-
-			helper->_db_plugin->dll_index = plgEntry->m_PluginDllIndex;
-			helper->_db_plugin->dll_name = plgManager->GetPluginDllInfo(plgEntry->m_PluginDllIndex)->m_DllFileName.CStr();
-			helper->_db_plugin->plugin_index = plgEntry->m_PositionInDll;
-			helper->_db_plugin->active = plgEntry->m_Active;
-			helper->_db_plugin->needed_by_file = plgEntry->m_NeededByFile;
-			CKPluginInfo* plgInfo = &(plgEntry->m_PluginInfo);
-			CopyGuid(plgInfo->m_GUID, helper->_db_plugin->guid);
-			helper->_db_plugin->desc = plgInfo->m_Description.CStr();
-			helper->_db_plugin->author = plgInfo->m_Author.CStr();
-			helper->_db_plugin->summary = plgInfo->m_Summary.CStr();
-			helper->_db_plugin->version = plgInfo->m_Version;
-			helper->_db_plugin->func_init = plgInfo->m_InitInstanceFct;
-			helper->_db_plugin->func_exit = plgInfo->m_ExitInstanceFct;
-
-			mDb->write_plugin(helper->_db_plugin);
+					mDb->write_plugin(mDb->mDbHelper.plugin);
+				}
+			}
 		}
-	}
-}
 
 #if !defined(VIRTOOLS_21)
-void IterateVariable(CKVariableManager* varManager, EnvironmentDatabase* mDb, dbEnvDataStructHelper* helper) {
-	CKVariableManager::Iterator it = varManager->GetVariableIterator();
-	CKVariableManager::Variable* varobj = NULL;
-	XString dataCopyCache;
-	for (; !it.End(); it++) {
-		varobj = it.GetVariable();
-		helper->_db_variable->name = it.GetName();
-		CopyCKString(helper->_db_variable->desciption, varobj->GetDescription());
-		helper->_db_variable->flags = varobj->GetFlags();
-		helper->_db_variable->type = varobj->GetType();
-		CopyCKString(helper->_db_variable->representation, varobj->GetRepresentation());
-		varobj->GetStringValue(dataCopyCache);
-		helper->_db_variable->data = dataCopyCache.CStr();
+		void IterateVariable(CKVariableManager* varManager, Database::EnvironmentDatabase* mDb) {
+			CKVariableManager::Iterator it = varManager->GetVariableIterator();
+			CKVariableManager::Variable* varobj = NULL;
+			XString dataCopyCache;
+			for (; !it.End(); it++) {
+				varobj = it.GetVariable();
+				mDb->mDbHelper.variable.name = it.GetName();
+				CopyCKString(mDb->mDbHelper.variable.desciption, varobj->GetDescription());
+				mDb->mDbHelper.variable.flags = varobj->GetFlags();
+				mDb->mDbHelper.variable.type = varobj->GetType();
+				CopyCKString(mDb->mDbHelper.variable.representation, varobj->GetRepresentation());
+				varobj->GetStringValue(dataCopyCache);
+				mDb->mDbHelper.variable.data = dataCopyCache.CStr();
 
-		mDb->write_variable(helper->_db_variable);
+				mDb->write_variable(mDb->mDbHelper.variable);
+			}
+		}
+#endif
+
 	}
 }
-#endif

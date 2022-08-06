@@ -109,18 +109,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="database.hpp" />
-    <ClInclude Include="data_export.h" />
-    <ClInclude Include="env_export.h" />
+    <ClInclude Include="env_export.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="doc_export.hpp" />
     <ClInclude Include="string_helper.hpp" />
-    <ClInclude Include="virtools_compatible.h" />
+    <ClInclude Include="virtools_compatible.hpp" />
     <ClInclude Include="vt_menu.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />
-    <ClCompile Include="data_export.cpp" />
     <ClCompile Include="env_export.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="doc_export.cpp" />

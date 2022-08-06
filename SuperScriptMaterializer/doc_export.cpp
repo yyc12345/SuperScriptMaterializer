@@ -435,13 +435,160 @@ namespace SSMaterializer {
 
 #pragma endregion
 
+#pragma region message
+
+		void IterateMessage(CKContext* ctx, Database::DocumentDatabase* mDb) {
+			CKMessageManager* msgManager = ctx->GetMessageManager();
+			int count = msgManager->GetMessageTypeCount();
+			for (int i = 0; i < count; i++) {
+				mDb->mDbHelper.msg.index = i;
+				CopyCKString(mDb->mDbHelper.msg.name, msgManager->GetMessageTypeName(i));
+
+				mDb->write_msg(mDb->mDbHelper.msg);
+			}
+		}
+
+#pragma endregion
+
 #pragma region array
+
+		void IterateArray(CKContext* ctx, Database::DocumentDatabase* mDb) {
+			// get all array
+			XObjectPointerArray objArray = ctx->GetObjectListByType(CKCID_DATAARRAY, TRUE);
+			CKDataArray* darray = NULL;
+			int len = objArray.Size();
+			for (int i = 0; i < len; i++) {
+				darray = (CKDataArray*)objArray.GetObjectA(i);
+
+				// dump self data first
+				mDb->mDbHelper._array.thisobj = darray->GetID();
+				CopyCKString(mDb->mDbHelper._array.name, darray->GetName());
+				mDb->mDbHelper._array.columns = darray->GetColumnCount();
+				mDb->mDbHelper._array.rows = darray->GetRowCount();
+
+				mDb->write_array(mDb->mDbHelper._array);
+
+				// dump column and row data
+				Proc_ArrayColumnRow(darray, mDb, darray->GetID());
+			}
+		}
+
+		void Proc_ArrayColumnRow(CKDataArray* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+			int columns = cache->GetColumnCount(), rows = cache->GetRowCount();
+
+			// we iterate columns to get data
+			// because the value type of one column is not changed,
+			// it is benefit to our export.
+			for (int col = 0; col < columns; ++col) {
+				// dump column self first
+				mDb->mDbHelper.array_header.index = col;
+				CopyCKString(mDb->mDbHelper.array_header.name, cache->GetColumnName(col));
+
+				CK_ARRAYTYPE coltype = cache->GetColumnType(col);
+				mDb->mDbHelper.array_header.type = coltype;
+				if (coltype == CKARRAYTYPE_PARAMETER) {
+					CKGUID guid = cache->GetColumnParameterGuid(col);
+					CopyGuid(mDb->mDbHelper.array_header.param_type_guid, guid);
+					CKSTRING pname = mDb->mDbHelper.param_manager->ParameterGuidToName(guid);
+					CopyCKString(mDb->mDbHelper.array_header.param_type, pname);
+				} else {
+					mDb->mDbHelper.array_header.param_type = "";
+					mDb->mDbHelper.array_header.param_type_guid = "";
+				}
+
+				mDb->mDbHelper.array_header.parent = parents;
+				mDb->write_array_header(mDb->mDbHelper.array_header);
+
+				// write row data
+				switch (coltype) {
+					case CKARRAYTYPE_INT:
+						for (int row = 0; row < rows; ++row) {
+							mDb->mDbHelper.array_cell.column = col;
+							mDb->mDbHelper.array_cell.row = row;
+							mDb->mDbHelper.array_cell.parent = parents;
+							
+							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%d", &((int*)cache->GetElement(row, col)));
+							mDb->mDbHelper.array_cell.inner_param = -1;
+
+							mDb->write_array_cell(mDb->mDbHelper.array_cell);
+						}
+						break;
+					case CKARRAYTYPE_FLOAT:
+						for (int row = 0; row < rows; ++row) {
+							mDb->mDbHelper.array_cell.column = col;
+							mDb->mDbHelper.array_cell.row = row;
+							mDb->mDbHelper.array_cell.parent = parents;
+
+							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%f", &((float*)cache->GetElement(row, col)));
+							mDb->mDbHelper.array_cell.inner_param = -1;
+
+							mDb->write_array_cell(mDb->mDbHelper.array_cell);
+						}
+						break;
+					case CKARRAYTYPE_STRING:
+						for (int row = 0; row < rows; ++row) {
+							mDb->mDbHelper.array_cell.column = col;
+							mDb->mDbHelper.array_cell.row = row;
+							mDb->mDbHelper.array_cell.parent = parents;
+
+							int count = cache->GetElementStringValue(row, col, NULL);
+							mDb->mDbHelper.array_cell.showcase.resize(count);
+							cache->GetElementStringValue(row, col, (char*)mDb->mDbHelper.array_cell.showcase.data());
+							mDb->mDbHelper.array_cell.inner_param = -1;
+
+							mDb->write_array_cell(mDb->mDbHelper.array_cell);
+						}
+						break;
+					case CKARRAYTYPE_OBJECT:
+						for (int row = 0; row < rows; ++row) {
+							mDb->mDbHelper.array_cell.column = col;
+							mDb->mDbHelper.array_cell.row = row;
+							mDb->mDbHelper.array_cell.parent = parents;
+
+							CKObject* obj = cache->GetElementObject(row, col);
+							if (obj == NULL) continue;	// fail to get obj
+							CopyCKString(mDb->mDbHelper.array_cell.showcase, obj->GetName());
+							mDb->mDbHelper.array_cell.inner_param = obj->GetID();
+
+							mDb->write_array_cell(mDb->mDbHelper.array_cell);
+
+							// dig more data for it
+							DigObjectData(obj, mDb, obj->GetID());
+						}
+						break;
+					case CKARRAYTYPE_PARAMETER:
+						for (int row = 0; row < rows; ++row) {
+							mDb->mDbHelper.array_cell.column = col;
+							mDb->mDbHelper.array_cell.row = row;
+							mDb->mDbHelper.array_cell.parent = parents;
+
+							CKParameter* p = (CKParameter*)cache->GetElementObject(row, col);
+							if (p == NULL) continue;	// fail to get obj
+							int count = p->GetStringValue(NULL, FALSE);
+							mDb->mDbHelper.array_cell.showcase.resize(count);
+							p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), FALSE);
+							mDb->mDbHelper.array_cell.inner_param = p->GetID();
+
+							mDb->write_array_cell(mDb->mDbHelper.array_cell);
+
+							// dig more data for it.
+							DigParameterData(p, mDb, p->GetID());
+						}
+						break;
+				}
+
+			}
+		}
 
 #pragma endregion
 
 #pragma region data process
 
-		void DigParameterData(CKParameterLocal* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+		void DigObjectData(CKObject* o, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+
+		}
+
+		void DigParameterData(CKParameter* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			CKGUID t = p->GetGUID();
 			CKParameterType pt = p->GetType();
 			BOOL unknowType = FALSE;
@@ -614,7 +761,7 @@ namespace SSMaterializer {
 					Utils::StdstringGetBase64(str_raw, cptr, ds);
 					DataDictWritter("raw.data", str_raw.c_str(), mDb, parents);
 				}
-				
+
 				//dump data length
 				DataDictWritter("dump.length", (long)ds, mDb, parents);
 				return;

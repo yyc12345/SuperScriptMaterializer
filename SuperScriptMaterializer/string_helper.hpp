@@ -4,9 +4,9 @@
 #include <string>
 
 #define CopyGuid(str, guid) SSMaterializer::Utils::StdstringPrintf((str), "0x%08X, 0x%08X", (guid).d1, (guid).d2);
-#define CopyCKString(storage, str) storage = (str) ? (str) : "";
+#define CopyCKString(storage, str) storage = (str) ? (str) : "!!UNKNOW!!";
 #define CopyCKParamTypeStr(strl, ckpt, pm) if ((ckpt) != -1) (strl) = (pm)->ParameterTypeToName(ckpt);\
-else (strl) = "!!UNKNOW TYPE!!";
+else (strl) = "!!UNKNOW!!";
 
 namespace SSMaterializer {
 	namespace Utils {
