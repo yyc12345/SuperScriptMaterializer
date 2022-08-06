@@ -7,8 +7,6 @@
 // disable microsoft shitty macro to avoid build error
 #undef GetClassName
 
-#define changeSuffix(a) prefix[endIndex]='\0';strcat(prefix,a)
-
 namespace SSMaterializer {
 	namespace DocumentExporter {
 
@@ -221,7 +219,7 @@ namespace SSMaterializer {
 
 		void Proc_pTarget(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents) {
 			mDb->mDbHelper.script_pTarget.thisobj = cache->GetID();
-			mDb->mDbHelper.script_pTarget.name = cache->GetName();
+			CopyCKString(mDb->mDbHelper.script_pTarget.name, cache->GetName());
 			CopyCKParamTypeStr(mDb->mDbHelper.script_pTarget.type, cache->GetType(), mDb->mDbHelper.param_manager);
 			CopyGuid(mDb->mDbHelper.script_pTarget.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pTarget.parent = parents;
@@ -229,7 +227,7 @@ namespace SSMaterializer {
 			mDb->mDbHelper.script_pTarget.shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
 
 			mDb->write_script_pTarget(mDb->mDbHelper.script_pTarget);
-			
+
 			// try generate pLink and eLink
 			Generate_pLink(ctx, cache, mDb, parents, grandparents, -1, TRUE, TRUE);
 		}
@@ -237,7 +235,7 @@ namespace SSMaterializer {
 		void Proc_pIn(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 			mDb->mDbHelper.script_pIn.thisobj = cache->GetID();
 			mDb->mDbHelper.script_pIn.index = index;
-			mDb->mDbHelper.script_pIn.name = cache->GetName();
+			CopyCKString(mDb->mDbHelper.script_pIn.name, cache->GetName());
 			CopyCKParamTypeStr(mDb->mDbHelper.script_pIn.type, cache->GetType(), mDb->mDbHelper.param_manager);
 			CopyGuid(mDb->mDbHelper.script_pIn.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pIn.parent = parents;
@@ -254,7 +252,7 @@ namespace SSMaterializer {
 		void Proc_pOut(CKContext* ctx, CKParameterOut* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 			mDb->mDbHelper.script_pOut.thisobj = cache->GetID();
 			mDb->mDbHelper.script_pOut.index = index;
-			mDb->mDbHelper.script_pOut.name = cache->GetName();
+			CopyCKString(mDb->mDbHelper.script_pOut.name, cache->GetName());
 			CopyCKParamTypeStr(mDb->mDbHelper.script_pOut.type, cache->GetType(), mDb->mDbHelper.param_manager);
 			CopyGuid(mDb->mDbHelper.script_pOut.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pOut.parent = parents;
@@ -268,7 +266,7 @@ namespace SSMaterializer {
 		void Proc_bIn(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
 			mDb->mDbHelper.script_bIn.thisobj = cache->GetID();
 			mDb->mDbHelper.script_bIn.index = index;
-			mDb->mDbHelper.script_bIn.name = cache->GetName();
+			CopyCKString(mDb->mDbHelper.script_bIn.name, cache->GetName());
 			mDb->mDbHelper.script_bIn.parent = parents;
 
 			mDb->write_script_bIn(mDb->mDbHelper.script_bIn);
@@ -277,7 +275,7 @@ namespace SSMaterializer {
 		void Proc_bOut(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
 			mDb->mDbHelper.script_bOut.thisobj = cache->GetID();
 			mDb->mDbHelper.script_bOut.index = index;
-			mDb->mDbHelper.script_bOut.name = cache->GetName();
+			CopyCKString(mDb->mDbHelper.script_bOut.name, cache->GetName());
 			mDb->mDbHelper.script_bOut.parent = parents;
 
 			mDb->write_script_bOut(mDb->mDbHelper.script_bOut);
@@ -288,30 +286,28 @@ namespace SSMaterializer {
 			CKBehavior* beh = io->GetOwner();
 			mDb->mDbHelper.script_bLink.input = io->GetID();
 			mDb->mDbHelper.script_bLink.input_obj = beh->GetID();
-			mDb->mDbHelper.script_bLink.input_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+			mDb->mDbHelper.script_bLink.input_type = (io->GetType() == CK_BEHAVIORIO_IN ? DataStruct::bLinkInputOutputType_INPUT : DataStruct::bLinkInputOutputType_OUTPUT);
 			mDb->mDbHelper.script_bLink.input_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 			io = cache->GetOutBehaviorIO();
 			beh = io->GetOwner();
 			mDb->mDbHelper.script_bLink.output = io->GetID();
 			mDb->mDbHelper.script_bLink.output_obj = beh->GetID();
-			mDb->mDbHelper.script_bLink.output_type = (io->GetType() == CK_BEHAVIORIO_IN ? bLinkInputOutputType_INPUT : bLinkInputOutputType_OUTPUT);
+			mDb->mDbHelper.script_bLink.output_type = (io->GetType() == CK_BEHAVIORIO_IN ? DataStruct::bLinkInputOutputType_INPUT : DataStruct::bLinkInputOutputType_OUTPUT);
 			mDb->mDbHelper.script_bLink.output_index = (io->GetType() == CK_BEHAVIORIO_IN ? io->GetOwner()->GetInputPosition(io) : io->GetOwner()->GetOutputPosition(io));
 
 			mDb->mDbHelper.script_bLink.delay = cache->GetActivationDelay();
-			mDb->mDbHelper.script_bLink.belong_to = parents;
+			mDb->mDbHelper.script_bLink.parent = parents;
 
 			mDb->write_script_bLink(mDb->mDbHelper.script_bLink);
 		}
 
 		void Proc_pLocal(CKParameterLocal* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, BOOL is_setting) {
 			mDb->mDbHelper.script_pLocal.thisobj = cache->GetID();
-			mDb->mDbHelper.script_pLocal.name = cache->GetName() ? cache->GetName() : "";
-			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) mDb->mDbHelper.script_pLocal.type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else mDb->mDbHelper.script_pLocal.type = "!!UNKNOW TYPE!!"; //unknow type
-			CopyGuid(cache->GetGUID(), mDb->mDbHelper.script_pLocal.type_guid);
+			CopyCKString(mDb->mDbHelper.script_pLocal.name, cache->GetName());
+			CopyCKParamTypeStr(mDb->mDbHelper.script_pLocal.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			CopyGuid(mDb->mDbHelper.script_pLocal.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pLocal.is_setting = is_setting;
-			mDb->mDbHelper.script_pLocal.belong_to = parents;
+			mDb->mDbHelper.script_pLocal.parent = parents;
 
 			mDb->write_script_pLocal(mDb->mDbHelper.script_pLocal);
 
@@ -321,9 +317,9 @@ namespace SSMaterializer {
 
 		void Proc_pOper(CKContext* ctx, CKParameterOperation* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			mDb->mDbHelper.script_pOper.thisobj = cache->GetID();
-			mDb->mDbHelper.script_pOper.op = helper->_parameterManager->OperationGuidToName(cache->GetOperationGuid());
-			CopyGuid(cache->GetOperationGuid(), mDb->mDbHelper.script_pOper.op_guid);
-			mDb->mDbHelper.script_pOper.belong_to = parents;
+			mDb->mDbHelper.script_pOper.op = mDb->mDbHelper.param_manager->OperationGuidToName(cache->GetOperationGuid());
+			CopyGuid(mDb->mDbHelper.script_pOper.op_guid, cache->GetOperationGuid());
+			mDb->mDbHelper.script_pOper.parent = parents;
 
 			mDb->write_script_pOper(mDb->mDbHelper.script_pOper);
 
@@ -333,19 +329,24 @@ namespace SSMaterializer {
 			Proc_pOut(ctx, cache->GetOutParameter(), mDb, cache->GetID(), parents, 0, FALSE);
 		}
 
+		/*
+		* pAttr do not have any explict interface to get them
+		* so they only can be find via pLink analyse.
+		* 2 pLink analyse funcstions will call this function to record each pAttr
+		* due to this mechanism, it might cause a duplication problem so
+		* we need check possible duplication here.
+		*/
 		void Proc_pAttr(CKContext* ctx, Database::DocumentDatabase* mDb, CKParameter* cache) {
-			//write self first to detect conflict
+			// write self first to detect conflict
 			mDb->mDbHelper.script_pAttr.thisobj = cache->GetID();
 			CopyCKString(mDb->mDbHelper.script_pAttr.name, cache->GetName());
-			CKParameterType vaildTypeChecker = cache->GetType();
-			if (vaildTypeChecker != -1) mDb->mDbHelper.script_pAttr.type = helper->_parameterManager->ParameterTypeToName(cache->GetType()); //known types
-			else mDb->mDbHelper.script_pAttr.type = "!!UNKNOW TYPE!!"; //unknow type
-			CopyGuid(cache->GetGUID(), mDb->mDbHelper.script_pAttr.type_guid);
+			CopyCKParamTypeStr(mDb->mDbHelper.script_pAttr.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			CopyGuid(mDb->mDbHelper.script_pAttr.type_guid, cache->GetGUID());
 
 			BOOL already_exist = FALSE;
 			mDb->write_script_pAttr(mDb->mDbHelper.script_pAttr, &already_exist);
 			if (!already_exist) {
-				//not duplicated, continue write property
+				// not duplicated, continue write some properties to indicate the host of this attribute
 				CKObject* host = cache->GetOwner();
 				DataDictWritter("attr.host_id", (long)host->GetID(), mDb, cache->GetID());
 				DataDictWritter("attr.host_name", host->GetName(), mDb, cache->GetID());
@@ -356,21 +357,20 @@ namespace SSMaterializer {
 		void Proc_Behavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			//write self data
 			mDb->mDbHelper.script_behavior.thisobj = bhv->GetID();
-			mDb->mDbHelper.script_behavior.name = bhv->GetName();
+			CopyCKString(mDb->mDbHelper.script_behavior.name, bhv->GetName());
 			mDb->mDbHelper.script_behavior.type = bhv->GetType();
-			mDb->mDbHelper.script_behavior.proto_name = bhv->GetPrototypeName() ? bhv->GetPrototypeName() : "";
-			CopyGuid(bhv->GetPrototypeGuid(), mDb->mDbHelper.script_behavior.proto_guid);
+			CopyCKString(mDb->mDbHelper.script_behavior.proto_name, bhv->GetPrototypeName());
+			CopyGuid(mDb->mDbHelper.script_behavior.proto_guid, bhv->GetPrototypeGuid());
 			mDb->mDbHelper.script_behavior.flags = bhv->GetFlags();
 			mDb->mDbHelper.script_behavior.priority = bhv->GetPriority();
 			mDb->mDbHelper.script_behavior.version = bhv->GetVersion();
 			mDb->mDbHelper.script_behavior.parent = parents;
-			sprintf(helper->_stringCache, "%d,%d,%d,%d,%d",
+			Utils::StdstringPrintf(mDb->mDbHelper.script_behavior.pin_count, "%d,%d,%d,%d,%d",
 				(bhv->IsUsingTarget() ? 1 : 0),
 				bhv->GetInputParameterCount(),
 				bhv->GetOutputParameterCount(),
 				bhv->GetInputCount(),
 				bhv->GetOutputCount());
-			mDb->mDbHelper.script_behavior.pin_count = helper->_stringCache;
 			mDb->write_script_behavior(mDb->mDbHelper.script_behavior);
 
 			//write target
@@ -407,6 +407,8 @@ namespace SSMaterializer {
 		}
 
 		void IterateScript(CKContext* ctx, Database::DocumentDatabase* mDb) {
+			// get all CKBeObject to try to get all scripts.
+			// because only CKBeObject can load script.
 			CKBeObject* beobj = NULL;
 			CKBehavior* beh = NULL;
 			XObjectPointerArray objArray = ctx->GetObjectListByType(CKCID_BEOBJECT, TRUE);
@@ -441,28 +443,39 @@ namespace SSMaterializer {
 
 		void DigParameterData(CKParameterLocal* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			CKGUID t = p->GetGUID();
+			CKParameterType pt = p->GetType();
 			BOOL unknowType = FALSE;
 
-			if (t.d1 & t.d2) unknowType = TRUE;
+			// export guid and type name corresponding with guid
+			static std::string str_guid;
+			static std::string str_typename;
+			CopyGuid(str_guid, t);
+			DataDictWritter("guid", str_guid.c_str(), mDb, parents);
+			CopyCKParamTypeStr(str_typename, pt, mDb->mDbHelper.param_manager);
+			DataDictWritter("typename", str_typename.c_str(), mDb, parents);
+
+			if (!(t.d1 & t.d2)) unknowType = TRUE;
+
+			// value object
+			if (p->GetParameterClassID() && p->GetValueObject(false)) {
+				CKObject* vobj = p->GetValueObject(false);
+				DataDictWritter("vobj.id", (long)vobj->GetID(), mDb, parents);
+				DataDictWritter("vobj.name", vobj->GetName() ? vobj->GetName() : "", mDb, parents);
+				DataDictWritter("vobj.classid", (long)vobj->GetClassID(), mDb, parents);
+				DataDictWritter("vobj.type", vobj->GetClassNameA(), mDb, parents);
+				return;
+			}
 
 			//nothing
 			if (t == CKPGUID_NONE) return;
-			if (p->GetParameterClassID() && p->GetValueObject(false)) {
-				DataDictWritter("id", (long)p->GetValueObject(false)->GetID(), mDb, parents);
-				DataDictWritter("name", p->GetValueObject(false)->GetName(), mDb, parents);
 
-				CK_CLASSID none_classid = p->GetValueObject(false)->GetClassID();
-				CKParameterType none_type = helper->_parameterManager->ClassIDToType(none_classid);
-				DataDictWritter("type", helper->_parameterManager->ParameterTypeToName(none_type), mDb, parents);
-				return;
-			}
 			//float
 			if (t == CKPGUID_FLOAT || t == CKPGUID_ANGLE || t == CKPGUID_PERCENTAGE || t == CKPGUID_TIME
 #if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
 				|| t == CKPGUID_FLOATSLIDER
 #endif
 				) {
-				DataDictWritter("float-data", *(float*)(p->GetReadDataPtr(false)), mDb, parents);
+				DataDictWritter("float", *(float*)(p->GetReadDataPtr(false)), mDb, parents);
 				return;
 			}
 			//int
@@ -473,22 +486,25 @@ namespace SSMaterializer {
 				|| t == CKPGUID_LIGHTTYPE || t == CKPGUID_SPRITEALIGN || t == CKPGUID_DIRECTION || t == CKPGUID_LAYERTYPE
 				|| t == CKPGUID_COMPOPERATOR || t == CKPGUID_BINARYOPERATOR || t == CKPGUID_SETOPERATOR
 				|| t == CKPGUID_OBSTACLEPRECISION || t == CKPGUID_OBSTACLEPRECISIONBEH) {
-				DataDictWritter("int-data", (long)(*(int*)(p->GetReadDataPtr(false))), mDb, parents);
+				DataDictWritter("int", (long)(*(int*)(p->GetReadDataPtr(false))), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_VECTOR) {
 				VxVector vec;
 				memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-				DataDictWritter("vector.x", vec.x, mDb, parents);
-				DataDictWritter("vector.y", vec.y, mDb, parents);
-				DataDictWritter("vector.z", vec.z, mDb, parents);
+				static std::string str_vector;
+				Utils::StdstringPrintf(str_vector, "%f, %f, %f",
+					vec.x, vec.y, vec.z);
+				DataDictWritter("vector", str_vector.c_str(), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_2DVECTOR) {
 				Vx2DVector vec;
 				memcpy(&vec, p->GetReadDataPtr(false), sizeof(vec));
-				DataDictWritter("2dvector.x", vec.x, mDb, parents);
-				DataDictWritter("2dvector.y", vec.y, mDb, parents);
+				static std::string str_2dvector;
+				Utils::StdstringPrintf(str_2dvector, "%f, %f",
+					vec.x, vec.y);
+				DataDictWritter("2dvector", str_2dvector.c_str(), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_MATRIX) {
@@ -496,68 +512,82 @@ namespace SSMaterializer {
 				char position[128];
 				memcpy(&mat, p->GetReadDataPtr(false), sizeof(mat));
 
-				for (int i = 0; i < 4; ++i) {
-					for (int j = 0; j < 4; ++j) {
-						sprintf(position, "matrix[%d][%d]", i, j);
-						DataDictWritter(position, mat[i][j], mDb, parents);
-					}
-				}
+				static std::string str_matrix;
+				Utils::StdstringPrintf(str_matrix, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f",
+					mat[0][0], mat[0][1], mat[0][2], mat[0][3],
+					mat[1][0], mat[1][1], mat[1][2], mat[1][3],
+					mat[2][0], mat[2][1], mat[2][2], mat[2][3],
+					mat[3][0], mat[3][1], mat[3][2], mat[3][3]
+				);
+				DataDictWritter("matrix", str_matrix.c_str(), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_COLOR) {
 				VxColor col;
 				memcpy(&col, p->GetReadDataPtr(false), sizeof(col));
-				DataDictWritter("color.r", col.r, mDb, parents);
-				DataDictWritter("color.g", col.g, mDb, parents);
-				DataDictWritter("color.b", col.b, mDb, parents);
-				DataDictWritter("color.a", col.a, mDb, parents);
+				static std::string str_color;
+				Utils::StdstringPrintf(str_color, "%f, %f, %f, %f",
+					col.r, col.g, col.b, col.a);
+				DataDictWritter("color", str_color.c_str(), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_2DCURVE) {
 				//CK2dCurve* c;
 				CK2dCurve* c = (CK2dCurve*)p->GetReadDataPtr(false);
-				char prefix[128];
-				int endIndex = 0;
-				//memcpy(&c, p->GetReadDataPtr(false), sizeof(c));
-				for (int i = 0, cc = c->GetControlPointCount(); i < cc; ++i) {
-					sprintf(prefix, "2dcurve.control_point[%d]", i);
-					endIndex = strlen(prefix);
 
-					changeSuffix(".pos.x");
-					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().x, mDb, parents);
-					changeSuffix(".pos.y");
-					DataDictWritter(prefix, c->GetControlPoint(i)->GetPosition().y, mDb, parents);
-					changeSuffix(".islinear");
-					DataDictWritter(prefix, (long)c->GetControlPoint(i)->IsLinear(), mDb, parents);
-					if (c->GetControlPoint(i)->IsTCB()) {
-						changeSuffix(".bias");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetBias(), mDb, parents);
-						changeSuffix(".continuity");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetContinuity(), mDb, parents);
-						changeSuffix(".tension");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetTension(), mDb, parents);
+				// we need construct a fake json body as our data
+				static std::string str_2dcurve;
+				static std::string str_2dcurve_entry;
+
+				str_2dcurve = "[";
+				for (int i = 0, cc = c->GetControlPointCount(); i < cc; ++i) {
+					if (i != 0) str_2dcurve += ',';	// extra splitter
+
+					str_2dcurve += '{';	// object start
+					CK2dCurvePoint* cp = c->GetControlPoint(i);
+
+					Utils::StdstringPrintf(str_2dcurve_entry, "\"x\": %f, \"y\": %f,", cp->GetPosition().x, cp->GetPosition().y);
+					str_2dcurve += str_2dcurve_entry.c_str();
+
+					if (cp->IsLinear()) str_2dcurve += "\"linear\": true,";
+					else str_2dcurve += "\"linear\": false,";
+
+					if (cp->IsTCB()) {
+						str_2dcurve += "\"tcb\": true,";
+
+						Utils::StdstringPrintf(str_2dcurve_entry, "\"bias\": %f,", cp->GetBias());
+						str_2dcurve += str_2dcurve_entry.c_str();
+						Utils::StdstringPrintf(str_2dcurve_entry, "\"continuity\": %f,", cp->GetContinuity());
+						str_2dcurve += str_2dcurve_entry.c_str();
+						Utils::StdstringPrintf(str_2dcurve_entry, "\"tension\": %f", cp->GetTension());
+						str_2dcurve += str_2dcurve_entry.c_str();
+
 					} else {
-						changeSuffix(".intangent.x");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().x, mDb, parents);
-						changeSuffix(".intangent.y");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetInTangent().y, mDb, parents);
-						changeSuffix(".outtangent.x");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().x, mDb, parents);
-						changeSuffix(".outtangent.y");
-						DataDictWritter(prefix, c->GetControlPoint(i)->GetOutTangent().y, mDb, parents);
+						str_2dcurve += "\"tcb\": false,";
+
+						Utils::StdstringPrintf(str_2dcurve_entry, "\"intangent\": {\"x\": %f, \"y\": %f},", cp->GetInTangent().x, cp->GetInTangent().y);
+						str_2dcurve += str_2dcurve_entry.c_str();
+						Utils::StdstringPrintf(str_2dcurve_entry, "\"outtangent\": {\"x\": %f, \"y\": %f}", cp->GetOutTangent().x, cp->GetOutTangent().y);
+						str_2dcurve += str_2dcurve_entry.c_str();
+
 					}
+
+					str_2dcurve += '}';
 				}
+				DataDictWritter("2dcurve", str_2dcurve.c_str(), mDb, parents);
 				return;
 			}
 			if (t == CKPGUID_STRING) {
 				char* cptr = (char*)p->GetReadDataPtr(false);
 				int cc = p->GetDataSize();
 
-				helper->_db_pData->data.clear();
-				helper->_db_pData->data.insert(0, cptr, 0, cc);
-				helper->_db_pData->field = "str";
-				helper->_db_pData->belong_to = p->GetID();
-				mDb->write_pData(helper->_db_pData);
+				// virtools internal data may not have null terminal, so we use raw add function here
+				// resize data and copy
+				mDb->mDbHelper.data.data.resize(cc);
+				memcpy((void*)mDb->mDbHelper.data.data.data(), cptr, cc);
+				mDb->mDbHelper.data.field = "string";
+				mDb->mDbHelper.data.parent = parents;
+				mDb->write_data(mDb->mDbHelper.data);
 				return;
 			}
 
@@ -569,31 +599,24 @@ namespace SSMaterializer {
 				|| t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS
 #endif
 				) {
-				//dump data
-				unsigned char* cptr = (unsigned char*)p->GetReadDataPtr(false);
-				char temp[8];
-				int cc = 0, rcc = 0, pos = 0;
-				rcc = cc = p->GetDataSize();
-				if (rcc > 1024) rcc = 1024;
+				// raw data also need use raw export feature
+				// we use base64 encode to encode all data
+				char* cptr = (char*)p->GetReadDataPtr(false);
+				int ds = p->GetDataSize();
 
-				helper->_db_pData->data.clear();
-				for (int i = 0; i < rcc; i++) {
-					sprintf(temp, "0x%02X", cptr[i]);
-
-					helper->_db_pData->data += temp;
-					if (i != rcc - 1)
-						helper->_db_pData->data += ", ";
+				// dump data
+				static std::string str_raw;
+				if (ds > 10240) {
+					// data is too big, clamp it to 10240
+					Utils::StdstringGetBase64(str_raw, cptr, 10240);
+					DataDictWritter("raw.partial_data", str_raw.c_str(), mDb, parents);
+				} else {
+					Utils::StdstringGetBase64(str_raw, cptr, ds);
+					DataDictWritter("raw.data", str_raw.c_str(), mDb, parents);
 				}
-
-				if (rcc == cc)
-					helper->_db_pData->field = "dump.data";
-				else
-					helper->_db_pData->field = "dump.partial_data";
-				helper->_db_pData->belong_to = p->GetID();
-				mDb->write_pData(helper->_db_pData);
-
+				
 				//dump data length
-				DataDictWritter("dump.length", (long)cc, mDb, parents);
+				DataDictWritter("dump.length", (long)ds, mDb, parents);
 				return;
 			}
 		}
