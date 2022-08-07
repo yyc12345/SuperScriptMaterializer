@@ -504,6 +504,7 @@ namespace SSMaterializer {
 				// write row data
 				switch (coltype) {
 					case CKARRAYTYPE_INT:
+					{
 						for (int row = 0; row < rows; ++row) {
 							mDb->mDbHelper.array_cell.column = col;
 							mDb->mDbHelper.array_cell.row = row;
@@ -514,8 +515,10 @@ namespace SSMaterializer {
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
 						}
-						break;
+					}
+					break;
 					case CKARRAYTYPE_FLOAT:
+					{
 						for (int row = 0; row < rows; ++row) {
 							mDb->mDbHelper.array_cell.column = col;
 							mDb->mDbHelper.array_cell.row = row;
@@ -526,8 +529,10 @@ namespace SSMaterializer {
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
 						}
-						break;
+					}
+					break;
 					case CKARRAYTYPE_STRING:
+					{
 						for (int row = 0; row < rows; ++row) {
 							mDb->mDbHelper.array_cell.column = col;
 							mDb->mDbHelper.array_cell.row = row;
@@ -540,43 +545,66 @@ namespace SSMaterializer {
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
 						}
-						break;
+					}
+					break;
 					case CKARRAYTYPE_OBJECT:
-						for (int row = 0; row < rows; ++row) {
-							mDb->mDbHelper.array_cell.column = col;
-							mDb->mDbHelper.array_cell.row = row;
-							mDb->mDbHelper.array_cell.parent = parents;
-
-							CKObject* obj = cache->GetElementObject(row, col);
-							if (obj == NULL) continue;	// fail to get obj
-							CopyCKString(mDb->mDbHelper.array_cell.showcase, obj->GetName());
-							mDb->mDbHelper.array_cell.inner_param = obj->GetID();
-
-							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-
-							// dig more data for it
-							DigObjectData(obj, mDb, obj->GetID());
-						}
-						break;
 					case CKARRAYTYPE_PARAMETER:
+					{
+						// due to Virtools shit document.
+						// although column has indicate current column is object or parameter.
+						// but it can not ensure value is CKParameter when column type is parameter.
+						// for example, Parameter - Array will return a CKDataArray, not CKParameter.
+						// so we put these 2 type together and check it in runtime to
+						// use different output.
+
+						CKObject* obj = NULL;
+						CKParameter* p = NULL;
+						CK_CLASSID objcls;
+						int param_size = 0;
+
 						for (int row = 0; row < rows; ++row) {
 							mDb->mDbHelper.array_cell.column = col;
 							mDb->mDbHelper.array_cell.row = row;
 							mDb->mDbHelper.array_cell.parent = parents;
 
-							CKParameter* p = (CKParameter*)cache->GetElementObject(row, col);
-							if (p == NULL) continue;	// fail to get obj
-							int count = p->GetStringValue(NULL, FALSE);
-							mDb->mDbHelper.array_cell.showcase.resize(count);
-							p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), FALSE);
-							mDb->mDbHelper.array_cell.inner_param = p->GetID();
+							// check get status
+							obj = cache->GetElementObject(row, col);
+							if (obj == NULL) {
+								// fail to get obj
+								mDb->mDbHelper.array_cell.showcase = "(null)";
+								mDb->mDbHelper.array_cell.inner_param = -1;
+							} else {
+								// split normal obj and param obj
+								// use class id
+								objcls = obj->GetClassID();
+								if (objcls == CKCID_PARAMETER || objcls == CKCID_PARAMETERLOCAL || objcls == CKCID_PARAMETEROUT) {
+									// CKParameter
+									p = (CKParameter*)obj;
+									param_size = p->GetStringValue(NULL, FALSE);
+									mDb->mDbHelper.array_cell.showcase.resize(param_size);
+									p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), FALSE);
+
+									mDb->mDbHelper.array_cell.inner_param = p->GetID();
+
+									// dig more data for it.
+									DigParameterData(p, mDb, p->GetID());
+								} else {
+									// normal CKObject
+									Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%s(%s)",
+										obj->GetName() ? obj->GetName() : "!!UNKNOW!!",
+										obj->GetClassNameA() ? obj->GetClassNameA() : "!!UNKNOW!!");
+
+									mDb->mDbHelper.array_cell.inner_param = obj->GetID();
+
+									// dig more data for it
+									DigObjectData(obj, mDb, obj->GetID());
+								}
+							}
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-
-							// dig more data for it.
-							DigParameterData(p, mDb, p->GetID());
 						}
-						break;
+					}
+					break;
 				}
 
 			}
@@ -592,9 +620,9 @@ namespace SSMaterializer {
 			if (mDb->is_obj_duplicated(parents)) return;
 
 			DataDictWritter("obj.id", (long)o->GetID(), mDb, parents);
-			DataDictWritter("obj.name", o->GetName() ? o->GetName() : "", mDb, parents);
+			DataDictWritter("obj.name", o->GetName() ? o->GetName() : "!!UNKNOW!!", mDb, parents);
 			DataDictWritter("obj.classid", (long)o->GetClassID(), mDb, parents);
-			DataDictWritter("obj.type", o->GetClassNameA(), mDb, parents);
+			DataDictWritter("obj.type", o->GetClassNameA() ? o->GetClassNameA() : "!!UNKNOW!!", mDb, parents);
 		}
 
 		void DigParameterData(CKParameter* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
@@ -694,7 +722,8 @@ namespace SSMaterializer {
 				static std::string str_2dcurve_entry;
 
 				str_2dcurve = "[";
-				for (int i = 0, cc = c->GetControlPointCount(); i < cc; ++i) {
+				int cpcount = c->GetControlPointCount();
+				for (int i = 0; i < cpcount; ++i) {
 					if (i != 0) str_2dcurve += ',';	// extra splitter
 
 					str_2dcurve += '{';	// object start

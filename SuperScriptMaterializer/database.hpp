@@ -311,8 +311,6 @@ namespace SSMaterializer {
 
 		protected:
 			sqlite3_stmt* CreateStmt(const char* stmt);
-			virtual BOOL Init();
-			virtual BOOL Finalize();
 
 			sqlite3* mDb;
 			std::vector<sqlite3_stmt*> mStmtCache;
@@ -350,8 +348,8 @@ namespace SSMaterializer {
 			BOOL is_obj_duplicated(DataStruct::EXPAND_CK_ID parents);
 
 		protected:
-			BOOL Init() override;
-			BOOL Finalize() override;
+			BOOL Init();
+			BOOL Finalize();
 
 			std::set<DataStruct::EXPAND_CK_ID> mUniqueAttr;
 			std::set<DataStruct::EXPAND_CK_ID> mUniqueObj;
@@ -370,8 +368,8 @@ namespace SSMaterializer {
 			void write_variable(DataStruct::dbenv_variable& data);
 
 		protected:
-			BOOL Init() override;
-			BOOL Finalize() override;
+			BOOL Init();
+			BOOL Finalize();
 		};
 
 	}
