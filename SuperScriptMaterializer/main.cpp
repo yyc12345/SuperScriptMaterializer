@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "vt_menu.h"
-#include "vt_player.h"
+#include "vt_menu.hpp"
+#include "vt_player.hpp"
 
 #if defined(VIRTOOLS_PLUGIN)
 PluginInterface* s_Plugininterface = NULL;
@@ -29,7 +29,7 @@ SuperScriptMaterializer theApp;
 BOOL SuperScriptMaterializer::InitInstance() {
 	CWinApp::InitInstance();
 
-	strcpy(g_PluginInfo0.m_Name, "Super Script Materializer");
+	strcpy(g_PluginInfo0.m_Name, "SSMaterializer");
 	g_PluginInfo0.m_PluginType = PluginInfo::PT_EDITOR;
 	g_PluginInfo0.m_PluginType = (PluginInfo::PLUGIN_TYPE)(g_PluginInfo0.m_PluginType | PluginInfo::PTF_RECEIVENOTIFICATION);
 	g_PluginInfo0.m_PluginCallback = PluginCallback;

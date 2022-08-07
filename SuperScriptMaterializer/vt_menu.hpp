@@ -1,9 +1,8 @@
-#if !defined(_YYCDLL_VT_MENU_H__IMPORTED_)
-#define _YYCDLL_VT_MENU_H__IMPORTED_
+#pragma once
 
 #if defined(VIRTOOLS_PLUGIN)
 #include "stdafx.h"
-#include "database.h"
+#include "database.hpp"
 
 void PluginCallback(PluginInfo::CALLBACK_REASON reason, PluginInterface* plugininterface);
 
@@ -13,6 +12,4 @@ void UpdateMenu();
 void PluginMenuCallback(int commandID);
 
 BOOL OpenFileDialog(std::string* returned_file);
-#endif
-
 #endif

@@ -84,14 +84,23 @@ namespace SSMaterializer {
 
 			// append new one
 			mStmtCache.push_back(stmt);
+			return stmt;
+		}
+
+		BOOL SSMaterializerDatabase::Init() {
+			return TRUE;
+		}
+
+		BOOL SSMaterializerDatabase::Finalize() {
+			return TRUE;
 		}
 
 #pragma endregion
 
-#pragma region sub-database constructor and deconstructor
+#pragma region sub-database constructor, deconstructor and help functions
 
 		DocumentDatabase::DocumentDatabase(const char* file, CKParameterManager* paramManager) :
-			SSMaterializerDatabase(file), m_pAttrUniqueEnsurance(), mDbHelper(paramManager) {
+			SSMaterializerDatabase(file), mUniqueAttr(), mUniqueObj(), mDbHelper(paramManager) {
 			;
 		}
 
@@ -108,6 +117,30 @@ namespace SSMaterializer {
 			;
 		}
 
+		BOOL DocumentDatabase::is_attr_duplicated(DataStruct::EXPAND_CK_ID parents) {
+			// check duplication
+			if (mUniqueAttr.find(parents) != mUniqueAttr.end()) {
+				//existing item. skip it to make sure unique
+				return TRUE;
+			} else {
+				//add this item
+				mUniqueAttr.insert(parents);
+				return FALSE;
+			}
+		}
+
+		BOOL DocumentDatabase::is_obj_duplicated(DataStruct::EXPAND_CK_ID parents) {
+			// check duplication
+			if (mUniqueObj.find(parents) != mUniqueObj.end()) {
+				//existing item. skip it to make sure unique
+				return TRUE;
+			} else {
+				//add this item
+				mUniqueObj.insert(parents);
+				return FALSE;
+			}
+		}
+
 #pragma endregion
 
 #pragma region table, index creation functions
@@ -116,6 +149,9 @@ namespace SSMaterializer {
 if (result != SQLITE_OK) { return FALSE; }
 
 		BOOL DocumentDatabase::Init() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Init()) return FALSE;
+
 			int result;
 
 			//Init table
@@ -149,6 +185,9 @@ if (result != SQLITE_OK) { return FALSE; }
 		}
 
 		BOOL DocumentDatabase::Finalize() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Finalize()) return FALSE;
+
 			//create index for quick select in SuperScriptDecorator
 			int result;
 
@@ -165,14 +204,16 @@ if (result != SQLITE_OK) { return FALSE; }
 			SafeSqlExec("CREATE INDEX [quick_where10] ON [script_bLink] ([parent])");
 			SafeSqlExec("CREATE INDEX [quick_where11] ON [script_elink] ([parent])");
 			SafeSqlExec("CREATE INDEX [quick_where12] ON [script_pAttr] ([thisobj])");
-			SafeSqlExec("CREATE INDEX [quick_where13] ON [array_cell] ([parent])");
-			SafeSqlExec("CREATE INDEX [quick_where14] ON [data] ([parent])");
+			SafeSqlExec("CREATE INDEX [quick_where13] ON [data] ([parent])");
 			SafeSqlExec("commit;");
 
 			return TRUE;
 		}
 
 		BOOL EnvironmentDatabase::Init() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Init()) return FALSE;
+
 			int result;
 
 			//init table
@@ -190,6 +231,9 @@ if (result != SQLITE_OK) { return FALSE; }
 		}
 
 		BOOL EnvironmentDatabase::Finalize() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Finalize()) return FALSE;
+
 			return TRUE;
 		}
 
@@ -393,18 +437,7 @@ if (stmt == NULL) { \
 			sqlite3_step(stmt);
 		}
 
-		void DocumentDatabase::write_script_pAttr(DataStruct::dbdoc_script_pAttr& data, BOOL* already_exist) {
-			// check duplication first
-			if (m_pAttrUniqueEnsurance.find(data.thisobj) != m_pAttrUniqueEnsurance.end()) {
-				//existing item. skip it to make sure unique
-				*already_exist = TRUE;
-				return;
-			} else {
-				//add this item
-				m_pAttrUniqueEnsurance.insert(data.thisobj);
-				*already_exist = FALSE;
-			}
-
+		void DocumentDatabase::write_script_pAttr(DataStruct::dbdoc_script_pAttr& data) {
 			// then check database validation
 			if (mDb == NULL) return;
 

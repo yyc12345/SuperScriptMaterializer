@@ -1,7 +1,7 @@
-#include "vt_menu.h"
-#include "database.h"
-#include "script_export.h"
-#include "env_export.h"
+#include "vt_menu.hpp"
+#include "database.hpp"
+#include "doc_export.hpp"
+#include "env_export.hpp"
 
 #if defined(VIRTOOLS_PLUGIN)
 
@@ -34,7 +34,7 @@ void InitMenu() {
 	if (!s_Plugininterface)
 		return;
 
-	s_MainMenu = s_Plugininterface->AddPluginMenu("Super Script Materializer", 20, NULL, (VoidFunc1Param)PluginMenuCallback);
+	s_MainMenu = s_Plugininterface->AddPluginMenu("SSMaterializer", 20, NULL, (VoidFunc1Param)PluginMenuCallback);
 }
 
 void RemoveMenu() {
@@ -47,23 +47,12 @@ void RemoveMenu() {
 void UpdateMenu() {
 	s_Plugininterface->ClearPluginMenu(s_MainMenu);		//clear menu
 
-	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Export all scripts");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Export document");
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 1, "Export environment");
 
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, -1, NULL, TRUE);
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 2, "Report bug");
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 3, "Plugin homepage");
-	//===========================freeze chirs241097 code for future expand
-	//s_Plugininterface->AddPluginMenuItem(s_MainMenu, -1, NULL, TRUE);
-
-	////note : sub menu must have independent command ids that must be >=0
-	//CMenu* sub0 = s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Fsck /dev/sdb", FALSE, TRUE);//bb manipulation
-
-	//s_Plugininterface->AddPluginMenuItem(sub0, 1, "Fsck /dev/sdb1");//modify bb proto
-	//s_Plugininterface->AddPluginMenuItem(sub0, 2, "Fsck /dev/sdb2");//not implemented
-
-	//s_Plugininterface->AddPluginMenuItem(s_MainMenu, -1, NULL, TRUE);
-	//s_Plugininterface->AddPluginMenuItem(s_MainMenu, 10, "Exit Fsck");
 
 	s_Plugininterface->UpdatePluginMenu(s_MainMenu);	//update menu,always needed when you finished to update the menu
 														//unless you want the menu not to have Virtools Dev main menu color scheme.
@@ -88,21 +77,18 @@ void PluginMenuCallback(int commandID) {
 				DeleteFile(file.c_str());
 
 				//Init resources
-				DocumentDatabase* _db = new DocumentDatabase();
-				dbDocDataStructHelper* _helper = new dbDocDataStructHelper();
-				_db->Open(file.c_str());
-				_helper->Init(ctx->GetParameterManager());
+				SSMaterializer::Database::DocumentDatabase* db = 
+					new SSMaterializer::Database::DocumentDatabase(file.c_str(), ctx->GetParameterManager());
 
 				//iterate item
-				IterateScript(ctx, _db, _helper);
+				SSMaterializer::DocumentExporter::IterateScript(ctx, db);
+				SSMaterializer::DocumentExporter::IterateMessage(ctx, db);
+				SSMaterializer::DocumentExporter::IterateArray(ctx, db);
 
 				//Close all resources
-				_helper->dispose();
-				_db->Close();
-				delete _helper;
-				delete _db;
+				delete db;
 
-				ctx->OutputToConsole("[Super Script Materializer] Done");
+				ctx->OutputToConsole("[SSMaterializer] Done");
 			}
 			break;
 			case 1:
@@ -115,28 +101,22 @@ void PluginMenuCallback(int commandID) {
 				DeleteFile(file.c_str());
 
 				//Init
-				EnvironmentDatabase* _db = new EnvironmentDatabase();
-				dbEnvDataStructHelper* _helper = new dbEnvDataStructHelper();
-				_db->Open(file.c_str());
-				_helper->Init();
+				SSMaterializer::Database::EnvironmentDatabase* db =
+					new SSMaterializer::Database::EnvironmentDatabase(file.c_str());
 
 				//iterate parameter operation/param
-				IterateParameterOperation(ctx->GetParameterManager(), _db, _helper);
-				IterateParameter(ctx->GetParameterManager(), _db, _helper);
-				IterateMessage(ctx->GetMessageManager(), _db, _helper);
-				IterateAttribute(ctx->GetAttributeManager(), _db, _helper);
-				IteratePlugin(CKGetPluginManager(), _db, _helper);
+				SSMaterializer::EnvironmentExporter::IterateParameterOperation(ctx->GetParameterManager(), db);
+				SSMaterializer::EnvironmentExporter::IterateParameter(ctx->GetParameterManager(), db);
+				SSMaterializer::EnvironmentExporter::IterateAttribute(ctx->GetAttributeManager(), db);
+				SSMaterializer::EnvironmentExporter::IteratePlugin(CKGetPluginManager(), db);
 #if !defined(VIRTOOLS_21)
-				IterateVariable(ctx->GetVariableManager(), _db, _helper);
+				SSMaterializer::EnvironmentExporter::IterateVariable(ctx->GetVariableManager(), db);
 #endif
 
 				//release all
-				_helper->dispose();
-				_db->Close();
-				delete _helper;
-				delete _db;
+				delete db;
 
-				ctx->OutputToConsole("[Super Script Materializer] Done");
+				ctx->OutputToConsole("[SSMaterializer] Done");
 			}
 			break;
 			case 2:

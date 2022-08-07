@@ -1,5 +1,4 @@
 LIBRARY      "SuperScriptMaterializer"
-DESCRIPTION  'Fuck Virtools'
 
 EXPORTS
 	GetVirtoolsPluginInfoCount

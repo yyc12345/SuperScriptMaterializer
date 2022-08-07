@@ -337,21 +337,23 @@ namespace SSMaterializer {
 		* we need check possible duplication here.
 		*/
 		void Proc_pAttr(CKContext* ctx, Database::DocumentDatabase* mDb, CKParameter* cache) {
+			// check duplication
+			if (mDb->is_attr_duplicated(cache->GetID())) return;
+
 			// write self first to detect conflict
 			mDb->mDbHelper.script_pAttr.thisobj = cache->GetID();
 			CopyCKString(mDb->mDbHelper.script_pAttr.name, cache->GetName());
 			CopyCKParamTypeStr(mDb->mDbHelper.script_pAttr.type, cache->GetType(), mDb->mDbHelper.param_manager);
 			CopyGuid(mDb->mDbHelper.script_pAttr.type_guid, cache->GetGUID());
 
-			BOOL already_exist = FALSE;
-			mDb->write_script_pAttr(mDb->mDbHelper.script_pAttr, &already_exist);
-			if (!already_exist) {
-				// not duplicated, continue write some properties to indicate the host of this attribute
-				CKObject* host = cache->GetOwner();
-				DataDictWritter("attr.host_id", (long)host->GetID(), mDb, cache->GetID());
-				DataDictWritter("attr.host_name", host->GetName(), mDb, cache->GetID());
-			}
+			mDb->write_script_pAttr(mDb->mDbHelper.script_pAttr);
 
+			// continue write some properties to indicate the host of this attribute
+			CKObject* host = cache->GetOwner();
+			// write owner id
+			DataDictWritter("attr.owner", (long)host->GetID(), mDb, cache->GetID());
+			// write data for owner
+			DigObjectData(host, mDb, host->GetID());
 		}
 
 		void Proc_Behavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
@@ -506,8 +508,8 @@ namespace SSMaterializer {
 							mDb->mDbHelper.array_cell.column = col;
 							mDb->mDbHelper.array_cell.row = row;
 							mDb->mDbHelper.array_cell.parent = parents;
-							
-							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%d", &((int*)cache->GetElement(row, col)));
+
+							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%d", *((int*)cache->GetElement(row, col)));
 							mDb->mDbHelper.array_cell.inner_param = -1;
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
@@ -519,7 +521,7 @@ namespace SSMaterializer {
 							mDb->mDbHelper.array_cell.row = row;
 							mDb->mDbHelper.array_cell.parent = parents;
 
-							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%f", &((float*)cache->GetElement(row, col)));
+							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%f", *((float*)cache->GetElement(row, col)));
 							mDb->mDbHelper.array_cell.inner_param = -1;
 
 							mDb->write_array_cell(mDb->mDbHelper.array_cell);
@@ -585,13 +587,21 @@ namespace SSMaterializer {
 #pragma region data process
 
 		void DigObjectData(CKObject* o, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+			// check duplication
+			// we use `parents` not o->GetID() because in some call they are not equal.
+			if (mDb->is_obj_duplicated(parents)) return;
 
+			DataDictWritter("obj.id", (long)o->GetID(), mDb, parents);
+			DataDictWritter("obj.name", o->GetName() ? o->GetName() : "", mDb, parents);
+			DataDictWritter("obj.classid", (long)o->GetClassID(), mDb, parents);
+			DataDictWritter("obj.type", o->GetClassNameA(), mDb, parents);
 		}
 
 		void DigParameterData(CKParameter* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
+			// due to our algorithm, parameter can not be duplicated
+			// so we don't need to check its duplication.
 			CKGUID t = p->GetGUID();
 			CKParameterType pt = p->GetType();
-			BOOL unknowType = FALSE;
 
 			// export guid and type name corresponding with guid
 			static std::string str_guid;
@@ -601,15 +611,13 @@ namespace SSMaterializer {
 			CopyCKParamTypeStr(str_typename, pt, mDb->mDbHelper.param_manager);
 			DataDictWritter("typename", str_typename.c_str(), mDb, parents);
 
-			if (!(t.d1 & t.d2)) unknowType = TRUE;
-
 			// value object
 			if (p->GetParameterClassID() && p->GetValueObject(false)) {
 				CKObject* vobj = p->GetValueObject(false);
-				DataDictWritter("vobj.id", (long)vobj->GetID(), mDb, parents);
-				DataDictWritter("vobj.name", vobj->GetName() ? vobj->GetName() : "", mDb, parents);
-				DataDictWritter("vobj.classid", (long)vobj->GetClassID(), mDb, parents);
-				DataDictWritter("vobj.type", vobj->GetClassNameA(), mDb, parents);
+				// write its id
+				DataDictWritter("vobj", (long)vobj->GetID(), mDb, parents);
+				// write more data for its id
+				DigObjectData(vobj, mDb, vobj->GetID());
 				return;
 			}
 
@@ -656,7 +664,6 @@ namespace SSMaterializer {
 			}
 			if (t == CKPGUID_MATRIX) {
 				VxMatrix mat;
-				char position[128];
 				memcpy(&mat, p->GetReadDataPtr(false), sizeof(mat));
 
 				static std::string str_matrix;
@@ -738,10 +745,9 @@ namespace SSMaterializer {
 				return;
 			}
 
-			unknowType = TRUE;
 			//if it gets here, we have no idea what it really is. so simply dump it.
 			//buffer-like
-			if (unknowType || t == CKPGUID_VOIDBUF
+			if (t == CKPGUID_VOIDBUF
 #if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
 				|| t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS
 #endif

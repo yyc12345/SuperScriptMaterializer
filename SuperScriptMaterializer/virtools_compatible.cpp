@@ -1,4 +1,4 @@
-#include "virtools_compatible.h"
+#include "virtools_compatible.hpp"
 
 #if defined(VIRTOOLS_50) && defined(VIRTOOLS_STANDALONE)
 

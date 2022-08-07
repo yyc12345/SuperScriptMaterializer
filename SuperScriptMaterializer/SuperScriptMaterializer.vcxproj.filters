@@ -30,13 +30,16 @@
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="vt_menu.h">
+    <ClInclude Include="vt_menu.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="virtools_compatible.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="string_helper.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vt_player.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

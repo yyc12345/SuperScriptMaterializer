@@ -311,8 +311,8 @@ namespace SSMaterializer {
 
 		protected:
 			sqlite3_stmt* CreateStmt(const char* stmt);
-			virtual BOOL Init() = 0;
-			virtual BOOL Finalize() = 0;
+			virtual BOOL Init();
+			virtual BOOL Finalize();
 
 			sqlite3* mDb;
 			std::vector<sqlite3_stmt*> mStmtCache;
@@ -336,7 +336,7 @@ namespace SSMaterializer {
 			void write_script_pLink(DataStruct::dbdoc_script_pLink& data);
 			void write_script_pOper(DataStruct::dbdoc_script_pOper& data);
 			void write_script_eLink(DataStruct::dbdoc_script_eLink& data);
-			void write_script_pAttr(DataStruct::dbdoc_script_pAttr& data, BOOL* already_exist);
+			void write_script_pAttr(DataStruct::dbdoc_script_pAttr& data);
 
 			void write_msg(DataStruct::dbdoc_msg& data);
 
@@ -346,11 +346,15 @@ namespace SSMaterializer {
 
 			void write_data(DataStruct::dbdoc_data& data);
 
+			BOOL is_attr_duplicated(DataStruct::EXPAND_CK_ID parents);
+			BOOL is_obj_duplicated(DataStruct::EXPAND_CK_ID parents);
+
 		protected:
 			BOOL Init() override;
 			BOOL Finalize() override;
 
-			std::set<DataStruct::EXPAND_CK_ID> m_pAttrUniqueEnsurance;
+			std::set<DataStruct::EXPAND_CK_ID> mUniqueAttr;
+			std::set<DataStruct::EXPAND_CK_ID> mUniqueObj;
 		};
 
 		class EnvironmentDatabase : public SSMaterializerDatabase {

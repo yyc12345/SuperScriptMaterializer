@@ -114,8 +114,9 @@
     <ClInclude Include="doc_export.hpp" />
     <ClInclude Include="string_helper.hpp" />
     <ClInclude Include="virtools_compatible.hpp" />
-    <ClInclude Include="vt_menu.h" />
+    <ClInclude Include="vt_menu.hpp" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="vt_player.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />

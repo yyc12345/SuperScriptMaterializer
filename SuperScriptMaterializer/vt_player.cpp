@@ -1,6 +1,6 @@
-#include "vt_player.h"
-#include "script_export.h"
-#include "env_export.h"
+#include "vt_player.hpp"
+#include "doc_export.hpp"
+#include "env_export.hpp"
 
 #if defined(VIRTOOLS_STANDALONE)
 
