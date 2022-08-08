@@ -561,6 +561,7 @@ namespace SSMaterializer {
 						CKParameter* p = NULL;
 						CK_CLASSID objcls;
 						int param_size = 0;
+						BOOL need_evaluate = FALSE;
 
 						for (int row = 0; row < rows; ++row) {
 							mDb->mDbHelper.array_cell.column = col;
@@ -578,11 +579,13 @@ namespace SSMaterializer {
 								// use class id
 								objcls = obj->GetClassID();
 								if (objcls == CKCID_PARAMETER || objcls == CKCID_PARAMETERLOCAL || objcls == CKCID_PARAMETEROUT) {
+									need_evaluate = objcls == CKCID_PARAMETEROUT;
+
 									// CKParameter
 									p = (CKParameter*)obj;
-									param_size = p->GetStringValue(NULL, FALSE);
+									param_size = p->GetStringValue(NULL, need_evaluate);
 									mDb->mDbHelper.array_cell.showcase.resize(param_size);
-									p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), FALSE);
+									p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), need_evaluate);
 
 									mDb->mDbHelper.array_cell.inner_param = p->GetID();
 
@@ -715,7 +718,8 @@ namespace SSMaterializer {
 			}
 			if (t == CKPGUID_2DCURVE) {
 				//CK2dCurve* c;
-				CK2dCurve* c = (CK2dCurve*)p->GetReadDataPtr(false);
+				CK2dCurve* c = NULL;
+				memcpy(&c, p->GetReadDataPtr(false), sizeof(c));
 
 				// we need construct a fake json body as our data
 				static std::string str_2dcurve;
@@ -757,6 +761,7 @@ namespace SSMaterializer {
 
 					str_2dcurve += '}';
 				}
+				str_2dcurve = "]";
 				DataDictWritter("2dcurve", str_2dcurve.c_str(), mDb, parents);
 				return;
 			}

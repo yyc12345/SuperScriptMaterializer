@@ -36,8 +36,27 @@ namespace SSMaterializer {
 
 #pragma region universal sqlite database init and free
 
-		SSMaterializerDatabase::SSMaterializerDatabase(const char* file) :
+		SSMaterializerDatabase::SSMaterializerDatabase() :
 			mStmtCache(), mDb(NULL) {
+			;
+		}
+
+		SSMaterializerDatabase::~SSMaterializerDatabase() {
+			;
+		}
+
+		sqlite3_stmt* SSMaterializerDatabase::CreateStmt(const char* str_stmt) {
+			int result;
+			sqlite3_stmt* stmt = NULL;
+			result = sqlite3_prepare_v2(mDb, str_stmt, -1, &stmt, NULL);
+			if (result != SQLITE_OK) return NULL;
+
+			// append new one
+			mStmtCache.push_back(stmt);
+			return stmt;
+		}
+
+		void SSMaterializerDatabase::FakeConstructor(const char* file) {
 			// open mDb
 			int result;
 			result = sqlite3_open(file, &mDb);
@@ -47,6 +66,13 @@ namespace SSMaterializer {
 			result = sqlite3_exec(mDb, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
 			if (result != SQLITE_OK) goto fail;
 
+			// run init
+			if (!Init()) goto fail;
+
+			//start job
+			result = sqlite3_exec(mDb, "begin;", NULL, NULL, NULL);
+			if (result != SQLITE_OK) goto fail;
+
 			return;
 		fail:
 			sqlite3_close(mDb);
@@ -54,9 +80,16 @@ namespace SSMaterializer {
 			mDb = NULL;
 		}
 
-		SSMaterializerDatabase::~SSMaterializerDatabase() {
+		void SSMaterializerDatabase::FakeDeconstructor() {
 			if (mDb == NULL) return;
 			int result;
+
+			//commit job
+			result = sqlite3_exec(mDb, "commit;", NULL, NULL, NULL);
+			if (result != SQLITE_OK) goto fail;
+
+			// run extra stuff
+			if (!Finalize()) goto fail;
 
 			//free all cached stmts and commit job
 			for (auto it = mStmtCache.begin(); it != mStmtCache.end(); it++) {
@@ -72,15 +105,12 @@ namespace SSMaterializer {
 			mDb = NULL;
 		}
 
-		sqlite3_stmt* SSMaterializerDatabase::CreateStmt(const char* str_stmt) {
-			int result;
-			sqlite3_stmt* stmt = NULL;
-			result = sqlite3_prepare_v2(mDb, str_stmt, -1, &stmt, NULL);
-			if (result != SQLITE_OK) return NULL;
+		BOOL SSMaterializerDatabase::Init() {
+			return TRUE;
+		}
 
-			// append new one
-			mStmtCache.push_back(stmt);
-			return stmt;
+		BOOL SSMaterializerDatabase::Finalize() {
+			return TRUE;
 		}
 
 #pragma endregion
@@ -88,53 +118,21 @@ namespace SSMaterializer {
 #pragma region sub-database constructor, deconstructor and help functions
 
 		DocumentDatabase::DocumentDatabase(const char* file, CKParameterManager* paramManager) :
-			SSMaterializerDatabase(file), mUniqueAttr(), mUniqueObj(), mDbHelper(paramManager) {
-			if (!Init()) goto fail;
-
-			//start job
-			int result = sqlite3_exec(mDb, "begin;", NULL, NULL, NULL);
-			if (result != SQLITE_OK) goto fail;
-
-		fail:
-			sqlite3_close(mDb);
-			mDb = NULL;
+			SSMaterializerDatabase(), mUniqueAttr(), mUniqueObj(), mDbHelper(paramManager) {
+			FakeConstructor(file);
 		}
 
 		DocumentDatabase::~DocumentDatabase() {
-			if (!Finalize()) goto fail;
-
-			//commit job
-			int result = sqlite3_exec(mDb, "commit;", NULL, NULL, NULL);
-			if (result != SQLITE_OK) goto fail;
-
-		fail:
-			sqlite3_close(mDb);
-			mDb = NULL;
+			FakeDeconstructor();
 		}
 
 		EnvironmentDatabase::EnvironmentDatabase(const char* file) :
-			SSMaterializerDatabase(file), mDbHelper() {
-			if (!Init()) goto fail;
-
-			//start job
-			int result = sqlite3_exec(mDb, "begin;", NULL, NULL, NULL);
-			if (result != SQLITE_OK) goto fail;
-
-		fail:
-			sqlite3_close(mDb);
-			mDb = NULL;
+			SSMaterializerDatabase(), mDbHelper() {
+			FakeConstructor(file);
 		}
 
 		EnvironmentDatabase::~EnvironmentDatabase() {
-			if (!Finalize()) goto fail;
-
-			//commit job
-			int result = sqlite3_exec(mDb, "commit;", NULL, NULL, NULL);
-			if (result != SQLITE_OK) goto fail;
-
-		fail:
-			sqlite3_close(mDb);
-			mDb = NULL;
+			FakeDeconstructor();
 		}
 
 		BOOL DocumentDatabase::is_attr_duplicated(DataStruct::EXPAND_CK_ID parents) {
@@ -169,6 +167,9 @@ namespace SSMaterializer {
 if (result != SQLITE_OK) { return FALSE; }
 
 		BOOL DocumentDatabase::Init() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Init()) return FALSE;
+
 			int result;
 
 			//Init table
@@ -202,6 +203,9 @@ if (result != SQLITE_OK) { return FALSE; }
 		}
 
 		BOOL DocumentDatabase::Finalize() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Finalize()) return FALSE;
+
 			//create index for quick select in SuperScriptDecorator
 			int result;
 
@@ -225,6 +229,9 @@ if (result != SQLITE_OK) { return FALSE; }
 		}
 
 		BOOL EnvironmentDatabase::Init() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Init()) return FALSE;
+
 			int result;
 
 			//init table
@@ -242,6 +249,9 @@ if (result != SQLITE_OK) { return FALSE; }
 		}
 
 		BOOL EnvironmentDatabase::Finalize() {
+			// execute parent first
+			if (!SSMaterializerDatabase::Finalize()) return FALSE;
+
 			return TRUE;
 		}
 
