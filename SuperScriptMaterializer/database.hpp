@@ -154,28 +154,11 @@ namespace SSMaterializer {
 			std::string name;
 		};
 
-		struct dbdoc_array {
-			EXPAND_CK_ID thisobj;
+		struct dbdoc_obj {
+			EXPAND_CK_ID id;
 			std::string name;
-			int rows;
-			int columns;
-		};
-
-		struct dbdoc_array_header {
-			int index;
-			std::string name;
-			CK_ARRAYTYPE type;
-			std::string param_type;
-			std::string param_type_guid;
-			EXPAND_CK_ID parent;
-		};
-
-		struct dbdoc_array_cell {
-			int row;
-			int column;
-			std::string showcase;
-			EXPAND_CK_ID inner_param;
-			EXPAND_CK_ID parent;
+			CK_CLASSID classid;
+			std::string classtype;
 		};
 
 		struct dbdoc_data {
@@ -278,10 +261,7 @@ namespace SSMaterializer {
 				dbdoc_script_pTarget script_pTarget;
 
 				dbdoc_msg msg;
-
-				dbdoc_array _array;
-				dbdoc_array_header array_header;
-				dbdoc_array_cell array_cell;
+				dbdoc_obj obj;
 
 				dbdoc_data data;
 			};
@@ -341,22 +321,19 @@ namespace SSMaterializer {
 			void write_script_pAttr(DataStruct::dbdoc_script_pAttr& data);
 
 			void write_msg(DataStruct::dbdoc_msg& data);
-
-			void write_array(DataStruct::dbdoc_array& data);
-			void write_array_header(DataStruct::dbdoc_array_header& data);
-			void write_array_cell(DataStruct::dbdoc_array_cell& data);
+			void write_obj(DataStruct::dbdoc_obj& data);
 
 			void write_data(DataStruct::dbdoc_data& data);
 
 			BOOL is_attr_duplicated(DataStruct::EXPAND_CK_ID parents);
-			BOOL is_obj_duplicated(DataStruct::EXPAND_CK_ID parents);
+			//BOOL is_obj_duplicated(DataStruct::EXPAND_CK_ID parents);
 
 		protected:
 			virtual BOOL Init() override;
 			virtual BOOL Finalize() override;
 
 			std::set<DataStruct::EXPAND_CK_ID> mUniqueAttr;
-			std::set<DataStruct::EXPAND_CK_ID> mUniqueObj;
+			//std::set<DataStruct::EXPAND_CK_ID> mUniqueObj;
 		};
 
 		class EnvironmentDatabase : public SSMaterializerDatabase {

@@ -219,9 +219,9 @@ namespace SSMaterializer {
 
 		void Proc_pTarget(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents) {
 			mDb->mDbHelper.script_pTarget.thisobj = cache->GetID();
-			CopyCKString(mDb->mDbHelper.script_pTarget.name, cache->GetName());
-			CopyCKParamTypeStr(mDb->mDbHelper.script_pTarget.type, cache->GetType(), mDb->mDbHelper.param_manager);
-			CopyGuid(mDb->mDbHelper.script_pTarget.type_guid, cache->GetGUID());
+			Utils::CopyCKString(mDb->mDbHelper.script_pTarget.name, cache->GetName());
+			Utils::CopyCKParamTypeStr(mDb->mDbHelper.script_pTarget.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			Utils::CopyGuid(mDb->mDbHelper.script_pTarget.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pTarget.parent = parents;
 			mDb->mDbHelper.script_pTarget.direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 			mDb->mDbHelper.script_pTarget.shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
@@ -235,9 +235,9 @@ namespace SSMaterializer {
 		void Proc_pIn(CKContext* ctx, CKParameterIn* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 			mDb->mDbHelper.script_pIn.thisobj = cache->GetID();
 			mDb->mDbHelper.script_pIn.index = index;
-			CopyCKString(mDb->mDbHelper.script_pIn.name, cache->GetName());
-			CopyCKParamTypeStr(mDb->mDbHelper.script_pIn.type, cache->GetType(), mDb->mDbHelper.param_manager);
-			CopyGuid(mDb->mDbHelper.script_pIn.type_guid, cache->GetGUID());
+			Utils::CopyCKString(mDb->mDbHelper.script_pIn.name, cache->GetName());
+			Utils::CopyCKParamTypeStr(mDb->mDbHelper.script_pIn.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			Utils::CopyGuid(mDb->mDbHelper.script_pIn.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pIn.parent = parents;
 			mDb->mDbHelper.script_pIn.direct_source = cache->GetDirectSource() ? cache->GetDirectSource()->GetID() : -1;
 			mDb->mDbHelper.script_pIn.shared_source = cache->GetSharedSource() ? cache->GetSharedSource()->GetID() : -1;
@@ -252,9 +252,9 @@ namespace SSMaterializer {
 		void Proc_pOut(CKContext* ctx, CKParameterOut* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, DataStruct::EXPAND_CK_ID grandparents, int index, BOOL executedFromBB) {
 			mDb->mDbHelper.script_pOut.thisobj = cache->GetID();
 			mDb->mDbHelper.script_pOut.index = index;
-			CopyCKString(mDb->mDbHelper.script_pOut.name, cache->GetName());
-			CopyCKParamTypeStr(mDb->mDbHelper.script_pOut.type, cache->GetType(), mDb->mDbHelper.param_manager);
-			CopyGuid(mDb->mDbHelper.script_pOut.type_guid, cache->GetGUID());
+			Utils::CopyCKString(mDb->mDbHelper.script_pOut.name, cache->GetName());
+			Utils::CopyCKParamTypeStr(mDb->mDbHelper.script_pOut.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			Utils::CopyGuid(mDb->mDbHelper.script_pOut.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pOut.parent = parents;
 
 			mDb->write_script_pOut(mDb->mDbHelper.script_pOut);
@@ -266,7 +266,7 @@ namespace SSMaterializer {
 		void Proc_bIn(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
 			mDb->mDbHelper.script_bIn.thisobj = cache->GetID();
 			mDb->mDbHelper.script_bIn.index = index;
-			CopyCKString(mDb->mDbHelper.script_bIn.name, cache->GetName());
+			Utils::CopyCKString(mDb->mDbHelper.script_bIn.name, cache->GetName());
 			mDb->mDbHelper.script_bIn.parent = parents;
 
 			mDb->write_script_bIn(mDb->mDbHelper.script_bIn);
@@ -275,7 +275,7 @@ namespace SSMaterializer {
 		void Proc_bOut(CKBehaviorIO* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, int index) {
 			mDb->mDbHelper.script_bOut.thisobj = cache->GetID();
 			mDb->mDbHelper.script_bOut.index = index;
-			CopyCKString(mDb->mDbHelper.script_bOut.name, cache->GetName());
+			Utils::CopyCKString(mDb->mDbHelper.script_bOut.name, cache->GetName());
 			mDb->mDbHelper.script_bOut.parent = parents;
 
 			mDb->write_script_bOut(mDb->mDbHelper.script_bOut);
@@ -303,9 +303,9 @@ namespace SSMaterializer {
 
 		void Proc_pLocal(CKParameterLocal* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents, BOOL is_setting) {
 			mDb->mDbHelper.script_pLocal.thisobj = cache->GetID();
-			CopyCKString(mDb->mDbHelper.script_pLocal.name, cache->GetName());
-			CopyCKParamTypeStr(mDb->mDbHelper.script_pLocal.type, cache->GetType(), mDb->mDbHelper.param_manager);
-			CopyGuid(mDb->mDbHelper.script_pLocal.type_guid, cache->GetGUID());
+			Utils::CopyCKString(mDb->mDbHelper.script_pLocal.name, cache->GetName());
+			Utils::CopyCKParamTypeStr(mDb->mDbHelper.script_pLocal.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			Utils::CopyGuid(mDb->mDbHelper.script_pLocal.type_guid, cache->GetGUID());
 			mDb->mDbHelper.script_pLocal.is_setting = is_setting;
 			mDb->mDbHelper.script_pLocal.parent = parents;
 
@@ -318,7 +318,7 @@ namespace SSMaterializer {
 		void Proc_pOper(CKContext* ctx, CKParameterOperation* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			mDb->mDbHelper.script_pOper.thisobj = cache->GetID();
 			mDb->mDbHelper.script_pOper.op = mDb->mDbHelper.param_manager->OperationGuidToName(cache->GetOperationGuid());
-			CopyGuid(mDb->mDbHelper.script_pOper.op_guid, cache->GetOperationGuid());
+			Utils::CopyGuid(mDb->mDbHelper.script_pOper.op_guid, cache->GetOperationGuid());
 			mDb->mDbHelper.script_pOper.parent = parents;
 
 			mDb->write_script_pOper(mDb->mDbHelper.script_pOper);
@@ -342,9 +342,9 @@ namespace SSMaterializer {
 
 			// write self first to detect conflict
 			mDb->mDbHelper.script_pAttr.thisobj = cache->GetID();
-			CopyCKString(mDb->mDbHelper.script_pAttr.name, cache->GetName());
-			CopyCKParamTypeStr(mDb->mDbHelper.script_pAttr.type, cache->GetType(), mDb->mDbHelper.param_manager);
-			CopyGuid(mDb->mDbHelper.script_pAttr.type_guid, cache->GetGUID());
+			Utils::CopyCKString(mDb->mDbHelper.script_pAttr.name, cache->GetName());
+			Utils::CopyCKParamTypeStr(mDb->mDbHelper.script_pAttr.type, cache->GetType(), mDb->mDbHelper.param_manager);
+			Utils::CopyGuid(mDb->mDbHelper.script_pAttr.type_guid, cache->GetGUID());
 
 			mDb->write_script_pAttr(mDb->mDbHelper.script_pAttr);
 
@@ -352,17 +352,15 @@ namespace SSMaterializer {
 			CKObject* host = cache->GetOwner();
 			// write owner id
 			DataDictWritter("attr.owner", (long)host->GetID(), mDb, cache->GetID());
-			// write data for owner
-			DigObjectData(host, mDb, host->GetID());
 		}
 
 		void Proc_Behavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			//write self data
 			mDb->mDbHelper.script_behavior.thisobj = bhv->GetID();
-			CopyCKString(mDb->mDbHelper.script_behavior.name, bhv->GetName());
+			Utils::CopyCKString(mDb->mDbHelper.script_behavior.name, bhv->GetName());
 			mDb->mDbHelper.script_behavior.type = bhv->GetType();
-			CopyCKString(mDb->mDbHelper.script_behavior.proto_name, bhv->GetPrototypeName());
-			CopyGuid(mDb->mDbHelper.script_behavior.proto_guid, bhv->GetPrototypeGuid());
+			Utils::CopyCKString(mDb->mDbHelper.script_behavior.proto_name, bhv->GetPrototypeName());
+			Utils::CopyGuid(mDb->mDbHelper.script_behavior.proto_guid, bhv->GetPrototypeGuid());
 			mDb->mDbHelper.script_behavior.flags = bhv->GetFlags();
 			mDb->mDbHelper.script_behavior.priority = bhv->GetPriority();
 			mDb->mDbHelper.script_behavior.version = bhv->GetVersion();
@@ -437,196 +435,48 @@ namespace SSMaterializer {
 
 #pragma endregion
 
-#pragma region message
+#pragma region message & obj
 
 		void IterateMessage(CKContext* ctx, Database::DocumentDatabase* mDb) {
 			CKMessageManager* msgManager = ctx->GetMessageManager();
 			int count = msgManager->GetMessageTypeCount();
 			for (int i = 0; i < count; i++) {
 				mDb->mDbHelper.msg.index = i;
-				CopyCKString(mDb->mDbHelper.msg.name, msgManager->GetMessageTypeName(i));
+				Utils::CopyCKString(mDb->mDbHelper.msg.name, msgManager->GetMessageTypeName(i));
 
 				mDb->write_msg(mDb->mDbHelper.msg);
 			}
 		}
 
-#pragma endregion
+		static std::vector<CK_CLASSID> g_CommonClassId{
+#if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
+			// export video for non-21/25 virtools ver
+			CKCID_VIDEO,
+#endif
+			// export beobj object will export almost objects
+			CKCID_OBJECTANIMATION, CKCID_ANIMATION, CKCID_BEOBJECT
+		};
+		void IterateObj(CKContext* ctx, Database::DocumentDatabase* mDb) {
+			for (auto it = g_CommonClassId.begin(); it != g_CommonClassId.end(); ++it) {
+				XObjectPointerArray objArray = ctx->GetObjectListByType(*it, TRUE);
+				int len = objArray.Size();
+				int scriptLen = 0;
+				for (int i = 0; i < len; i++) {
+					CKSceneObject* scene_obj = (CKSceneObject*)objArray.GetObjectA(i);
 
-#pragma region array
-
-		void IterateArray(CKContext* ctx, Database::DocumentDatabase* mDb) {
-			// get all array
-			XObjectPointerArray objArray = ctx->GetObjectListByType(CKCID_DATAARRAY, TRUE);
-			CKDataArray* darray = NULL;
-			int len = objArray.Size();
-			for (int i = 0; i < len; i++) {
-				darray = (CKDataArray*)objArray.GetObjectA(i);
-
-				// dump self data first
-				mDb->mDbHelper._array.thisobj = darray->GetID();
-				CopyCKString(mDb->mDbHelper._array.name, darray->GetName());
-				mDb->mDbHelper._array.columns = darray->GetColumnCount();
-				mDb->mDbHelper._array.rows = darray->GetRowCount();
-
-				mDb->write_array(mDb->mDbHelper._array);
-
-				// dump column and row data
-				Proc_ArrayColumnRow(darray, mDb, darray->GetID());
-			}
-		}
-
-		void Proc_ArrayColumnRow(CKDataArray* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
-			int columns = cache->GetColumnCount(), rows = cache->GetRowCount();
-
-			// we iterate columns to get data
-			// because the value type of one column is not changed,
-			// it is benefit to our export.
-			for (int col = 0; col < columns; ++col) {
-				// dump column self first
-				mDb->mDbHelper.array_header.index = col;
-				CopyCKString(mDb->mDbHelper.array_header.name, cache->GetColumnName(col));
-
-				CK_ARRAYTYPE coltype = cache->GetColumnType(col);
-				mDb->mDbHelper.array_header.type = coltype;
-				if (coltype == CKARRAYTYPE_PARAMETER) {
-					CKGUID guid = cache->GetColumnParameterGuid(col);
-					CopyGuid(mDb->mDbHelper.array_header.param_type_guid, guid);
-					CKSTRING pname = mDb->mDbHelper.param_manager->ParameterGuidToName(guid);
-					CopyCKString(mDb->mDbHelper.array_header.param_type, pname);
-				} else {
-					mDb->mDbHelper.array_header.param_type = "";
-					mDb->mDbHelper.array_header.param_type_guid = "";
+					mDb->mDbHelper.obj.id = scene_obj->GetID();
+					Utils::CopyCKString(mDb->mDbHelper.obj.name, scene_obj->GetName());
+					mDb->mDbHelper.obj.classid = scene_obj->GetClassID();
+					Utils::CopyCKClassId(mDb->mDbHelper.obj.classtype, scene_obj->GetClassID(), mDb->mDbHelper.param_manager);
+					mDb->write_obj(mDb->mDbHelper.obj);
 				}
-
-				mDb->mDbHelper.array_header.parent = parents;
-				mDb->write_array_header(mDb->mDbHelper.array_header);
-
-				// write row data
-				switch (coltype) {
-					case CKARRAYTYPE_INT:
-					{
-						for (int row = 0; row < rows; ++row) {
-							mDb->mDbHelper.array_cell.column = col;
-							mDb->mDbHelper.array_cell.row = row;
-							mDb->mDbHelper.array_cell.parent = parents;
-
-							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%d", *((int*)cache->GetElement(row, col)));
-							mDb->mDbHelper.array_cell.inner_param = -1;
-
-							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-						}
-					}
-					break;
-					case CKARRAYTYPE_FLOAT:
-					{
-						for (int row = 0; row < rows; ++row) {
-							mDb->mDbHelper.array_cell.column = col;
-							mDb->mDbHelper.array_cell.row = row;
-							mDb->mDbHelper.array_cell.parent = parents;
-
-							Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%f", *((float*)cache->GetElement(row, col)));
-							mDb->mDbHelper.array_cell.inner_param = -1;
-
-							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-						}
-					}
-					break;
-					case CKARRAYTYPE_STRING:
-					{
-						for (int row = 0; row < rows; ++row) {
-							mDb->mDbHelper.array_cell.column = col;
-							mDb->mDbHelper.array_cell.row = row;
-							mDb->mDbHelper.array_cell.parent = parents;
-
-							int count = cache->GetElementStringValue(row, col, NULL);
-							mDb->mDbHelper.array_cell.showcase.resize(count);
-							cache->GetElementStringValue(row, col, (char*)mDb->mDbHelper.array_cell.showcase.data());
-							mDb->mDbHelper.array_cell.inner_param = -1;
-
-							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-						}
-					}
-					break;
-					case CKARRAYTYPE_OBJECT:
-					case CKARRAYTYPE_PARAMETER:
-					{
-						// due to Virtools shit document.
-						// although column has indicate current column is object or parameter.
-						// but it can not ensure value is CKParameter when column type is parameter.
-						// for example, Parameter - Array will return a CKDataArray, not CKParameter.
-						// so we put these 2 type together and check it in runtime to
-						// use different output.
-
-						CKObject* obj = NULL;
-						CKParameter* p = NULL;
-						CK_CLASSID objcls;
-						int param_size = 0;
-						BOOL need_evaluate = FALSE;
-
-						for (int row = 0; row < rows; ++row) {
-							mDb->mDbHelper.array_cell.column = col;
-							mDb->mDbHelper.array_cell.row = row;
-							mDb->mDbHelper.array_cell.parent = parents;
-
-							// check get status
-							obj = cache->GetElementObject(row, col);
-							if (obj == NULL) {
-								// fail to get obj
-								mDb->mDbHelper.array_cell.showcase = "(null)";
-								mDb->mDbHelper.array_cell.inner_param = -1;
-							} else {
-								// split normal obj and param obj
-								// use class id
-								objcls = obj->GetClassID();
-								if (objcls == CKCID_PARAMETER || objcls == CKCID_PARAMETERLOCAL || objcls == CKCID_PARAMETEROUT) {
-									need_evaluate = objcls == CKCID_PARAMETEROUT;
-
-									// CKParameter
-									p = (CKParameter*)obj;
-									param_size = p->GetStringValue(NULL, need_evaluate);
-									mDb->mDbHelper.array_cell.showcase.resize(param_size);
-									p->GetStringValue((char*)mDb->mDbHelper.array_cell.showcase.data(), need_evaluate);
-
-									mDb->mDbHelper.array_cell.inner_param = p->GetID();
-
-									// dig more data for it.
-									DigParameterData(p, mDb, p->GetID());
-								} else {
-									// normal CKObject
-									Utils::StdstringPrintf(mDb->mDbHelper.array_cell.showcase, "%s(%s)",
-										obj->GetName() ? obj->GetName() : "!!UNKNOW!!",
-										obj->GetClassNameA() ? obj->GetClassNameA() : "!!UNKNOW!!");
-
-									mDb->mDbHelper.array_cell.inner_param = obj->GetID();
-
-									// dig more data for it
-									DigObjectData(obj, mDb, obj->GetID());
-								}
-							}
-
-							mDb->write_array_cell(mDb->mDbHelper.array_cell);
-						}
-					}
-					break;
-				}
-
 			}
+
 		}
 
 #pragma endregion
 
 #pragma region data process
-
-		void DigObjectData(CKObject* o, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
-			// check duplication
-			// we use `parents` not o->GetID() because in some call they are not equal.
-			if (mDb->is_obj_duplicated(parents)) return;
-
-			DataDictWritter("obj.id", (long)o->GetID(), mDb, parents);
-			DataDictWritter("obj.name", o->GetName() ? o->GetName() : "!!UNKNOW!!", mDb, parents);
-			DataDictWritter("obj.classid", (long)o->GetClassID(), mDb, parents);
-			DataDictWritter("obj.type", o->GetClassNameA() ? o->GetClassNameA() : "!!UNKNOW!!", mDb, parents);
-		}
 
 		void DigParameterData(CKParameter* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents) {
 			// due to our algorithm, parameter can not be duplicated
@@ -637,9 +487,9 @@ namespace SSMaterializer {
 			// export guid and type name corresponding with guid
 			static std::string str_guid;
 			static std::string str_typename;
-			CopyGuid(str_guid, t);
+			Utils::CopyGuid(str_guid, t);
 			DataDictWritter("guid", str_guid.c_str(), mDb, parents);
-			CopyCKParamTypeStr(str_typename, pt, mDb->mDbHelper.param_manager);
+			Utils::CopyCKParamTypeStr(str_typename, pt, mDb->mDbHelper.param_manager);
 			DataDictWritter("typename", str_typename.c_str(), mDb, parents);
 
 			// value object
@@ -647,8 +497,6 @@ namespace SSMaterializer {
 				CKObject* vobj = p->GetValueObject(false);
 				// write its id
 				DataDictWritter("vobj", (long)vobj->GetID(), mDb, parents);
-				// write more data for its id
-				DigObjectData(vobj, mDb, vobj->GetID());
 				return;
 			}
 

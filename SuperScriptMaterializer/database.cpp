@@ -10,8 +10,7 @@ namespace SSMaterializer {
 				script_bIn(), script_bOut(), script_bLink(),
 				script_pIn(), script_pOut(), script_pLink(), script_eLink(),
 				script_pLocal(), script_pTarget(), script_pAttr(),
-				msg(),
-				_array(), array_header(), array_cell(),
+				msg(), obj(),
 				data() {
 				param_manager = paramManager;
 			}
@@ -118,7 +117,7 @@ namespace SSMaterializer {
 #pragma region sub-database constructor, deconstructor and help functions
 
 		DocumentDatabase::DocumentDatabase(const char* file, CKParameterManager* paramManager) :
-			SSMaterializerDatabase(), mUniqueAttr(), mUniqueObj(), mDbHelper(paramManager) {
+			SSMaterializerDatabase(), mUniqueAttr(), /*mUniqueObj(), */mDbHelper(paramManager) {
 			FakeConstructor(file);
 		}
 
@@ -147,17 +146,17 @@ namespace SSMaterializer {
 			}
 		}
 
-		BOOL DocumentDatabase::is_obj_duplicated(DataStruct::EXPAND_CK_ID parents) {
-			// check duplication
-			if (mUniqueObj.find(parents) != mUniqueObj.end()) {
-				//existing item. skip it to make sure unique
-				return TRUE;
-			} else {
-				//add this item
-				mUniqueObj.insert(parents);
-				return FALSE;
-			}
-		}
+		//BOOL DocumentDatabase::is_obj_duplicated(DataStruct::EXPAND_CK_ID parents) {
+		//	// check duplication
+		//	if (mUniqueObj.find(parents) != mUniqueObj.end()) {
+		//		//existing item. skip it to make sure unique
+		//		return TRUE;
+		//	} else {
+		//		//add this item
+		//		mUniqueObj.insert(parents);
+		//		return FALSE;
+		//	}
+		//}
 
 #pragma endregion
 
@@ -190,10 +189,7 @@ if (result != SQLITE_OK) { return FALSE; }
 			SafeSqlExec("CREATE TABLE [script_pAttr] ([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT);");
 
 			SafeSqlExec("CREATE TABLE [msg] ([index] INTEGER, [name] TEXT);");
-
-			SafeSqlExec("CREATE TABLE [array] ([thisobj] INTEGER, [name] TEXT, [rows] INTEGER, [columns] INTEGER);");
-			SafeSqlExec("CREATE TABLE [array_header] ([index] INTEGER, [name] TEXT, [type] INTEGER, [param_type] TEXT, [param_type_guid] TEXT, [parent] INTEGER);");
-			SafeSqlExec("CREATE TABLE [array_cell] ([row] INTEGER, [column] INTEGER, [showcase] TEXT, [inner_param] INTEGER, [parent] INTEGER);");
+			SafeSqlExec("CREATE TABLE [obj] ([id] INTEGER, [name] TEXT, [classid] INTEGER, [classtype] TEXT);");
 
 			SafeSqlExec("CREATE TABLE [data] ([field] TEXT, [data] TEXT, [parent] INTEGER);");
 
@@ -482,45 +478,16 @@ if (stmt == NULL) { \
 			sqlite3_step(stmt);
 		}
 
-		void DocumentDatabase::write_array(DataStruct::dbdoc_array& data) {
+		void DocumentDatabase::write_obj(DataStruct::dbdoc_obj& data) {
 			if (mDb == NULL) return;
 
-			TryGetStmtCache("INSERT INTO [array] VALUES (?, ?, ?, ?)");
+			TryGetStmtCache("INSERT INTO [obj] VALUES (?, ?, ?, ?)");
 			sqlite3_reset(stmt);
 
-			sqlite3_bind_int(stmt, 1, data.thisobj);
+			sqlite3_bind_int(stmt, 1, data.id);
 			sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
-			sqlite3_bind_int(stmt, 3, data.rows);
-			sqlite3_bind_int(stmt, 4, data.columns);
-			sqlite3_step(stmt);
-		}
-
-		void DocumentDatabase::write_array_header(DataStruct::dbdoc_array_header& data) {
-			if (mDb == NULL) return;
-
-			TryGetStmtCache("INSERT INTO [array_header] VALUES (?, ?, ?, ?, ?, ?)");
-			sqlite3_reset(stmt);
-
-			sqlite3_bind_int(stmt, 1, data.index);
-			sqlite3_bind_text(stmt, 2, data.name.c_str(), -1, SQLITE_TRANSIENT);
-			sqlite3_bind_int(stmt, 3, data.type);
-			sqlite3_bind_text(stmt, 4, data.param_type.c_str(), -1, SQLITE_TRANSIENT);
-			sqlite3_bind_text(stmt, 5, data.param_type_guid.c_str(), -1, SQLITE_TRANSIENT);
-			sqlite3_bind_int(stmt, 6, data.parent);
-			sqlite3_step(stmt);
-		}
-
-		void DocumentDatabase::write_array_cell(DataStruct::dbdoc_array_cell& data) {
-			if (mDb == NULL) return;
-
-			TryGetStmtCache("INSERT INTO [array_cell] VALUES (?, ?, ?, ?, ?)");
-			sqlite3_reset(stmt);
-
-			sqlite3_bind_int(stmt, 1, data.row);
-			sqlite3_bind_int(stmt, 2, data.column);
-			sqlite3_bind_text(stmt, 3, data.showcase.c_str(), -1, SQLITE_TRANSIENT);
-			sqlite3_bind_int(stmt, 4, data.inner_param);
-			sqlite3_bind_int(stmt, 5, data.parent);
+			sqlite3_bind_int(stmt, 3, data.classid);
+			sqlite3_bind_text(stmt, 4, data.classtype.c_str(), -1, SQLITE_TRANSIENT);
 			sqlite3_step(stmt);
 		}
 

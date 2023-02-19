@@ -18,16 +18,12 @@ namespace SSMaterializer {
 		void Proc_pOper(CKContext* ctx, CKParameterOperation* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
 		void Proc_pAttr(CKContext* ctx, Database::DocumentDatabase* mDb, CKParameter* cache);
 
-
 		void Proc_Behavior(CKContext* ctx, CKBehavior* bhv, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
 		void IterateScript(CKContext* ctx, Database::DocumentDatabase* mDb);
 
 		void IterateMessage(CKContext* ctx, Database::DocumentDatabase* mDb);
+		void IterateObj(CKContext* ctx, Database::DocumentDatabase* mDb);
 
-		void IterateArray(CKContext* ctx, Database::DocumentDatabase* mDb);
-		void Proc_ArrayColumnRow(CKDataArray* cache, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
-
-		void DigObjectData(CKObject* o, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
 		void DigParameterData(CKParameter* p, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
 		void DataDictWritter(const char* field, long data, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);
 		void DataDictWritter(const char* field, float data, Database::DocumentDatabase* mDb, DataStruct::EXPAND_CK_ID parents);

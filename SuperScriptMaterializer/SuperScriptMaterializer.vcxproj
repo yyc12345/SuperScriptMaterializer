@@ -20,14 +20,14 @@
     <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-  <ConfigurationType>Application</ConfigurationType></PropertyGroup>
+  <ConfigurationType>DynamicLibrary</ConfigurationType></PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-  <ConfigurationType>Application</ConfigurationType></PropertyGroup>
+  <ConfigurationType>DynamicLibrary</ConfigurationType></PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>

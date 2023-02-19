@@ -47,12 +47,12 @@ void RemoveMenu() {
 void UpdateMenu() {
 	s_Plugininterface->ClearPluginMenu(s_MainMenu);		//clear menu
 
-	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Export document");
-	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 1, "Export environment");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 0, "Export Document");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 1, "Export Environment");
 
 	s_Plugininterface->AddPluginMenuItem(s_MainMenu, -1, NULL, TRUE);
-	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 2, "Report bug");
-	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 3, "Plugin homepage");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 2, "Report Bug");
+	s_Plugininterface->AddPluginMenuItem(s_MainMenu, 3, "Plugin Homepage");
 
 	s_Plugininterface->UpdatePluginMenu(s_MainMenu);	//update menu,always needed when you finished to update the menu
 														//unless you want the menu not to have Virtools Dev main menu color scheme.
@@ -83,7 +83,7 @@ void PluginMenuCallback(int commandID) {
 				//iterate item
 				SSMaterializer::DocumentExporter::IterateScript(ctx, db);
 				SSMaterializer::DocumentExporter::IterateMessage(ctx, db);
-				SSMaterializer::DocumentExporter::IterateArray(ctx, db);
+				SSMaterializer::DocumentExporter::IterateObj(ctx, db);
 
 				//Close all resources
 				delete db;

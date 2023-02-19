@@ -16,7 +16,7 @@ namespace SSMaterializer {
 				//fill basic data
 				mDb->mDbHelper.op.op_code = i;
 				_guid = parameterManager->OperationCodeToGuid(i);
-				CopyGuid(mDb->mDbHelper.op.op_guid, _guid);
+				Utils::CopyGuid(mDb->mDbHelper.op.op_guid, _guid);
 				mDb->mDbHelper.op.op_name = parameterManager->OperationCodeToName(i);
 
 				//allocate mem
@@ -29,9 +29,9 @@ namespace SSMaterializer {
 
 				parameterManager->GetAvailableOperationsDesc(_guid, NULL, NULL, NULL, opList);
 				for (int j = 0; j < cacheListCount; j++) {
-					CopyGuid(mDb->mDbHelper.op.in1_guid, opList[j].P1Guid);
-					CopyGuid(mDb->mDbHelper.op.in2_guid, opList[j].P2Guid);
-					CopyGuid(mDb->mDbHelper.op.out_guid, opList[j].ResGuid);
+					Utils::CopyGuid(mDb->mDbHelper.op.in1_guid, opList[j].P1Guid);
+					Utils::CopyGuid(mDb->mDbHelper.op.in2_guid, opList[j].P2Guid);
+					Utils::CopyGuid(mDb->mDbHelper.op.out_guid, opList[j].ResGuid);
 					mDb->mDbHelper.op.funcPtr = opList[j].Fct;
 
 					mDb->write_op(mDb->mDbHelper.op);
@@ -48,8 +48,8 @@ namespace SSMaterializer {
 				desc = parameterManager->GetParameterTypeDescription(i);
 
 				mDb->mDbHelper.param.index = desc->Index;
-				CopyGuid(mDb->mDbHelper.param.guid, desc->Guid);
-				CopyGuid(mDb->mDbHelper.param.derived_from, desc->DerivedFrom);
+				Utils::CopyGuid(mDb->mDbHelper.param.guid, desc->Guid);
+				Utils::CopyGuid(mDb->mDbHelper.param.derived_from, desc->DerivedFrom);
 				mDb->mDbHelper.param.type_name = desc->TypeName.CStr();
 				mDb->mDbHelper.param.default_size = desc->DefaultSize;
 				mDb->mDbHelper.param.func_CreateDefault = desc->CreateDefaultFunction;
@@ -70,7 +70,7 @@ namespace SSMaterializer {
 				mDb->mDbHelper.param.dw_param = desc->dwParam;
 				mDb->mDbHelper.param.dw_flags = desc->dwFlags;
 				mDb->mDbHelper.param.cid = desc->Cid;
-				CopyGuid(mDb->mDbHelper.param.saver_manager, desc->Saver_Manager);
+				Utils::CopyGuid(mDb->mDbHelper.param.saver_manager, desc->Saver_Manager);
 
 				mDb->write_param(mDb->mDbHelper.param);
 			}
@@ -82,11 +82,11 @@ namespace SSMaterializer {
 				mDb->mDbHelper.attr.index = i;
 				mDb->mDbHelper.attr.name = attrManager->GetAttributeNameByType(i);
 				mDb->mDbHelper.attr.category_index = attrManager->GetAttributeCategoryIndex(i);
-				CopyCKString(mDb->mDbHelper.attr.category_name, attrManager->GetAttributeCategory(i));
+				Utils::CopyCKString(mDb->mDbHelper.attr.category_name, attrManager->GetAttributeCategory(i));
 				mDb->mDbHelper.attr.flags = attrManager->GetAttributeFlags(i);
 				mDb->mDbHelper.attr.param_index = attrManager->GetAttributeParameterType(i);
 				mDb->mDbHelper.attr.compatible_classid = attrManager->GetAttributeCompatibleClassId(i);
-				CopyCKString(mDb->mDbHelper.attr.default_value, attrManager->GetAttributeDefaultValue(i));
+				Utils::CopyCKString(mDb->mDbHelper.attr.default_value, attrManager->GetAttributeDefaultValue(i));
 
 				mDb->write_attr(mDb->mDbHelper.attr);
 			}
@@ -108,7 +108,7 @@ namespace SSMaterializer {
 					mDb->mDbHelper.plugin.plugin_index = plgEntry->m_PositionInDll;
 					mDb->mDbHelper.plugin.active = plgEntry->m_Active;
 
-					CopyGuid(mDb->mDbHelper.plugin.guid, plgInfo->m_GUID);
+					Utils::CopyGuid(mDb->mDbHelper.plugin.guid, plgInfo->m_GUID);
 					mDb->mDbHelper.plugin.desc = plgInfo->m_Description.CStr();
 					mDb->mDbHelper.plugin.author = plgInfo->m_Author.CStr();
 					mDb->mDbHelper.plugin.summary = plgInfo->m_Summary.CStr();
@@ -129,10 +129,10 @@ namespace SSMaterializer {
 			for (; !it.End(); it++) {
 				varobj = it.GetVariable();
 				mDb->mDbHelper.variable.name = it.GetName();
-				CopyCKString(mDb->mDbHelper.variable.desciption, varobj->GetDescription());
+				Utils::CopyCKString(mDb->mDbHelper.variable.desciption, varobj->GetDescription());
 				mDb->mDbHelper.variable.flags = varobj->GetFlags();
 				mDb->mDbHelper.variable.type = varobj->GetType();
-				CopyCKString(mDb->mDbHelper.variable.representation, varobj->GetRepresentation());
+				Utils::CopyCKString(mDb->mDbHelper.variable.representation, varobj->GetRepresentation());
 				varobj->GetStringValue(dataCopyCache);
 				mDb->mDbHelper.variable.data = dataCopyCache.CStr();
 
