@@ -1,8 +1,14 @@
-import Scripts.VSProp as VSProp
+import VSProp
 import os
 import sys
 
-# ======================== const define
+# =========== check work dir ===========
+
+if not os.path.isfile(os.path.join(os.getcwd(), 'README.md')):
+    print('Error! Please run this script at the root of this repository.')
+    sys.exit(1)
+
+# =========== const define ===========
 
 build_type_standalone = "standalone"
 build_type_plugin = "plugin"
@@ -68,7 +74,7 @@ valid_vt21_reverse_work_type = (
     'doyagu'
 )
 
-# ======================== assist func
+# =========== assist func ===========
 def get_executable_virtools(vt_ver):
     if vt_ver == '21':
         return 'Dev.exe'
@@ -81,7 +87,7 @@ def get_executable_virtools(vt_ver):
     elif vt_ver == '50':
         return 'devr.exe'
 
-# ======================== requirement get
+# =========== requirement get ===========
 
 # get basic cfg, such as build type, and vt version
 while True:
@@ -147,8 +153,7 @@ else:
         else:
             break
 
-# ======================== construct some path
-# .......todo
+# =========== construct some path ===========
 
 # build sqlite related data
 sqlite_header_path = input_sqlite_header_path
@@ -226,7 +231,7 @@ else:
         virtools_lib_path = os.path.join(input_virtools_root_path, 'Sdk/Lib/Win32/Release')
 
 
-# ======================== create props
+# =========== create props ===========
 
 props = VSProp.VSPropWriter()
 vcxproj = VSProp.VSVcxprojModifier('./SuperScriptMaterializer/SuperScriptMaterializer.vcxproj')
@@ -270,7 +275,7 @@ props.AddMacro('VIRTOOLS_MODULE_DEFINE', virtools_module_define)
 props.Write2File('./SuperScriptMaterializer/Virtools.props')
 vcxproj.Write2File()
 
-# ======================== create vt21 props
+# =========== create vt21 props ===========
 
 # if we are using virtools 2.1. and we use gamepiaynmo as our
 # reverse library. we need enable project GPVirtoolsStatic and 

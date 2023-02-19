@@ -1,53 +1,51 @@
-import CustomConfig
-import DecoratorCore
-import os
-import sys
-import getopt
-import logging
+import CustomConfig, DecoratorCore, Progressbar
+import os, sys, getopt, logging, time
 
+# print banner
+print('Super Script Decorator')
+print('Homepage: https://github.com/yyc12345/SuperScriptMaterializer')
+print('Report bug: https://github.com/yyc12345/SuperScriptMaterializer/issues')
+print('')
+
+# try get args
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hi:o:e:c:fd")
 except getopt.GetoptError:
     print('Wrong arguments!')
     print('python SuperScriptViewer.py -i <import.txt> -o <decorated.db> -c <codec_name> -d')
     sys.exit(1)
+
+# analyze args
+cfg: CustomConfig.CustomConfig = CustomConfig.CustomConfig()
 for opt, arg in opts:
     if opt == '-h':
         print('python SuperScriptViewer.py -i <import.txt> -o <decorated.db> -c <codec_name> -d')
         sys.exit(0)
     elif opt == '-i':
-        CustomConfig.export_db = arg
+        cfg.m_ImportTxt = arg
     elif opt == '-o':
-        CustomConfig.decorated_db = arg
+        cfg.m_DecoratedDb = arg
     elif opt == '-c':
-        CustomConfig.database_encoding = arg
+        cfg.m_DatabaseEncoding = arg
     elif opt == '-d':
-        CustomConfig.debug_mode = True
+        cfg.m_DebugMode = True
 
-print('Super Script Decorator')
-print('Homepage: https://github.com/yyc12345/SuperScriptMaterializer')
-print('Report bug: https://github.com/yyc12345/SuperScriptMaterializer/issues')
-print('')
-
-# process input and output
-if not os.path.isfile(CustomConfig.export_db):
-    print('No import.txt. Fail to generate. Exit app.')
+# regulate data
+if not cfg.Regulate():
+    # failed. exit program
     sys.exit(1)
 
-# real db generator func
-def dc_wrapper():
-    pass
-
-# generate db
-if CustomConfig.debug_mode:
-    DecoratorCore.run()
+# if in debug mode, run directly
+# otherwise, run with a try wrapper.
+if cfg.m_DebugMode:
+    DecoratorCore.run(cfg)
 else:
     try:
-        DecoratorCore.run()
-    except Exception, ex:
+        DecoratorCore.run(cfg)
+    except Exception as ex:
         print("!!! An error occurs. Please report follwoing error output and reproduce file to developer. !!!")
         logging.exception(ex)
         sys.exit(1)
-
-print('Decorated database generating done.')
+        
+print('Decorated database generation done.')
 

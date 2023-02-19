@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "SSDecorator",
+            "type": "python",
+            "request": "launch",
+            "program": "SuperScriptDecorator.py",
+            "console": "integratedTerminal",
+            "args": ["-d", "-i", "../example.txt", "-o", "decorate.db"],
+            "justMyCode": false
+        }
+    ]
+}
