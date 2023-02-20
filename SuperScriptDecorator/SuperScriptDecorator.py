@@ -38,10 +38,10 @@ if not cfg.Regulate():
 # if in debug mode, run directly
 # otherwise, run with a try wrapper.
 if cfg.m_DebugMode:
-    DecoratorCore.run(cfg)
+    DecoratorCore.Run(cfg)
 else:
     try:
-        DecoratorCore.run(cfg)
+        DecoratorCore.Run(cfg)
     except Exception as ex:
         print("!!! An error occurs. Please report follwoing error output and reproduce file to developer. !!!")
         logging.exception(ex)

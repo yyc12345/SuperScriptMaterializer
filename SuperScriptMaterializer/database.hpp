@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "virtools_compatible.hpp"
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <set>
 
 namespace SSMaterializer {
@@ -290,14 +290,14 @@ namespace SSMaterializer {
 			virtual ~SSMaterializerDatabase();
 
 		protected:
-			sqlite3_stmt* CreateStmt(const char* stmt);
+			sqlite3_stmt* GetStmt(const char* stmt);
 			void FakeConstructor(const char* file);
 			void FakeDeconstructor();
 			virtual BOOL Init();
 			virtual BOOL Finalize();
 
 			sqlite3* mDb;
-			std::vector<sqlite3_stmt*> mStmtCache;
+			std::unordered_map<uintptr_t, sqlite3_stmt*> mStmtCache;
 		};
 
 		class DocumentDatabase : public SSMaterializerDatabase {

@@ -46,6 +46,6 @@ class Prograssbar(object):
             percentage_bar * '#',
             (self.__PbarFullChar - percentage_bar) * '=', 
             percentage_full * 100,
-            self.__CurFileName
+            self.__CurFileName if self.__CurFileName else ''
         ))
         sys.stdout.flush()
