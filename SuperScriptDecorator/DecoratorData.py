@@ -96,10 +96,21 @@ class TreeLayoutLayer(typing.Generic[TNode]):
 
 class TreeLayout(typing.Generic[TNode]):
     NO_REFERENCE_LAYER: int = -1
+    NO_START_POS_OF_REF_LAYER: int = -1
 
     def __init__(self):
         self.m_Layers: collections.deque[TreeLayoutLayer[TNode]] = collections.deque()
         self.__CurrentLayer: TreeLayoutLayer[TNode] = None
+
+    def GetCurrentLayerIndex(self) -> int:
+        if self.__CurrentLayer is None: raise Exception("No layer!")
+        return len(self.m_Layers) - 1
+
+    def GetCurrentItemIndex(self) -> int:
+        if self.__CurrentLayer is None: raise Exception("No layer!")
+        result = len(self.__CurrentLayer)
+        if result == 0: raise Exception("No item!")
+        return result - 1
 
     def NewLayer(self, ref_layer: int, start_pos_of_ref_layer: int):
         self.__CurrentLayer = TreeLayoutLayer(ref_layer, start_pos_of_ref_layer)
