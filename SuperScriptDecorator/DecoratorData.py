@@ -1,3 +1,14 @@
+'''
+NOTE:
+
+There are 3 different styles shape in generated graph. 
+"Block" is stands for the large block, including BB and pOper.
+"Cell" is stands for the medium block, including pLocal, pAttr, Shortcut.
+"Particle" is stands for the small block, including bIO, pIO, pTarget.
+
+Besides these shapes, the generated graph also include various links.
+There are 2 types link. bLink and pLink.
+'''
 import typing, collections, sqlite3
 
 class Vector(object):
@@ -59,7 +70,7 @@ class Margin(object):
         self.m_BodySize: Vector = Vector()
         self.m_BottomSize: Vector = Vector()
 
-class ICanComputeSize(object):
+class ICanManipulate(object):
     '''
     This class is served for TreeLayout class.
 
@@ -70,23 +81,15 @@ class ICanComputeSize(object):
     The reason is that the vertical and horizonal direction between BB and Oper is opposited. 
     So we use Leaves and Root to give theme an uniformed concept.
     '''
-    def GetPos() -> Vector:
-        '''
-        Get current node's start position.
-        '''
-        raise NotImplementedError()
-    def GetSize() -> Vector:
-        '''
-        Get current node's size.
-        '''
-        raise NotImplementedError()
+    def SetOrigin():
+        pass
     def ComputeSize() -> Vector:
         '''
         Get current node's start position
         '''
         raise NotImplementedError()
 
-TNode = typing.TypeVar('TNode', bound=ICanComputeSize)
+TNode = typing.TypeVar('TNode', bound=ICanManipulate)
 
 class TreeLayoutLayer(typing.Generic[TNode]):
     def __init__(self, ref_layer: int, start_pos_of_ref_layer: int):
@@ -154,11 +157,11 @@ class OperDataPayload(object):
         self.m_OpGuid: str = v.op_guid
         self.m_Parent: int = v.parent
 
-class OperTreeNode(ICanComputeSize):
+class OperTreeNode(ICanManipulate):
     def __init__(self, payload: OperDataPayload):
         self.m_Payload: OperDataPayload = payload
 
-class BBTreeNode(ICanComputeSize):
+class BBTreeNode(ICanManipulate):
     def __init__(self, payload: BBDataPayload):
         self.m_UpperOper: TreeLayout[OperTreeNode] = TreeLayout()
         self.m_LowerOper: TreeLayout[OperTreeNode] = TreeLayout()
@@ -167,8 +170,19 @@ class BBTreeNode(ICanComputeSize):
         self.m_Payload: BBDataPayload = payload
 
 
-class GraphWork(ICanComputeSize):
+class GraphResult(ICanManipulate):
     def __init__(self):
+        self.m_GraphCKID: int = 0
+
+        self.m_BlockDict: dict[int, ICanManipulate] = {}
+        self.m_CellDict: dict[int, ICanManipulate] = {}
+        self.m_ParticleDict: dict[int, ICanManipulate] = {}
+
+        self.m_bIn: collections.deque = collections.deque()
+        self.m_bOut: collections.deque = collections.deque()
+        self.m_pIn: collections.deque = collections.deque()
+        self.m_pOut: collections.deque = collections.deque()
+
         self.m_PassiveVal: collections.deque = collections.deque()
         self.m_PassiveOper: TreeLayout[OperTreeNode] = TreeLayout()
         self.m_ActiveBB: TreeLayout[BBTreeNode] = TreeLayout()
