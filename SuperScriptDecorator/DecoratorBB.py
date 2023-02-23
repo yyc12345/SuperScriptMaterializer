@@ -34,7 +34,8 @@ class FindOperRootEnvironment(object):
 class BlocksFactory(object):
     def __init__(self, db: sqlite3.Connection, graph: DecoratorData.GraphResult):
         # assign members
-        self.m_Graph: DecoratorData.GraphResult = graph
+        self.m_Graph: DecoratorData.GraphResult = DecoratorData.GraphResult()
+        self.m_Graph.m_GraphCKID = graph
         self.m_Db: sqlite3.Connection = db
 
         self.__AllBB: set[int] = set()
@@ -54,16 +55,16 @@ class BlocksFactory(object):
 
     def __FillDataFromDb(self):
         cursor: sqlite3.Cursor = self.m_Db.cursor()
-        cursor.execute('SELECT * FROM [script_behavior] WHERE parent == ?', (self.m_Graph.m_GraphCKID, ))
+        cursor.execute('SELECT * FROM [script_behavior] WHERE parent == ?;', (self.m_Graph.m_GraphCKID, ))
         for sqldata in cursor.fetchall():
             payload: DecoratorData.BBDataPayload = DecoratorData.BBDataPayload(sqldata)
-            self.m_Graph.m_BlockDict[payload.m_CKID] = DecoratorData.BBTreeNode(payload)
+            self.m_Graph.m_BBDict[payload.m_CKID] = DecoratorData.BBTreeNodeWrapper(payload)
             self.__AllBB.add(payload.m_CKID)
 
-        cursor.execute('SELECT * FROM [script_pOper] WHERE parent == ?', (self.m_Graph.m_GraphCKID, ))
+        cursor.execute('SELECT * FROM [script_pOper] WHERE parent == ?;', (self.m_Graph.m_GraphCKID, ))
         for sqldata in cursor.fetchall():
             payload: DecoratorData.OperDataPayload = DecoratorData.OperDataPayload(sqldata)
-            self.m_Graph.m_BlockDict[payload.m_CKID] = DecoratorData.OperTreeNode(payload)
+            self.m_Graph.m_OperDict[payload.m_CKID] = DecoratorData.BBTreeNodeWrapper(payload)
             self.__AllOper.add(payload.m_CKID)
 
         cursor.close()
@@ -81,7 +82,7 @@ class BlocksFactory(object):
         # read datas
         for (output_obj, output_type, output_is_bb, ) in envir.m_Cursor.fetchall():
             # check dup
-            if output_obj in envir.m_WalkedOper:
+            if output_obj in envir.m_WalkedOper or output_obj not in self.__AllOper:
                 continue
             envir.m_WalkedOper.add(output_obj)
 
@@ -120,7 +121,7 @@ class BlocksFactory(object):
             # if depth == 0, all item should start from a new layer
             for item in gottenOper:
                 envir.m_Tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[item])
+                envir.m_Tree.NewItem(self.m_Graph.m_OperDict[item])
                 self.__RecursiveBuildOper(BuildOperEnvironment(
                     envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, item
                 ))
@@ -128,7 +129,7 @@ class BlocksFactory(object):
             # otherwise, only non-first node need new layer
             # proc first node
             first: int = gottenOper[0]
-            envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[first])
+            envir.m_Tree.NewItem(self.m_Graph.m_OperDict[first])
             self.__RecursiveBuildOper(BuildOperEnvironment(
                 envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, first
             ))
@@ -140,7 +141,7 @@ class BlocksFactory(object):
             # proc other node
             for other in gottenOper[1:]:
                 envir.m_Tree.NewLayer(cur_layer, cur_idx)
-                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[other])
+                envir.m_Tree.NewItem(self.m_Graph.m_OperDict[other])
                 self.__RecursiveBuildOper(BuildOperEnvironment(
                     envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, other
                 ))
@@ -166,7 +167,7 @@ class BlocksFactory(object):
         # we need process this BB related opers now
         # for every item
         for bbid in gottenBB:
-            bb: DecoratorData.BBTreeNodeWrapper = self.m_Graph.m_BlockDict[bbid]
+            bb: DecoratorData.BBTreeNodeWrapper = self.m_Graph.m_BBDict[bbid]
             # upper opers
             self.__RecursiveBuildOper(BuildOperEnvironment(
                 envir.m_Cursor, bb.m_UpperOper, 0, bbid
@@ -179,7 +180,7 @@ class BlocksFactory(object):
                 # we need add it manually
                 self.__AllOper.remove(operid)
                 bb.m_LowerOper.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-                bb.m_LowerOper.NewItem(self.m_Graph.m_BlockDict[operid])
+                bb.m_LowerOper.NewItem(self.m_Graph.m_BBDict[operid])
 
                 # gotten "root" is oper's CKID, so use depth 1 to cheat this function
                 self.__RecursiveBuildOper(BuildOperEnvironment(
@@ -191,7 +192,7 @@ class BlocksFactory(object):
             # if depth == 0, all item should start from a new layer
             for item in gottenBB:
                 envir.m_Tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[item])
+                envir.m_Tree.NewItem(self.m_Graph.m_BBDict[item])
                 self.__RecursiveBuildBB(BuildBBEnvironment(
                     envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, item
                 ))
@@ -199,7 +200,7 @@ class BlocksFactory(object):
             # otherwise, only non-first node need new layer
             # proc first node
             first: int = gottenBB[0]
-            envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[first])
+            envir.m_Tree.NewItem(self.m_Graph.m_BBDict[first])
             self.__RecursiveBuildBB(BuildBBEnvironment(
                 envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, first
             ))
@@ -211,7 +212,7 @@ class BlocksFactory(object):
             # proc other node
             for other in gottenBB[1:]:
                 envir.m_Tree.NewLayer(cur_layer, cur_idx)
-                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[other])
+                envir.m_Tree.NewItem(self.m_Graph.m_BBDict[other])
                 self.__RecursiveBuildBB(BuildBBEnvironment(
                     envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, other
                 ))
@@ -232,7 +233,7 @@ class BlocksFactory(object):
             
             self.__AllBB.remove(bbid)
             self.m_Graph.m_ActivePassiveBB.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-            self.m_Graph.m_ActivePassiveBB.NewItem(self.m_Graph.m_BlockDict[bbid])
+            self.m_Graph.m_ActivePassiveBB.NewItem(self.m_Graph.m_BBDict[bbid])
 
             # use depth = 1 to cheat this function for avoiding error bIO type
             self.__RecursiveBuildBB(BuildBBEnvironment(
@@ -257,7 +258,7 @@ class BlocksFactory(object):
                 # we need add it manually
                 self.__AllOper.remove(operid)
                 self.m_Graph.m_PassiveOper.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-                self.m_Graph.m_PassiveOper.NewItem(self.m_Graph.m_BlockDict[operid])
+                self.m_Graph.m_PassiveOper.NewItem(self.m_Graph.m_OperDict[operid])
 
                 # gotten "roots" is oper's CKID, so use depth 1 to cheat this function
                 self.__RecursiveBuildOper(BuildOperEnvironment(

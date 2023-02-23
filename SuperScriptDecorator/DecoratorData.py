@@ -111,7 +111,7 @@ class TreeLayout(typing.Generic[TNode]):
 
     def GetCurrentItemIndex(self) -> int:
         if self.__CurrentLayer is None: raise Exception("No layer!")
-        result = len(self.__CurrentLayer)
+        result = len(self.__CurrentLayer.m_Container)
         if result == 0: raise Exception("No item!")
         return result - 1
 
@@ -175,7 +175,8 @@ class GraphResult(ICanManipulate):
     def __init__(self):
         self.m_GraphCKID: int = 0
 
-        self.m_BlockDict: dict[int, ICanManipulate] = {}
+        self.m_BBDict: dict[int, BBTreeNodeWrapper] = {}
+        self.m_OperDict: dict[int, OperTreeNodeWrapper] = {}
         self.m_CellDict: dict[int, ICanManipulate] = {}
         self.m_ParticleDict: dict[int, ICanManipulate] = {}
 
