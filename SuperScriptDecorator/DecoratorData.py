@@ -157,16 +157,17 @@ class OperDataPayload(object):
         self.m_OpGuid: str = v.op_guid
         self.m_Parent: int = v.parent
 
-class OperTreeNode(ICanManipulate):
+class OperTreeNodeWrapper(ICanManipulate):
     def __init__(self, payload: OperDataPayload):
         self.m_Payload: OperDataPayload = payload
 
-class BBTreeNode(ICanManipulate):
+class BBTreeNodeWrapper(ICanManipulate):
     def __init__(self, payload: BBDataPayload):
-        self.m_UpperOper: TreeLayout[OperTreeNode] = TreeLayout()
-        self.m_LowerOper: TreeLayout[OperTreeNode] = TreeLayout()
+        self.m_UpperOper: TreeLayout[OperTreeNodeWrapper] = TreeLayout()
+        self.m_LowerOper: TreeLayout[OperTreeNodeWrapper] = TreeLayout()
         self.m_Upperval: collections.deque = collections.deque()
         self.m_LowerVal: collections.deque = collections.deque()
+
         self.m_Payload: BBDataPayload = payload
 
 
@@ -184,8 +185,7 @@ class GraphResult(ICanManipulate):
         self.m_pOut: collections.deque = collections.deque()
 
         self.m_PassiveVal: collections.deque = collections.deque()
-        self.m_PassiveOper: TreeLayout[OperTreeNode] = TreeLayout()
-        self.m_ActiveBB: TreeLayout[BBTreeNode] = TreeLayout()
-        self.m_PassiveBB: TreeLayout[BBTreeNode] = TreeLayout()
+        self.m_PassiveOper: TreeLayout[OperTreeNodeWrapper] = TreeLayout()
+        self.m_ActivePassiveBB: TreeLayout[BBTreeNodeWrapper] = TreeLayout()
 
 

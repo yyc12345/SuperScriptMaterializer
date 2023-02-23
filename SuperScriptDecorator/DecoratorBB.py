@@ -1,16 +1,35 @@
 import sqlite3, collections
 import DecoratorData, DecoratorConst
 
-class IntermediateTreeNode(object):
-    def __init__(self):
-        self.m_FirstVisit: bool = True
-        self.m_LoactedLayer: int = DecoratorData.TreeLayout.NO_REFERENCE_LAYER
-        self.m_LocatedPos: int = DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER
-        self.m_Collection: collections.deque[int] = collections.deque()
+class BuildBBEnvironment(object):
+    def __init__(self, 
+        cursor: sqlite3.Cursor, tree: DecoratorData.TreeLayout[DecoratorData.BBTreeNodeWrapper], 
+        depth: int, query_bb: int):
 
-class IntermediateOperDownwardSearch(object):
-    def __init__(self):
-        self.m_Collection: collections.deque[int] = collections.deque()
+        self.m_Cursor: sqlite3.Cursor = cursor
+        self.m_Tree: DecoratorData.TreeLayout[DecoratorData.BBTreeNodeWrapper] = tree
+        self.m_Depth: int = depth
+        self.m_QueryBB: int = query_bb
+
+class BuildOperEnvironment(object):
+    def __init__(self, 
+        cursor: sqlite3.Cursor, tree: DecoratorData.TreeLayout[DecoratorData.OperTreeNodeWrapper], 
+        depth: int, query_oper: int):
+
+        self.m_Cursor: sqlite3.Cursor = cursor
+        self.m_Tree: DecoratorData.TreeLayout[DecoratorData.OperTreeNodeWrapper] = tree
+        self.m_Depth: int = depth
+        self.m_QueryOper: int = query_oper
+
+class FindOperRootEnvironment(object):
+    def __init__(self, 
+        cursor: sqlite3.Cursor, walked_oper: set[int], 
+        depth: int, query_oper: int):
+
+        self.m_Cursor: sqlite3.Cursor = cursor
+        self.m_WalkedOper: set[int] = walked_oper
+        self.m_Depth: int = depth
+        self.m_QueryOper: int = query_oper
 
 class BlocksFactory(object):
     def __init__(self, db: sqlite3.Connection, graph: DecoratorData.GraphResult):
@@ -49,222 +68,201 @@ class BlocksFactory(object):
 
         cursor.close()
 
-    def __FindBBBottomOperRoot(self, start_pOut: tuple[int]) -> tuple[int]:
-        cursor: sqlite3.Cursor = self.m_Db.cursor()
-        cursor_outget: sqlite3.Cursor = self.m_Db.cursor()
+    def __RecursiveFindOperRoot(self, envir: FindOperRootEnvironment) -> tuple[int]:
+        envir.m_Cursor.execute('SELECT [output_obj], [output_type], [output_is_bb] FROM [script_pLink] WHERE ([input_obj] == ? AND [input_is_bb] == ? AND NOT (([output_type] == ? OR [output_type] == ?) AND [output_is_bb] == ?) AND [parent] == ?);',
+            (envir.m_QueryOper, (DecoratorConst.Export_Boolean.TRUE if envir.m_Depth == 0 else DecoratorConst.Export_Boolean.FALSE), 
+            DecoratorConst.Export_pLink_InputOutputType.PIN, DecoratorConst.Export_pLink_InputOutputType.PTARGET, DecoratorConst.Export_Boolean.TRUE,  # filter all BB's pIn
+            self.m_Graph.m_GraphCKID)
+        )
 
-        # prepare something
-        stack: collections.deque[int] = collections.deque()
-        procedOut: set[int] = set()
-        result: set[int] = set()
-        # prepare start symbol
-        stack.extend(start_pOut)
+        opers: set[int] = set()
+        results: set[int] = set()
 
-        # analyze
-        while len(stack) != 0:
-            # peek again
-            pout: int = stack.pop()
+        # read datas
+        for (output_obj, output_type, output_is_bb, ) in envir.m_Cursor.fetchall():
+            # check dup
+            if output_obj in envir.m_WalkedOper:
+                continue
+            envir.m_WalkedOper.add(output_obj)
 
-            # search this pOut in pLink
-            cursor.execute('SELECT [output], [output_obj], [output_type], [output_is_bb] FROM [script_pLink] WHERE ([input] == ? AND NOT (([output_type] == ? OR [output_type] == ?) AND [output_is_bb] == ?) AND [parent] == ?);',
-                (pout, 
-                DecoratorConst.Export_pLink_InputOutputType.PIN, DecoratorConst.Export_pLink_InputOutputType.PTARGET, DecoratorConst.Export_Boolean.TRUE,  # filter all BB's pIn
-                self.m_Graph.m_GraphCKID)
-            )
+            if output_type == DecoratorConst.Export_pLink_InputOutputType.PIN:
+                # this is a oper. find its pOut and add into stack
+                opers.add(output_obj)
+            else:
+                # this oper point to non-pIn, should be add into result
+                results.add(output_obj)
 
-            # read datas
-            for (output, output_obj, output_type, output_is_bb, ) in cursor.fetchall():
-                # check dup
-                if output in procedOut:
-                    continue
-                procedOut.add(output)
+        # recursive calling opers to get root
+        for oper in opers:
+            results.update(self.__RecursiveFindOperRoot(FindOperRootEnvironment(
+                envir.m_Cursor, envir.m_WalkedOper, envir.m_Depth + 1, oper
+            )))
+            
+        return tuple(i for i in results)
 
-                if output_type == DecoratorConst.Export_pLink_InputOutputType.PIN and output_is_bb == DecoratorConst.Export_Boolean.FALSE:
-                    # this is a oper. find its pOut and add into stack
-                    cursor_outget.execute('SELECT [thisobj] FROM [script_pOut] WHERE [parent] == ?;',
-                        (output_obj, )
-                    )
-                    for (thisobj, ) in cursor_outget.fetchall():
-                        stack.append(thisobj)
-                else:
-                    # this oper point to non-pIn, should be add into result
-                    result.add(output_obj)
-                    
-        # free cursor and return
-        cursor.close()
-        cursor_outget.close()
-        return tuple(i for i in result)
-
-    def __BuildOper(self, tree: DecoratorData.TreeLayout[DecoratorData.OperTreeNode], start_oper: int):
-        # prepare stack and start condition
-        stack: collections.deque[IntermediateTreeNode] = collections.deque()
-        
-        # check whether this BB has been processed
-        if start_oper not in self.__AllOper:
-            return
-        self.__AllOper.remove(start_oper)
-
-        # create cursor
-        cursor: sqlite3.Cursor = self.m_Db.cursor()
-
-        # create new layer and insert it
-        tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-        tree.NewItem(self.m_Graph.m_BlockDict[start_oper])
-
-        # prepare stack data
-        start_oper_data: IntermediateTreeNode = IntermediateTreeNode()
-        start_oper_data.m_LoactedLayer = tree.GetCurrentLayerIndex()
-        start_oper_data.m_LocatedPos = tree.GetCurrentItemIndex()
-        cursor.execute("SELECT [input_obj] FROM [script_pLink] WHERE ([output_obj] == ? AND [output_type] == ? AND [input_type] == ? AND [input_is_bb] == ? AND [parent] = ?);",
-            (start_oper, DecoratorConst.Export_pLink_InputOutputType.PIN, # order pOper's pIn
+    def __RecursiveBuildOper(self, envir: BuildOperEnvironment):
+        envir.m_Cursor.execute("SELECT [input_obj] FROM [script_pLink] WHERE ([output_obj] == ? AND [output_type] == ? AND [input_type] == ? AND [input_is_bb] == ? AND [parent] = ?);",
+            (envir.m_QueryOper, DecoratorConst.Export_pLink_InputOutputType.PIN, # order pOper's pIn
             DecoratorConst.Export_pLink_InputOutputType.POUT, DecoratorConst.Export_Boolean.FALSE,  # order pOper's pOut
             self.m_Graph.m_GraphCKID, )
         )
-        for (input_obj, ) in cursor.fetchall():
-            start_oper_data.m_Collection.append(input_obj)
-        stack.append(start_oper_data)
 
-        # start analyze
-        while len(stack) != 0:
-            # pick stack and decide whether pop this
-            stack_entry: IntermediateTreeNode = stack[-1]
-            if len(stack_entry.m_Collection) == 0:
-                stack.pop()
-                continue
+        gottenOper: list[int] = []
+        for (input_obj, ) in envir.m_Cursor.fetchall():
+            if input_obj in self.__AllOper:
+                self.__AllOper.remove(input_obj)
+                gottenOper.append(input_obj)
 
-            # pick a new Oper from collection.
-            # check whether it need process
-            oper_id: int = stack_entry.m_Collection[-1]
-            if oper_id not in self.__AllOper:
-                stack_entry.m_Collection.pop()
-                continue
-            self.__AllOper.remove(oper_id)
-
-            # get corresponding tree node
-            tree_node: DecoratorData.BBTreeNode = self.m_Graph.m_BlockDict[oper_id]
-
-            # start proc Oper
-            # create new stack entry
-            oper_data: IntermediateTreeNode = IntermediateTreeNode()
-            # push tree node into tree layout and get corresponding index.
-            # create new layer according to whether first visit
-            if stack_entry.m_FirstVisit:
-                tree.NewItem(tree_node)
-
-                oper_data.m_LoactedLayer = stack_entry.m_LoactedLayer
-                oper_data.m_LocatedPos = stack_entry.m_LocatedPos + 1
-                # reset first visit
-                stack_entry.m_FirstVisit = False
-            else:
-                tree.NewLayer(stack_entry.m_LoactedLayer, stack_entry.m_LocatedPos)
-                tree.NewItem(tree_node)
-
-                oper_data.m_LoactedLayer = tree.GetCurrentLayerIndex()
-                oper_data.m_LocatedPos = tree.GetCurrentItemIndex()
-            # query and fill stack entry data
-            cursor.execute("SELECT [input_obj] FROM [script_pLink] WHERE ([output_obj] == ? AND [output_type] == ? AND [input_type] == ? AND [input_is_bb] == ? AND [parent] = ?);",
-                (oper_id, DecoratorConst.Export_pLink_InputOutputType.PIN, # order pOper's pIn
-                DecoratorConst.Export_pLink_InputOutputType.POUT, DecoratorConst.Export_Boolean.FALSE,  # order pOper's pOut
-                self.m_Graph.m_GraphCKID, )
-            )
-            for (output_obj, ) in cursor.fetchall():
-                oper_data.m_Collection.append(output_obj)
-            stack.append(oper_data)
-
-        cursor.close()
-
-    def __BuildBB(self, tree: DecoratorData.TreeLayout[DecoratorData.BBTreeNode], start_bb: int):
-        # prepare stack and start condition
-        stack: collections.deque[IntermediateTreeNode] = collections.deque()
-        
-        # check whether this BB has been processed
-        if start_bb not in self.__AllBB:
+        if len(gottenOper) == 0:
             return
-        self.__AllBB.remove(start_bb)
 
-        # create cursor
-        cursor: sqlite3.Cursor = self.m_Db.cursor()
+        if envir.m_Depth == 0:
+            # if depth == 0, all item should start from a new layer
+            for item in gottenOper:
+                envir.m_Tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
+                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[item])
+                self.__RecursiveBuildOper(BuildOperEnvironment(
+                    envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, item
+                ))
+        else:
+            # otherwise, only non-first node need new layer
+            # proc first node
+            first: int = gottenOper[0]
+            envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[first])
+            self.__RecursiveBuildOper(BuildOperEnvironment(
+                envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, first
+            ))
 
-        # create new layer and insert it
-        tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-        tree.NewItem(self.m_Graph.m_BlockDict[start_bb])
+            # get layer and pos
+            cur_layer = envir.m_Tree.GetCurrentLayerIndex()
+            cur_idx = envir.m_Tree.GetCurrentItemIndex()
 
-        # prepare stack data
-        start_bb_data: IntermediateTreeNode = IntermediateTreeNode()
-        start_bb_data.m_LoactedLayer = tree.GetCurrentLayerIndex()
-        start_bb_data.m_LocatedPos = tree.GetCurrentItemIndex()
-        cursor.execute("SELECT [output_obj] FROM [script_bLink] WHERE ([input_obj] == ? AND [input_type] == ? AND [parent] = ?) ORDER BY [input_index] ASC;",
-            (start_bb, DecoratorConst.Export_bLink_InputOutputType.OUTPUT, self.m_Graph.m_GraphCKID, )
+            # proc other node
+            for other in gottenOper[1:]:
+                envir.m_Tree.NewLayer(cur_layer, cur_idx)
+                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[other])
+                self.__RecursiveBuildOper(BuildOperEnvironment(
+                    envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, other
+                ))
+
+    def __RecursiveBuildBB(self, envir: BuildBBEnvironment):
+        # query all link for next bb
+        envir.m_Cursor.execute('SELECT [output_obj] FROM [script_bLink] WHERE ([input_obj] == ? AND [input_type] == ? AND [parent] = ?) ORDER BY [input_index] ASC;',
+            (envir.m_QueryBB,
+            (DecoratorConst.Export_bLink_InputOutputType.INPUT if envir.m_Depth == 0 else DecoratorConst.Export_bLink_InputOutputType.OUTPUT),
+            self.m_Graph.m_GraphCKID)
         )
-        for (output_obj, ) in cursor.fetchall():
-            start_bb_data.m_Collection.append(output_obj)
-        stack.append(start_bb_data)
 
-        # start analyze
-        while len(stack) != 0:
-            # pick stack and decide whether pop this
-            stack_entry: IntermediateTreeNode = stack[-1]
-            if len(stack_entry.m_Collection) == 0:
-                stack.pop()
-                continue
+        # filter useless bb
+        gottenBB: list[int] = []
+        for (output_obj, ) in envir.m_Cursor.fetchall():
+            if output_obj in self.__AllBB:
+                self.__AllBB.remove(output_obj)
+                gottenBB.append(output_obj)
 
-            # pick a new BB from collection.
-            # check whether it need process
-            bb_id: int = stack_entry.m_Collection[-1]
-            if bb_id not in self.__AllBB:
-                stack_entry.m_Collection.pop()
-                continue
-            self.__AllBB.remove(bb_id)
+        if len(gottenBB) == 0:
+            return
 
-            # get corresponding tree node
-            tree_node: DecoratorData.BBTreeNode = self.m_Graph.m_BlockDict[bb_id]
+        # we need process this BB related opers now
+        # for every item
+        for bbid in gottenBB:
+            bb: DecoratorData.BBTreeNodeWrapper = self.m_Graph.m_BlockDict[bbid]
+            # upper opers
+            self.__RecursiveBuildOper(BuildOperEnvironment(
+                envir.m_Cursor, bb.m_UpperOper, 0, bbid
+            ))
+            # lower opers
+            lower_root: tuple[int] = self.__RecursiveFindOperRoot(FindOperRootEnvironment(
+                envir.m_Cursor, set(), 0, bbid
+            ))
+            for operid in lower_root:
+                # we need add it manually
+                self.__AllOper.remove(operid)
+                bb.m_LowerOper.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
+                bb.m_LowerOper.NewItem(self.m_Graph.m_BlockDict[operid])
 
-            # start proc BB
-            # create new stack entry
-            bb_data: IntermediateTreeNode = IntermediateTreeNode()
-            # push tree node into tree layout and get corresponding index.
-            # create new layer according to whether first visit
-            if stack_entry.m_FirstVisit:
-                tree.NewItem(tree_node)
+                # gotten "root" is oper's CKID, so use depth 1 to cheat this function
+                self.__RecursiveBuildOper(BuildOperEnvironment(
+                    envir.m_Cursor, bb.m_LowerOper, 1, operid
+                ))
 
-                bb_data.m_LoactedLayer = stack_entry.m_LoactedLayer
-                bb_data.m_LocatedPos = stack_entry.m_LocatedPos + 1
-                # reset first visit
-                stack_entry.m_FirstVisit = False
-            else:
-                tree.NewLayer(stack_entry.m_LoactedLayer, stack_entry.m_LocatedPos)
-                tree.NewItem(tree_node)
+        # now we place BB in tree layout
+        if envir.m_Depth == 0:
+            # if depth == 0, all item should start from a new layer
+            for item in gottenBB:
+                envir.m_Tree.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
+                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[item])
+                self.__RecursiveBuildBB(BuildBBEnvironment(
+                    envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, item
+                ))
+        else:
+            # otherwise, only non-first node need new layer
+            # proc first node
+            first: int = gottenBB[0]
+            envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[first])
+            self.__RecursiveBuildBB(BuildBBEnvironment(
+                envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, first
+            ))
 
-                bb_data.m_LoactedLayer = tree.GetCurrentLayerIndex()
-                bb_data.m_LocatedPos = tree.GetCurrentItemIndex()
-            # query and fill stack entry data
-            cursor.execute("SELECT [output_obj] FROM [script_bLink] WHERE ([input_obj] == ? AND [input_type] == ? AND [belong_to] = ?) ORDER BY [input_index] ASC;",
-                (bb_id, DecoratorConst.Export_bLink_InputOutputType.OUTPUT, self.m_Graph.m_GraphCKID, )
-            )
-            for (output_obj, ) in cursor.fetchall():
-                bb_data.m_Collection.append(output_obj)
-            stack.append(bb_data)
+            # get layer and pos
+            cur_layer = envir.m_Tree.GetCurrentLayerIndex()
+            cur_idx = envir.m_Tree.GetCurrentItemIndex()
 
-            # todo: executing oper finder for current bb
+            # proc other node
+            for other in gottenBB[1:]:
+                envir.m_Tree.NewLayer(cur_layer, cur_idx)
+                envir.m_Tree.NewItem(self.m_Graph.m_BlockDict[other])
+                self.__RecursiveBuildBB(BuildBBEnvironment(
+                    envir.m_Cursor, envir.m_Tree, envir.m_Depth + 1, other
+                ))
 
-        cursor.close()
-
+        
     def __ProcActiveBB(self):
         cursor: sqlite3.Cursor = self.m_Db.cursor()
-        cursor.execute("SELECT [output_obj] FROM [script_bLink] WHERE ([input_obj] == ? AND [input_type] == ? AND [belong_to] = ?) ORDER BY [input_index] ASC;",
-            (self.m_Graph.m_GraphCKID, DecoratorConst.Export_bLink_InputOutputType.INPUT, self.m_Graph.m_GraphCKID, )
-        )
-        for (output_obj, ) in cursor.fetchall():
-            self.__BuildBB(self.m_Graph.m_ActiveBB, output_obj)
-
+        self.__RecursiveBuildBB(BuildBBEnvironment(
+            cursor, self.m_Graph.m_ActivePassiveBB, 0, self.m_Graph.m_GraphCKID
+        ))
         cursor.close()
 
     def __ProcPassiveBB(self):
         cursor: sqlite3.Cursor = self.m_Db.cursor()
         while len(self.__AllBB) != 0:
-            self.__BuildBB(self.m_PassiveBBLayer, self.__GetOneFromSet(self.__AllBB))
+            # we manually add first
+            bbid = self.__GetOneFromSet(self.__AllBB)
+            
+            self.__AllBB.remove(bbid)
+            self.m_Graph.m_ActivePassiveBB.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
+            self.m_Graph.m_ActivePassiveBB.NewItem(self.m_Graph.m_BlockDict[bbid])
 
+            # use depth = 1 to cheat this function for avoiding error bIO type
+            self.__RecursiveBuildBB(BuildBBEnvironment(
+                cursor, self.m_Graph.m_ActivePassiveBB, 1, bbid
+            ))
         cursor.close()
 
     def __ProcPassiveOper(self):
-        pass
+        cursor: sqlite3.Cursor = self.m_Db.cursor()
+        while len(self.__AllOper) != 0:
+            # peek one randomly and try finding root
+            peek: int = self.__GetOneFromSet(self.__AllOper)
+            roots: tuple[int] = self.__RecursiveFindOperRoot(FindOperRootEnvironment(
+                cursor, set(), 1, peek    # use 1 to cheat this function
+            ))
+
+            # if no root found, add self
+            roots = (peek, )
+
+            # generate tree
+            for operid in roots:
+                # we need add it manually
+                self.__AllOper.remove(operid)
+                self.m_Graph.m_PassiveOper.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
+                self.m_Graph.m_PassiveOper.NewItem(self.m_Graph.m_BlockDict[operid])
+
+                # gotten "roots" is oper's CKID, so use depth 1 to cheat this function
+                self.__RecursiveBuildOper(BuildOperEnvironment(
+                    cursor, self.m_Graph.m_PassiveOper, 1, operid
+                ))
+
+        cursor.close()
+
