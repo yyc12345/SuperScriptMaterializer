@@ -82,7 +82,7 @@ class BlocksFactory(object):
         # read datas
         for (output_obj, output_type, output_is_bb, ) in envir.m_Cursor.fetchall():
             # check dup
-            if output_obj in envir.m_WalkedOper or output_obj not in self.__AllOper:
+            if output_obj in envir.m_WalkedOper:
                 continue
             envir.m_WalkedOper.add(output_obj)
 
@@ -91,7 +91,8 @@ class BlocksFactory(object):
                 opers.add(output_obj)
             else:
                 # this oper point to non-pIn, should be add into result
-                results.add(output_obj)
+                if envir.m_Depth != 0:  # omit BB
+                    results.add(envir.m_QueryOper)
 
         # recursive calling opers to get root
         for oper in opers:
@@ -180,7 +181,7 @@ class BlocksFactory(object):
                 # we need add it manually
                 self.__AllOper.remove(operid)
                 bb.m_LowerOper.NewLayer(DecoratorData.TreeLayout.NO_REFERENCE_LAYER, DecoratorData.TreeLayout.NO_START_POS_OF_REF_LAYER)
-                bb.m_LowerOper.NewItem(self.m_Graph.m_BBDict[operid])
+                bb.m_LowerOper.NewItem(self.m_Graph.m_OperDict[operid])
 
                 # gotten "root" is oper's CKID, so use depth 1 to cheat this function
                 self.__RecursiveBuildOper(BuildOperEnvironment(

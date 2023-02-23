@@ -32,7 +32,7 @@ namespace SSMaterializer {
 			CKParameter* directSource = NULL;
 			CKObject* ds_Owner = NULL;
 			CKParameterIn* sharedSource = NULL;
-			CKBehavior* ss_Owner = NULL;
+			CKObject* ss_Owner = NULL;
 
 			// first, we analyse eLink
 			// check whether this is export parameter and write to database
@@ -113,23 +113,40 @@ namespace SSMaterializer {
 			if (sharedSource = analysed_pin->GetSharedSource()) {
 				//pIn from BB
 				mDb->mDbHelper.script_pLink.input = sharedSource->GetID();
-				ss_Owner = (CKBehavior*)sharedSource->GetOwner();
+				ss_Owner = sharedSource->GetOwner();
 				mDb->mDbHelper.script_pLink.input_obj = ss_Owner->GetID();
 
-				if (ss_Owner->IsUsingTarget() && (ss_Owner->GetTargetParameter() == sharedSource)) {
-					//pTarget
-					mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PTARGET;
-					mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
-					mDb->mDbHelper.script_pLink.input_index = -1;	// omit
+				switch (ss_Owner->GetClassID()) {
+					case CKCID_BEHAVIOR: // CKBehavior
+					{
+						if (((CKBehavior*)ss_Owner)->IsUsingTarget() && (((CKBehavior*)ss_Owner)->GetTargetParameter() == sharedSource)) {
+							//pTarget
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PTARGET;
+							mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+							mDb->mDbHelper.script_pLink.input_index = -1;	// omit
 
-				} else {
-					//pIn
-					mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
-					mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
-					mDb->mDbHelper.script_pLink.input_index = ss_Owner->GetInputParameterPosition(sharedSource);
+						} else {
+							//pIn
+							mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
+							mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+							mDb->mDbHelper.script_pLink.input_index = ((CKBehavior*)ss_Owner)->GetInputParameterPosition(sharedSource);
+						}
+
+						break;
+					}
+					case CKCID_PARAMETEROPERATION:	// CKParameterOperation
+					{
+						//pOper only have pIn.
+						mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
+						mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+						mDb->mDbHelper.script_pLink.input_index = ((CKParameterOperation*)ss_Owner)->GetInParameter1() == sharedSource ? 0 : 1;
+						break;
+					}
+					default:
+						// the unexpected value. according to SDK manual,
+						// there are only 2 possible types
+						return;
 				}
-
-
 			}
 
 			// if the header of pLink has been analysed successfully, 
