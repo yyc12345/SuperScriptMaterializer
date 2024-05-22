@@ -1,6 +1,124 @@
-import VSProp
-import os
-import sys
+import vs_props_writer, vs_vcxproj_modifier
+import os, enum, sys
+
+#region Constant Declarations
+
+class BuildType(enum.Enum):
+    Standalone: str = "standalone"
+    Plugin: str = "plugin"
+
+class VirtoolsVersion(enum.Enum):
+    V21 = '21'
+    V25 = '25'
+    V30 = '30'
+    V35 = '35'
+    V40 = '40'
+    V50 = '50'
+
+VT_STANDALONE_ATTACHED_LIBS: dict[VirtoolsVersion, str] = {
+    VirtoolsVersion.V21: "VxMath.lib;CK2.lib",
+    VirtoolsVersion.V25: "VxMath.lib;CK2.lib",
+    VirtoolsVersion.V30: "VxMath.lib;CK2.lib",
+    VirtoolsVersion.V35: "VxMath.lib;CK2.lib",
+    VirtoolsVersion.V40: "VxMath.lib;CK2.lib",
+    VirtoolsVersion.V50: "VxMath.lib;CK2.lib"
+}
+VT_PLUGIN_ATTACHED_LIBS: dict[VirtoolsVersion, str] = {
+    VirtoolsVersion.V21: "",
+    VirtoolsVersion.V25: "",
+    VirtoolsVersion.V30: "VxMath.lib;DllEditor.lib;CK2.lib;InterfaceControls.lib;CKControls.lib",
+    VirtoolsVersion.V35: "VxMath.lib;DllEditor.lib;CK2.lib;InterfaceControls.lib;CKControls.lib",
+    VirtoolsVersion.V40: "VxMath.lib;DllEditor.lib;CK2.lib;InterfaceControls.lib;CKControls.lib",
+    VirtoolsVersion.V50: "VxMath.lib;DllEditor.lib;CK2.lib;InterfaceControls.lib;CKControls.lib" 
+}
+
+VT_PLUGIN_MACROS: dict[VirtoolsVersion, str] = {
+    VirtoolsVersion.V21: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE",
+    VirtoolsVersion.V25: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE",
+    VirtoolsVersion.V30: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE",
+    VirtoolsVersion.V35: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE",
+    VirtoolsVersion.V40: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE",
+    VirtoolsVersion.V50: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE" 
+}
+VT_STANDALONE_MACROS: dict[VirtoolsVersion, str] = {
+    VirtoolsVersion.V21: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG",
+    VirtoolsVersion.V25: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG",
+    VirtoolsVersion.V30: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG",
+    VirtoolsVersion.V35: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG",
+    VirtoolsVersion.V40: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG",
+    VirtoolsVersion.V50: "_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG;VIRTOOLS_USER_SDK" 
+}
+
+VT_EXECUTABLE_DEV: dict[VirtoolsVersion, str] = {
+    VirtoolsVersion.V21: "Dev.exe",
+    VirtoolsVersion.V25: "Dev.exe",
+    VirtoolsVersion.V30: "devr.exe",
+    VirtoolsVersion.V35: "devr.exe",
+    VirtoolsVersion.V40: "devr.exe",
+    VirtoolsVersion.V50: "devr.exe"
+}
+
+#endregion
+
+#region Assist Functions
+
+def get_project_root() -> str:
+    # build project root path
+    ret: str = os.path.dirname(os.path.dirname(__file__))
+    # check whether have readme file
+    if not os.path.isfile(os.path.join(ret, 'README.md')):
+        print('Fail to get project root folder. This script may be placed at wrong location.')
+        sys.exit(1)
+    # return value
+    return ret
+
+def get_attached_libs(build_type: BuildType, vt_version: VirtoolsVersion) -> str:
+    match(build_type):
+        case BuildType.Standalone:
+            return VT_STANDALONE_ATTACHED_LIBS[vt_version]
+        case BuildType.Plugin:
+            return VT_PLUGIN_ATTACHED_LIBS[vt_version]
+        case _:
+            raise Exception('invalid build type')
+
+def get_macros(build_type: BuildType, vt_version: VirtoolsVersion) -> str:
+    match(build_type):
+        case BuildType.Standalone:
+            return VT_STANDALONE_MACROS[vt_version]
+        case BuildType.Plugin:
+            return VT_PLUGIN_MACROS[vt_version]
+        case _:
+            raise Exception('invalid build type')
+
+def get_executable_dev(vt_version: VirtoolsVersion) -> str:
+    """
+    Return the path to executable Virtools Dev according to given Virtools version.
+
+    Usually it is `Dev.exe` or `devr.exe`.
+
+    :param vt_version The version of Virtools.
+    """
+    pass
+
+def get_output_path(build_type: BuildType, vt_root: str) -> str:
+    # fetch output path by build type
+    ret: str
+    match(build_type):
+        case BuildType.Standalone:
+            ret = vt_root
+        case BuildType.Plugin:
+            ret = os.path.join(vt_root, 'InterfacePlugins')
+        case _:
+            raise Exception('invalid build type')
+    # make sure return value is end with slash or backslash
+    if ret[-1] != '\\' or ret[-1] != '/':
+        ret += '\\'
+    # return value
+    return ret
+
+#endregion
+
+
 
 # =========== check work dir ===========
 
@@ -233,8 +351,10 @@ else:
 
 # =========== create props ===========
 
-props = VSProp.VSPropWriter()
-vcxproj = VSProp.VSVcxprojModifier('./SuperScriptMaterializer/SuperScriptMaterializer.vcxproj')
+props = vs_props_writer.VsPropsWriter()
+vcxproj = vs_vcxproj_modifier.VsVcxprojModifier(
+    './SuperScriptMaterializer/SuperScriptMaterializer.vcxproj'
+)
 
 # write build type
 if input_build_type == build_type_standalone:
@@ -244,9 +364,9 @@ elif input_build_type == build_type_plugin:
 
 # write subsystem
 if input_build_type == build_type_standalone:
-    props.SetSubSystem(props.SUBSYSTEM_CON);
+    props.SetSubSystem(vs_props_writer.VsSubSystem.Console)
 elif input_build_type == build_type_plugin:
-    props.SetSubSystem(props.SUBSYSTEM_WIN)
+    props.SetSubSystem(vs_props_writer.VsSubSystem.Windows)
 
 # write macro and misc
 # build type distinguish macro
@@ -286,3 +406,7 @@ if input_virtools_version == '21' and input_vt21_reverse_work_type == 'gamepiayn
     gp_props.Write2File('./GPVirtoolsStatic/Virtools.props')
 
 print("OK!")
+
+if __name__ == '__main__':
+    pass
+
