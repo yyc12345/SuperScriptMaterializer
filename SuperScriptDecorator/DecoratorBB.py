@@ -82,7 +82,7 @@ class BlocksFactory(object):
         # read datas
         for (output_obj, output_type, output_is_bb, ) in envir.m_Cursor.fetchall():
             # check dup
-            if output_obj in envir.m_WalkedOper:
+            if output_obj in envir.m_WalkedOper or output_obj not in self.__AllOper:
                 continue
             envir.m_WalkedOper.add(output_obj)
 

@@ -138,7 +138,7 @@ namespace SSMaterializer {
 					{
 						//pOper only have pIn.
 						mDb->mDbHelper.script_pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
-						mDb->mDbHelper.script_pLink.input_is_bb = TRUE;
+						mDb->mDbHelper.script_pLink.input_is_bb = FALSE;
 						mDb->mDbHelper.script_pLink.input_index = ((CKParameterOperation*)ss_Owner)->GetInParameter1() == sharedSource ? 0 : 1;
 						break;
 					}
