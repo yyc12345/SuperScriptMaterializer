@@ -1,6 +1,7 @@
 # ============== My Options ==============
 
 # ignore generated Virtools.props
+Virtools.props
 SuperScriptMaterializer/Virtools.props
 GPVirtoolsStatic/Virtools.props
 

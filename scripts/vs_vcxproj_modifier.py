@@ -16,7 +16,7 @@ class VsVcxprojModifier():
     def SetBuildType(self, bt: str):
         self.__BuildType = bt
 
-    def Write2File(self):
+    def Modify(self):
         # if no spec build type, do not modify
         if self.__BuildType is None:
             return

@@ -95,31 +95,55 @@ VT_EXECUTABLE_DEV: dict[VirtoolsVersion, str] = {
 #region Assist Functions
 
 def get_project_root() -> str:
-    # build project root path
-    ret: str = os.path.dirname(os.path.dirname(__file__))
+    # build project root path and return
+    return os.path.dirname(os.path.dirname(__file__))
+
+def check_project_root() -> None:
+    """
+    Check whether this script is executed in correct folder.
+
+    If check failed, this function will exit script, otherwise, return directly.
+    """
+    project_root: str = get_project_root()
     # check whether have readme file
-    if not os.path.isfile(os.path.join(ret, 'README.md')):
+    if not os.path.isfile(os.path.join(project_root, 'README.md')):
         print('Fail to get project root folder. This script may be placed at wrong location.')
         sys.exit(1)
-    # return value
-    return ret
 
-def validate_combination(build_type: BuildType, vt_version: VirtoolsVersion) -> bool:
+def validate_combination(build_type: BuildType, vt_version: VirtoolsVersion) -> None:
     """
     Check whether the given combination of build type and Virtools version is OK.
 
     Some combination of build type and Virtools version is invalid.
     For example, because Virtools 2.5 do not have UI register so plugin build type is not available in Virtools 2.1
 
-    @return True if the combination is valid.
+    If validation failed, this function will exit script, otherwise, return directly.
     """
+    # fetch result
+    is_okey: bool
     match(build_type):
         case BuildType.Standalone:
-            return vt_version in VT_STANDALONE_SUPPORTED_VER
+            is_okey = vt_version in VT_STANDALONE_SUPPORTED_VER
         case BuildType.Plugin:
-            return vt_version in VT_PLUGIN_SUPPORTED_VER
-        case _:
-            raise Exception('invalid build type')
+            is_okey = vt_version in VT_PLUGIN_SUPPORTED_VER
+    # output result
+    if not is_okey:
+        print(f'The combination of "{build_type.value}" and "{vt_version.value}" is not compatible currently.')
+        sys.exit(1)
+
+def ensure_trailing_slash(given_path: str) -> str:
+    """
+    Ensure given path is end with slash or backslash.
+
+    @param given_path The path for checking.
+    @return The path with trailing slash or backslash,
+    or the given path self if it already has.
+    """
+    # make sure return value is end with slash or backslash
+    if given_path[-1] != '\\' or given_path[-1] != '/':
+        return given_path + '\\'
+    else:
+        return given_path
 
 def get_header_path(vt_version: VirtoolsVersion, vt_root: str) -> str:
     return os.path.join(vt_root, VT_HEADER_PATH[vt_version])
@@ -133,8 +157,6 @@ def get_attached_libs(build_type: BuildType, vt_version: VirtoolsVersion) -> str
             return VT_STANDALONE_ATTACHED_LIBS[vt_version]
         case BuildType.Plugin:
             return VT_PLUGIN_ATTACHED_LIBS[vt_version]
-        case _:
-            raise Exception('invalid build type')
 
 def get_macros(build_type: BuildType, vt_version: VirtoolsVersion) -> str:
     match(build_type):
@@ -142,8 +164,6 @@ def get_macros(build_type: BuildType, vt_version: VirtoolsVersion) -> str:
             return VT_STANDALONE_MACROS[vt_version]
         case BuildType.Plugin:
             return VT_PLUGIN_MACROS[vt_version]
-        case _:
-            raise Exception('invalid build type')
 
 def get_executable_dev(vt_version: VirtoolsVersion, vt_root: str) -> str:
     """
@@ -158,6 +178,16 @@ def get_executable_dev(vt_version: VirtoolsVersion, vt_root: str) -> str:
     return os.path.join(vt_root, VT_EXECUTABLE_DEV[vt_version])
 
 def get_output_path(build_type: BuildType, vt_root: str) -> str:
+    """
+    Get the output path for plugin.
+
+    For plugin build type, script will try output binary into `InterfacePlugins` folder in Virtools environment.
+    For standalone build type, script will try output binary in the root path of Virtools.
+
+    @param vt_version The version of Virtools.
+    @param vt_root The path to Virtools root folder.
+    @return The path where the compiled project binary will be placed.
+    """
     # fetch output path by build type
     ret: str
     match(build_type):
@@ -165,17 +195,29 @@ def get_output_path(build_type: BuildType, vt_root: str) -> str:
             ret = vt_root
         case BuildType.Plugin:
             ret = os.path.join(vt_root, 'InterfacePlugins')
-        case _:
-            raise Exception('invalid build type')
     # make sure return value is end with slash or backslash
-    if ret[-1] != '\\' or ret[-1] != '/':
-        ret += '\\'
-    # return value
-    return ret
+    return ensure_trailing_slash(ret)
+
+def get_binary_suffix(build_type: BuildType) -> str:
+    match(build_type):
+        case BuildType.Standalone:
+            return 'exe'
+        case BuildType.Plugin:
+            return 'dll'
+
+def get_module_define(build_type: BuildType) -> str:
+    match(build_type):
+        case BuildType.Standalone:
+            return ''
+        case BuildType.Plugin:
+            return 'SuperScriptMaterializer.def'
 
 #endregion
 
 def main() -> None:
+    # ========== Check Environment ==========
+    check_project_root()
+
     # ========== Accept User Input ==========
     # build args parser
     parser = argparse.ArgumentParser(description='Project Configuration Maker')
@@ -214,14 +256,11 @@ def main() -> None:
     arg_sqlite_dll_path: str = args.sqlite_dll_path
 
     # validate the combination
-    if not validate_combination(arg_build_type, arg_virtools_version):
-        print(f'The combination of "{arg_build_type.value}" and "{arg_virtools_version.value}" is not compatible currently.')
-        sys.exit(1)
+    validate_combination(arg_build_type, arg_virtools_version)
 
-    # build macros valus
-    # virtools version macro
+    # build macros values
+    # virtools version and build type macro
     macro_virtools_ver: str = f'VIRTOOLS_{arg_virtools_version.value}'
-    # build type
     macro_virtools_build_type: str = f'VIRTOOLS_{arg_build_type.value.upper()}'
     # virtools header and lib
     macro_virtools_header_path: str = get_header_path(arg_virtools_version, arg_virtools_path)
@@ -230,211 +269,63 @@ def main() -> None:
     # sqlite header and lib
     macro_sqlite_header_path: str = arg_sqlite_amalgamation_path
     macro_sqlite_lib_path: str = arg_sqlite_dll_path
-    # out and debug path macros
+    # output path macro
     macro_virtools_output_path: str = get_output_path(arg_build_type, arg_virtools_path)
-    
+    # virtools used macros
+    macro_virtools_macros: str = get_macros(arg_build_type, arg_virtools_version)
+    # misc
+    macro_virtools_binary_suffix: str = get_binary_suffix(arg_build_type)
+    macro_virtools_module_define: str = get_module_define(arg_build_type)
 
-# =========== requirement get ===========
+    # ========== Create Property File ==========
 
-# # get basic cfg, such as build type, and vt version
-# while True:
-#     input_build_type = input('Choose build type(plugin, standalone): ')
-#     if input_build_type not in valid_build_type:
-#         print("Invalid build type!")
-#     else:
-#         break
+    props = vs_props_writer.VsPropsWriter()
 
-# valid_vtver_for_this_type = valid_virtools_plugin_ver if input_build_type == build_type_plugin else valid_virtools_standalone_ver
-# while True:
-#     input_virtools_version = input('Choose virtools version({}): '.format(', '.join(valid_vtver_for_this_type)))
-#     if input_virtools_version not in valid_vtver_for_this_type:
-#         print("Invalid virtools version!")
-#     else:
-#         break
+    # write subsystem
+    match(arg_build_type):
+        case BuildType.Standalone:
+            props.SetSubSystem(vs_props_writer.VsSubSystem.Console)
+        case BuildType.Plugin:
+            props.SetSubSystem(vs_props_writer.VsSubSystem.Windows)
 
-# # collect sqlite library data
-# while True:
-#     input_sqlite_header_path = input('SQLite header folder path: ')
-#     if not os.path.isdir(input_sqlite_header_path):
-#         print("Invalid SQLite header folder!")
-#     else:
-#         break
+    # write macro and misc
+    # build type distinguish macro
+    props.AddMacro('VIRTOOLS_VER', macro_virtools_ver)
+    props.AddMacro('VIRTOOLS_BUILD_TYPE', macro_virtools_build_type)
+    # header and libs
+    props.AddMacro('VIRTOOLS_HEADER_PATH', macro_virtools_header_path)
+    props.AddMacro('VIRTOOLS_LIB_PATH', macro_virtools_lib_path)
+    props.AddMacro('VIRTOOLS_ATTACHED_LIBS', macro_virtools_attcahed_libs)
+    props.AddMacro('SQLITE_HEADER_PATH', macro_sqlite_header_path)
+    props.AddMacro('SQLITE_LIB_PATH', macro_sqlite_lib_path)
+    # output
+    props.AddMacro('VIRTOOLS_OUTPUT_PATH', macro_virtools_output_path)
+    # essential build macro
+    props.AddMacro('VIRTOOLS_MACROS', macro_virtools_macros)
+    # misc macro
+    props.AddMacro('VIRTOOLS_BINARY_SUFFIX', macro_virtools_binary_suffix)
+    props.AddMacro('VIRTOOLS_MODULE_DEFINE', macro_virtools_module_define)
 
-# while True:
-#     input_sqlite_lib_path = input('SQLite lib file path: ')
-#     if not os.path.isfile(input_sqlite_lib_path):
-#         print("Invalid SQLite lib file!")
-#     else:
-#         break
+    # output
+    props.Generate(os.path.join(get_project_root(), 'Virtools.props'))
 
-# # collect virtools sdk data
-# if input_virtools_version != '21':
-#     # if we do not use virtools 21, we order get original virtools SDK
-#     while True:
-#         input_virtools_root_path = input('Virtools root path: ')
-#         if not os.path.isdir(input_virtools_root_path):
-#             print("Invalid virtools root path!")
-#         else:
-#             break
-# else:
-#     # if we are in virtools 21 environment, we have 2 choose aboud used virtools sdk
-#     # one is gamepiaynmo and another one is doyagu
-#     # allow user choose a proper one from them and input their corresponding path about cloned repository.
-#     # also order a proper runtime environment for debug
-#     while True:
-#         input_vt21_reverse_work_type = input('Choose Virtools 2.1 reverse work source(gamepiaynmo, doyagu): ')
-#         if input_vt21_reverse_work_type not in valid_vt21_reverse_work_type:
-#             print("Invalid Virtools 2.1 reverse work source!")
-#         else:
-#             break
-#     while True:
-#         input_vt21_reverse_work_path =  input('Virtools 2.1 reverse work root path: ')
-#         if not os.path.isdir(input_vt21_reverse_work_path):
-#             print("Invalid Virtools 2.1 reverse work root path!")
-#         else:
-#             break
-#     while True:
-#         input_vt21_runtime_path =  input('Virtools 2.1 runtime path: ')
-#         if not os.path.isdir(input_vt21_runtime_path):
-#             print("Invalid Virtools 2.1 runtime path!")
-#         else:
-#             break
+    # ========== Modify ==========
+    vcxproj = vs_vcxproj_modifier.VsVcxprojModifier(
+        os.path.join(get_project_root(), 'SuperScriptMaterializer/SuperScriptMaterializer.vcxproj')
+    )
 
-# # =========== construct some path ===========
+    # write build type
+    match(arg_build_type):
+        case BuildType.Standalone:
+            vcxproj.SetBuildType(vcxproj.BUILDTYPE_EXE)
+        case BuildType.Plugin:
+            vcxproj.SetBuildType(vcxproj.BUILDTYPE_DLL)
 
-# # build sqlite related data
-# sqlite_header_path = input_sqlite_header_path
-# (sqlite_lib_path, sqlite_lib_filename) = os.path.split(input_sqlite_lib_path)
+    # output
+    vcxproj.Modify()
 
-# # virtools version macro
-# virtools_ver = 'VIRTOOLS_' + input_virtools_version
-
-# # build type macro, and some essential build macros, linked lib
-# if input_build_type == build_type_plugin:
-#     virtools_build_type = 'VIRTOOLS_PLUGIN'
-#     virtools_build_suffix = 'dll'
-#     virtools_module_define = 'SuperScriptMaterializer.def'
-#     virtools_std_macro = virtools_std_macro_plugin_dict[input_virtools_version]
-#     virtools_attached_lib = virtools_attached_lib_plugin_dict[input_virtools_version]
-# elif input_build_type == build_type_standalone:
-#     virtools_build_type = 'VIRTOOLS_STANDALONE'
-#     virtools_build_suffix = 'exe'
-#     virtools_module_define = ''
-#     virtools_std_macro = virtools_std_macro_standalone_dict[input_virtools_version]
-#     # gamepiaynmo linked lib need special lib name
-#     if input_virtools_version == '21' and input_vt21_reverse_work_type == 'gamepiaynmo':
-#         virtools_attached_lib = virtools_gp_static_proj + '.lib'
-#     else:
-#         virtools_attached_lib = virtools_attached_lib_standalone_dict[input_virtools_version]
-
-# # debug configuration and output path
-# if input_virtools_version == '21':
-#     # virtools 21 onlt allow standalone build type
-#     # we copy it and specific some field
-#     virtools_debug_root = input_vt21_runtime_path
-#     virtools_debug_commandline = 'test.nmo test_script.db test_env.db'
-#     virtools_debug_target = os.path.join(input_vt21_runtime_path, 'SuperScriptMaterializer.exe')
-#     virtools_output_path = input_vt21_runtime_path
-# else:
-#     # in original virtools sdk environment
-#     # output file according to build type
-#     virtools_debug_root = input_virtools_root_path
-#     if input_build_type == build_type_plugin:
-#         virtools_debug_commandline = ''
-#         virtools_debug_target = os.path.join(input_virtools_root_path, executable_virtools[input_virtools_version])
-#         virtools_output_path = os.path.join(input_virtools_root_path, 'InterfacePlugins')
-#     else:
-#         virtools_debug_commandline = 'test.nmo test_script.db test_env.db'
-#         virtools_debug_target = os.path.join(input_virtools_root_path, 'SuperScriptMaterializer.exe')
-#         virtools_output_path = input_virtools_root_path
-
-# # make sure the last char of output_path is slash
-# if virtools_output_path[-1] != '\\' or virtools_output_path[-1] != '/':
-#     virtools_output_path = virtools_output_path + '\\'
-
-# # virtools compile and link options
-# # we need do different strategy for virtools 2.1 and anything else virtools version
-# if input_virtools_version == '21':
-#     # the reverse work of doyagu and gamepiaynmo is different, so we need to 
-#     # use them differently
-#     if input_vt21_reverse_work_type == 'doyagu':
-#         # doyagu do not need any extra macro
-#         virtools_extra_macro = ''
-#         virtools_header_path = os.path.join(input_vt21_reverse_work_path, 'Include')
-#         virtools_lib_path = os.path.join(input_vt21_reverse_work_path, 'Lib')
-#     else:
-#         # gamepiaynmo need a special macro but his proj do not need any link,
-#         # instead, we need compile it fully which will be implemented in following code
-#         virtools_extra_macro = 'BML_EXPORT='
-#         virtools_header_path = os.path.join(input_vt21_reverse_work_path, 'virtools')
-#         virtools_lib_path = '$(SolutionDir)out\\$(Platform)\\$(Configuration)\\' + virtools_gp_static_proj
-# else:
-#     virtools_extra_macro = ''
-#     if input_virtools_version == '25':
-#         virtools_header_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Includes')
-#         virtools_lib_path = os.path.join(input_virtools_root_path, 'Virtools_SDK/Lib')
-#     else:
-#         virtools_header_path = os.path.join(input_virtools_root_path, 'Sdk/Includes')
-#         virtools_lib_path = os.path.join(input_virtools_root_path, 'Sdk/Lib/Win32/Release')
-
-
-# # =========== create props ===========
-
-# props = vs_props_writer.VsPropsWriter()
-# vcxproj = vs_vcxproj_modifier.VsVcxprojModifier(
-#     './SuperScriptMaterializer/SuperScriptMaterializer.vcxproj'
-# )
-
-# # write build type
-# if input_build_type == build_type_standalone:
-#     vcxproj.SetBuildType(vcxproj.BUILDTYPE_EXE)
-# elif input_build_type == build_type_plugin:
-#     vcxproj.SetBuildType(vcxproj.BUILDTYPE_DLL)
-
-# # write subsystem
-# if input_build_type == build_type_standalone:
-#     props.SetSubSystem(vs_props_writer.VsSubSystem.Console)
-# elif input_build_type == build_type_plugin:
-#     props.SetSubSystem(vs_props_writer.VsSubSystem.Windows)
-
-# # write macro and misc
-# # build type distinguish macro
-# props.AddMacro('VIRTOOLS_VER', virtools_ver)
-# props.AddMacro('VIRTOOLS_BUILD_TYPE', virtools_build_type)
-# # header and libs
-# props.AddMacro('VIRTOOLS_HEADER_PATH', virtools_header_path)
-# props.AddMacro('VIRTOOLS_LIB_PATH', virtools_lib_path)
-# props.AddMacro('VIRTOOLS_LIB_FILENAME', virtools_attached_lib)
-# props.AddMacro('SQLITE_HEADER_PATH', sqlite_header_path)
-# props.AddMacro('SQLITE_LIB_PATH', sqlite_lib_path)
-# props.AddMacro('SQLITE_LIB_FILENAME', sqlite_lib_filename)
-# # output and debug
-# props.AddMacro('VIRTOOLS_OUTPUT_PATH', virtools_output_path)
-# props.AddMacro('VIRTOOLS_DEBUG_TARGET', virtools_debug_target)
-# props.AddMacro('VIRTOOLS_DEBUG_ROOT', virtools_debug_root)
-# props.AddMacro('VIRTOOLS_DEBUG_COMMANDLINE', virtools_debug_commandline)
-# # essential build macro
-# props.AddMacro('VIRTOOLS_STD_MACRO', virtools_std_macro)
-# props.AddMacro('VIRTOOLS_EXTRA_MACRO', virtools_extra_macro)
-# # misc macro
-# props.AddMacro('VIRTOOLS_BUILD_SUFFIX', virtools_build_suffix)
-# props.AddMacro('VIRTOOLS_MODULE_DEFINE', virtools_module_define)
-
-# # output
-# props.Write2File('./SuperScriptMaterializer/Virtools.props')
-# vcxproj.Write2File()
-
-# # =========== create vt21 props ===========
-
-# # if we are using virtools 2.1. and we use gamepiaynmo as our
-# # reverse library. we need enable project GPVirtoolsStatic and 
-# # add some macro for it
-# if input_virtools_version == '21' and input_vt21_reverse_work_type == 'gamepiaynmo':
-#     gp_props = VSProp.VSPropWriter()
-#     gp_props.AddMacro('BML_REPOSITORY', input_vt21_reverse_work_path)
-#     gp_props.Write2File('./GPVirtoolsStatic/Virtools.props')
-
-# print("OK!")
+    # ========== Done ==========
+    print("Configuration OK!")
 
 if __name__ == '__main__':
     main()
