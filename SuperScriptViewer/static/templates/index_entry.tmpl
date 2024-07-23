@@ -1,8 +1,0 @@
-{% for key, value in scripts.items() %}
-<h2>{{ key|e }}</h2>
-<ol>
-    {% for i in value %}
-    <li><a href="{{ "/viewer/%s"|format(i.id) }}">{{ i.name }}</a></li>
-    {% endfor %}
-</ol>
-{% endfor %}
