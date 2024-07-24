@@ -1,7 +1,5 @@
-# Check build environment
-include(${CMAKE_CURRENT_LIST_DIR}/../cmake/check_materializer_env.cmake)
-# Import virtools sdk
-include(${CMAKE_CURRENT_LIST_DIR}/../cmake/custom_import_virtools.cmake)
+# Try to initialize build environment
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/init_materializer_env.cmake)
 
 # Create library or executable according to build type
 if (VSW_MATERIALIZER_BUILD_TYPE STREQUAL "plugin")
@@ -28,11 +26,11 @@ target_include_directories(VSWMaterializer
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
 )
-# Setup C++ standard
+# Setup C++ standard (we require C++ 17 because Virtools can hold more higher C++ standard)
 set_target_properties(VSWMaterializer
 PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED 20
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED 17
     CXX_EXTENSION OFF
 )
 # MSVC specific correction
