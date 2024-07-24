@@ -12,12 +12,12 @@ if (WIN32)
     add_library(SQLite3 INTERFACE IMPORTED)
     add_library(SQLite3::SQLite3 ALIAS SQLite3)
     # Setup header files
-    set_target_properties(VirtoolsSDK PROPERTIES
+    set_target_properties(SQLite3 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES
         "${SQLITE_AMALGAMATION_PATH}"
     )
     # Setup lib files
-    set_target_properties(VirtoolsSDK PROPERTIES
+    set_target_properties(SQLite3 PROPERTIES
     INTERFACE_LINK_LIBRARIES
         "${SQLITE_DLL_PATH}/sqlite3.lib"
     )

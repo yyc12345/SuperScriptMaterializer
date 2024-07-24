@@ -105,12 +105,18 @@ INTERFACE_LINK_LIBRARIES
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:${VIRTOOLS_LIB_PATH}/InterfaceControls.lib>"
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:${VIRTOOLS_LIB_PATH}/CKControls.lib>"
 )
-# Setup build macros
-set_target_properties(VirtoolsSDK PROPERTIES
-INTERFACE_COMPILE_DEFINITIONS
+# Setup compile macros
+target_compile_definitions(VirtoolsSDK
+INTERFACE
     # Virtools version macro
     "VIRTOOLS_${VIRTOOLS_VERSION}"
     # Virtools 5.0 standalone mode need an extra macro
-    "$<$<AND:$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>,$<STREQUAL:${VIRTOOLS_VERSION},50>>:VIRTOOLS_USER_SDK"
+    "$<$<AND:$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>,$<STREQUAL:${VIRTOOLS_VERSION},50>>:VIRTOOLS_USER_SDK>"
+)
+# Setup compiler options
+target_compile_options(VirtoolsSDK
+INTERFACE
+    # Permissive mode ordered.
+    "/permissive"
 )
 

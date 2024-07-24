@@ -4,6 +4,7 @@ add_library(VSWShared STATIC "")
 target_sources(VSWShared
 PRIVATE
     # Sources
+    DataTypes.cpp
 )
 # Setup header files
 target_sources(VSWShared

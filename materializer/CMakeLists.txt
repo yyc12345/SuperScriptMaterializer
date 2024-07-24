@@ -7,24 +7,37 @@ if (VSW_MATERIALIZER_BUILD_TYPE STREQUAL "plugin")
 else ()
     add_executable(VSWMaterializer "")
 endif ()
-# Setup static library sources
+# Setup source files
 target_sources(VSWMaterializer
 PRIVATE
     # Sources
     main.cpp
 )
+# Setup header files
 target_sources(VSWMaterializer
-PUBLIC
+PRIVATE
 FILE_SET HEADERS
 FILES
     # Headers
     stdafx.hpp
-    resources.h
+    resource.h
 )
 # Setup header infomations
 target_include_directories(VSWMaterializer
-PUBLIC
+PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
+    YYCCommonplace
+    SQLite3::SQLite3
+    VirtoolsSDK
+    VSWShared
+)
+# Setup linked library
+target_link_libraries(VSWMaterializer
+PRIVATE
+    YYCCommonplace
+    SQLite3::SQLite3
+    VirtoolsSDK
+    VSWShared
 )
 # Setup C++ standard (we require C++ 17 because Virtools can hold more higher C++ standard)
 set_target_properties(VSWMaterializer
@@ -36,8 +49,8 @@ PROPERTIES
 # MSVC specific correction
 target_compile_definitions(VSWMaterializer
 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:UNICODE>
-    $<$<CXX_COMPILER_ID:MSVC>:_UNICODE>
+    $<$<CXX_COMPILER_ID:MSVC>:MBCS>
+    $<$<CXX_COMPILER_ID:MSVC>:_MBCS>
 )
 target_compile_options(VSWMaterializer
 PRIVATE

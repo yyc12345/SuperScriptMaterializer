@@ -8,7 +8,7 @@ PRIVATE
 )
 # Setup header files
 target_sources(VSWDecorator
-PUBLIC
+PRIVATE
 FILE_SET HEADERS
 FILES
     # Headers
@@ -17,6 +17,16 @@ FILES
 target_include_directories(VSWDecorator
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    YYCCommonplace
+    SQLite3::SQLite3
+    VSWShared
+)
+# Setup linked library
+target_link_libraries(VSWDecorator
+PRIVATE
+    YYCCommonplace
+    SQLite3::SQLite3
+    VSWShared
 )
 # Setup C++ standard
 set_target_properties(VSWDecorator
