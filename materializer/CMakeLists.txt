@@ -2,8 +2,8 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/init_materializer_env.cmake)
 
 # Create library or executable according to build type
-if (VSW_MATERIALIZER_BUILD_TYPE STREQUAL "plugin")
-    add_library(VSWMaterializer STATIC "")
+if (MATERIALIZER_BUILD_TYPE STREQUAL "plugin")
+    add_library(VSWMaterializer SHARED "")
 else ()
     add_executable(VSWMaterializer "")
 endif ()
@@ -12,6 +12,10 @@ target_sources(VSWMaterializer
 PRIVATE
     # Sources
     main.cpp
+    PluginMain.cpp
+    StandaloneMain.cpp
+    # Defination file
+    "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:Materializer.def>"
 )
 # Setup header files
 target_sources(VSWMaterializer
@@ -21,12 +25,14 @@ FILES
     # Headers
     stdafx.hpp
     resource.h
+    PluginMain.hpp
+    StandaloneMain.hpp
 )
 # Setup header infomations
 target_include_directories(VSWMaterializer
 PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
-    YYCCommonplace
+    YYCC::YYCCommonplace
     SQLite3::SQLite3
     VirtoolsSDK
     VSWShared
@@ -34,7 +40,7 @@ PRIVATE
 # Setup linked library
 target_link_libraries(VSWMaterializer
 PRIVATE
-    YYCCommonplace
+    YYCC::YYCCommonplace
     SQLite3::SQLite3
     VirtoolsSDK
     VSWShared
@@ -46,9 +52,22 @@ PROPERTIES
     CXX_STANDARD_REQUIRED 17
     CXX_EXTENSION OFF
 )
+# Setup MFC use
+set_target_properties(VSWMaterializer
+PROPERTIES
+    CMAKE_MFC_FLAG 2
+)
 # MSVC specific correction
 target_compile_definitions(VSWMaterializer
 PRIVATE
+    # MFC macro
+    _AFXDLL
+    # Materializer build type
+    "MATERIALIZER_$<UPPER_CASE:${MATERIALIZER_BUILD_TYPE}>"
+    # Materializer debug or release
+    "$<$<CONFIG:Debug>:MATERIALIZER_DEBUG>"
+    "$<$<CONFIG:Release,RelWithDebInfo,MinSizeRel>:MATERIALIZER_DEBUG>"
+    # Multibyte encoding
     $<$<CXX_COMPILER_ID:MSVC>:MBCS>
     $<$<CXX_COMPILER_ID:MSVC>:_MBCS>
 )

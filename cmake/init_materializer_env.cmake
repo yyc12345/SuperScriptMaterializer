@@ -95,8 +95,7 @@ INTERFACE_INCLUDE_DIRECTORIES
     "${VIRTOOLS_HEADER_PATH}"
 )
 # Setup lib files
-set_target_properties(VirtoolsSDK PROPERTIES
-INTERFACE_LINK_LIBRARIES
+set(VirtoolsSDK_LIBS_LIST
     # Both standalone and plugin build type needed
     "${VIRTOOLS_LIB_PATH}/CK2.lib"
     "${VIRTOOLS_LIB_PATH}/VxMath.lib"
@@ -104,6 +103,11 @@ INTERFACE_LINK_LIBRARIES
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:${VIRTOOLS_LIB_PATH}/DllEditor.lib>"
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:${VIRTOOLS_LIB_PATH}/InterfaceControls.lib>"
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:${VIRTOOLS_LIB_PATH}/CKControls.lib>"
+    # Virtools 5.0 special
+    "$<$<STREQUAL:${VIRTOOLS_VERSION},50>:${VIRTOOLS_LIB_PATH}/CKKernelInit.lib>"
+)
+set_target_properties(VirtoolsSDK PROPERTIES
+INTERFACE_LINK_LIBRARIES "${VirtoolsSDK_LIBS_LIST}"
 )
 # Setup compile macros
 target_compile_definitions(VirtoolsSDK
@@ -111,7 +115,7 @@ INTERFACE
     # Virtools version macro
     "VIRTOOLS_${VIRTOOLS_VERSION}"
     # Virtools 5.0 standalone mode need an extra macro
-    "$<$<AND:$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>,$<STREQUAL:${VIRTOOLS_VERSION},50>>:VIRTOOLS_USER_SDK>"
+    "$<$<AND:$<STREQUAL:${MATERIALIZER_BUILD_TYPE},standalone>,$<STREQUAL:${VIRTOOLS_VERSION},50>>:VIRTOOLS_USER_SDK>"
 )
 # Setup compiler options
 target_compile_options(VirtoolsSDK

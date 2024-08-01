@@ -17,14 +17,14 @@ FILES
 target_include_directories(VSWDecorator
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
-    YYCCommonplace
+    YYCC::YYCCommonplace
     SQLite3::SQLite3
     VSWShared
 )
 # Setup linked library
 target_link_libraries(VSWDecorator
 PRIVATE
-    YYCCommonplace
+    YYCC::YYCCommonplace
     SQLite3::SQLite3
     VSWShared
 )
