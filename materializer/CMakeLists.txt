@@ -11,9 +11,17 @@ endif ()
 target_sources(VSWMaterializer
 PRIVATE
     # Sources
+    # Main
     main.cpp
     PluginMain.cpp
     StandaloneMain.cpp
+    # Exporter
+    ExportContext.cpp
+    ExportEnvironment.cpp
+    ExportScript.cpp
+    # Utilities
+    Utilities.cpp
+    Database.cpp
     # Defination file
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:Materializer.def>"
 )
@@ -23,10 +31,20 @@ PRIVATE
 FILE_SET HEADERS
 FILES
     # Headers
+    # Misc
     stdafx.hpp
     resource.h
+    # Main
     PluginMain.hpp
     StandaloneMain.hpp
+    # Exporter
+    ExportContext.hpp
+    ExportEnvironment.hpp
+    ExportScript.hpp
+    # Utilities
+    Utilities.hpp
+    Database.hpp
+    DataTypes.hpp
 )
 # Setup header infomations
 target_include_directories(VSWMaterializer
