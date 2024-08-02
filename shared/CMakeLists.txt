@@ -4,7 +4,7 @@ add_library(VSWShared STATIC "")
 target_sources(VSWShared
 PRIVATE
     # Sources
-    "EnumTypes.cpp"
+    "GenericDataTypes.cpp"
 )
 # Setup header files
 target_sources(VSWShared
@@ -12,7 +12,7 @@ PUBLIC
 FILE_SET HEADERS
 FILES
     # Headers
-    "EnumTypes.hpp"
+    "GenericDataTypes.hpp"
 )
 # Setup include directory
 target_include_directories(VSWShared

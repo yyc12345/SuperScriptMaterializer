@@ -1,14 +1,14 @@
 #pragma once
 #include <cinttypes>
 
-namespace VSW {
+namespace VSW::DataTypes {
 
-	enum class BehaviorLinkIOType : uint32_t {
+	enum class BehaviorLinkIOType : int {
 		Input,
 		Output
 	};
 
-	enum class ParameterLinkIOType : uint32_t {
+	enum class ParameterLinkIOType : int {
 		ParameterIn,
 		ParameterOut,
 		/// @brief When using this, ignore [index] and [input_is_bb], set [input_index] to -1

@@ -1,6 +1,6 @@
 #include "ExportCore.hpp"
 
-namespace VSW::Materializer::ExportScript {
+namespace VSW::Materializer::ExportDocument {
 
 
 

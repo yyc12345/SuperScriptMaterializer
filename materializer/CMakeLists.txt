@@ -16,7 +16,7 @@ PRIVATE
     PluginMain.cpp
     StandaloneMain.cpp
     # Exporter
-    ExportContext.cpp
+    ExportDocument.cpp
     ExportEnvironment.cpp
     ExportScript.cpp
     # Utilities
@@ -38,9 +38,7 @@ FILES
     PluginMain.hpp
     StandaloneMain.hpp
     # Exporter
-    ExportContext.hpp
-    ExportEnvironment.hpp
-    ExportScript.hpp
+    ExportCore.hpp
     # Utilities
     Utilities.hpp
     Database.hpp
@@ -70,7 +68,7 @@ PROPERTIES
     CXX_STANDARD_REQUIRED 17
     CXX_EXTENSION OFF
 )
-# Setup MFC use
+# Setup MFC used in shared library
 set_target_properties(VSWMaterializer
 PROPERTIES
     CMAKE_MFC_FLAG 2

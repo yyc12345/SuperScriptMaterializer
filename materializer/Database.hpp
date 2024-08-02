@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.hpp"
+#include "DataTypes.hpp"
 #include <sqlite3.h>
 #include <map>
 
@@ -55,24 +56,38 @@ namespace VSW::Materializer::Database {
 		virtual bool PreClose() override;
 
 	public:
-
+		void Write(const DataTypes::Script::Table_script& data);
+		void Write(const DataTypes::Script::Table_behavior& data);
+		void Write(const DataTypes::Script::Table_bIn& data);
+		void Write(const DataTypes::Script::Table_bOut& data);
+		void Write(const DataTypes::Script::Table_pIn& data);
+		void Write(const DataTypes::Script::Table_pOut& data);
+		void Write(const DataTypes::Script::Table_bLink& data);
+		void Write(const DataTypes::Script::Table_pLocal& data);
+		void Write(const DataTypes::Script::Table_pAttr& data);
+		void Write(const DataTypes::Script::Table_pLink& data);
+		void Write(const DataTypes::Script::Table_pOper& data);
+		void Write(const DataTypes::Script::Table_eLink& data);
+		void Write(const DataTypes::Script::Table_pTarget& data);
+		void Write(const DataTypes::Script::Table_data& data);
 	};
 
-	class ContextDatabase : public AbstractDatabase {
+	class DocumentDatabase : public AbstractDatabase {
 	public:
-		ContextDatabase(const YYCC::yycc_u8string_view& file);
-		virtual ~ContextDatabase();
-		ContextDatabase(const ContextDatabase&) = delete;
-		ContextDatabase& operator=(const ContextDatabase&) = delete;
-		ContextDatabase(ContextDatabase&&) = delete;
-		ContextDatabase& operator=(ContextDatabase&&) = delete;
-		
+		DocumentDatabase(const YYCC::yycc_u8string_view& file);
+		virtual ~DocumentDatabase();
+		DocumentDatabase(const DocumentDatabase&) = delete;
+		DocumentDatabase& operator=(const DocumentDatabase&) = delete;
+		DocumentDatabase(DocumentDatabase&&) = delete;
+		DocumentDatabase& operator=(DocumentDatabase&&) = delete;
+
 	protected:
 		virtual bool PostOpen() override;
 		virtual bool PreClose() override;
 
 	public:
-
+		void Write(const DataTypes::Document::Table_msg& data);
+		void Write(const DataTypes::Document::Table_obj& data);
 	};
 
 	class EnvironmentDatabase : public AbstractDatabase {
@@ -83,13 +98,17 @@ namespace VSW::Materializer::Database {
 		EnvironmentDatabase& operator=(const EnvironmentDatabase&) = delete;
 		EnvironmentDatabase(EnvironmentDatabase&&) = delete;
 		EnvironmentDatabase& operator=(EnvironmentDatabase&&) = delete;
-		
+
 	protected:
 		virtual bool PostOpen() override;
 		virtual bool PreClose() override;
 
 	public:
-
+		void Write(const DataTypes::Environment::Table_op& data);
+		void Write(const DataTypes::Environment::Table_param& data);
+		void Write(const DataTypes::Environment::Table_attr& data);
+		void Write(const DataTypes::Environment::Table_plugin& data);
+		void Write(const DataTypes::Environment::Table_variable& data);
 	};
 
 }

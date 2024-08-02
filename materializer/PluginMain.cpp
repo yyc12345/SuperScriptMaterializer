@@ -1,4 +1,5 @@
 #include "PluginMain.hpp"
+#include "ExportCore.hpp"
 
 namespace VSW::Materializer::PluginMain {
 	
@@ -62,8 +63,8 @@ namespace VSW::Materializer::PluginMain {
 	static void UpdateMenu() {
 		g_Plugininterface->ClearPluginMenu(g_MainMenu);
 
-		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 0, "Export Scripts");
-		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 1, "Export Context");
+		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 0, "Export Script");
+		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 1, "Export Document");
 		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 2, "Export Environment");
 		g_Plugininterface->AddPluginMenuItem(g_MainMenu, -1, NULL, TRUE);
 		g_Plugininterface->AddPluginMenuItem(g_MainMenu, 3, "Report Bug");
