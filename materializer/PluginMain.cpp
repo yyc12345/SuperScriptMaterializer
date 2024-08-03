@@ -1,5 +1,6 @@
 #include "PluginMain.hpp"
 #include "ExportCore.hpp"
+#include "ExportDialog.hpp"
 
 namespace VSW::Materializer::PluginMain {
 	
@@ -11,21 +12,34 @@ namespace VSW::Materializer::PluginMain {
 
 	static void PluginMenuCallback(int command_id) {
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
+		CKContext* ctx = g_Plugininterface->GetCKContext();
 
 		switch (command_id) {
 			case 0:
 			{
-				MessageBoxW(nullptr, L"Work in Progress", L"WIP", MB_ICONINFORMATION + MB_OK);
+				ExportDialog dialog;
+				dialog.SetInitialDatabaseType(ExportDialog::InitialDatabaseType::Script);
+				if (dialog.DoModal() == IDOK) {
+					ExportScript::Export(ctx, dialog.GetDatabaseFileResult(), dialog.GetEncodingResult());
+				}
 				break;
 			}
 			case 1:
 			{
-				MessageBoxW(nullptr, L"Work in Progress", L"WIP", MB_ICONINFORMATION + MB_OK);
+				ExportDialog dialog;
+				dialog.SetInitialDatabaseType(ExportDialog::InitialDatabaseType::Document);
+				if (dialog.DoModal() == IDOK) {
+					ExportDocument::Export(ctx, dialog.GetDatabaseFileResult(), dialog.GetEncodingResult());
+				}
 				break;
 			}
 			case 2:
 			{
-				MessageBoxW(nullptr, L"Work in Progress", L"WIP", MB_ICONINFORMATION + MB_OK);
+				ExportDialog dialog;
+				dialog.SetInitialDatabaseType(ExportDialog::InitialDatabaseType::Environment);
+				if (dialog.DoModal() == IDOK) {
+					ExportEnvironment::Export(ctx, dialog.GetDatabaseFileResult(), dialog.GetEncodingResult());
+				}
 				break;
 			}
 			case 3:

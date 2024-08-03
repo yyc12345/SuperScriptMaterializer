@@ -22,6 +22,10 @@ PRIVATE
     # Utilities
     Utilities.cpp
     Database.cpp
+    # MFC parts
+    ExportDialog.cpp
+    # Resources file
+    "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:Materializer.rc>"
     # Defination file
     "$<$<STREQUAL:${MATERIALIZER_BUILD_TYPE},plugin>:Materializer.def>"
 )
@@ -33,7 +37,6 @@ FILES
     # Headers
     # Misc
     stdafx.hpp
-    resource.h
     # Main
     PluginMain.hpp
     StandaloneMain.hpp
@@ -43,6 +46,9 @@ FILES
     Utilities.hpp
     Database.hpp
     DataTypes.hpp
+    # MFC Parts
+    resource.h
+    ExportDialog.hpp
 )
 # Setup header infomations
 target_include_directories(VSWMaterializer
@@ -69,10 +75,12 @@ PROPERTIES
     CXX_EXTENSION OFF
 )
 # Setup MFC used in shared library
-set_target_properties(VSWMaterializer
-PROPERTIES
-    CMAKE_MFC_FLAG 2
-)
+if (MATERIALIZER_BUILD_TYPE STREQUAL "plugin")
+    set_target_properties(VSWMaterializer
+    PROPERTIES
+        CMAKE_MFC_FLAG 2
+    )
+endif ()
 # MSVC specific correction
 target_compile_definitions(VSWMaterializer
 PRIVATE

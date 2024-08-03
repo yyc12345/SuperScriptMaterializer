@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.hpp"
-#include "GenericDataTypes.hpp"
+#include <GenericHelper.hpp>
 
 namespace VSW::Materializer::DataTypes {
 

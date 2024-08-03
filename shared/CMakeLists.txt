@@ -4,7 +4,7 @@ add_library(VSWShared STATIC "")
 target_sources(VSWShared
 PRIVATE
     # Sources
-    "GenericDataTypes.cpp"
+    "GenericHelper.cpp"
 )
 # Setup header files
 target_sources(VSWShared
@@ -12,12 +12,18 @@ PUBLIC
 FILE_SET HEADERS
 FILES
     # Headers
-    "GenericDataTypes.hpp"
+    "GenericHelper.hpp"
 )
 # Setup include directory
 target_include_directories(VSWShared
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    YYCC::YYCCommonplace
+)
+# Setup linked library
+target_link_libraries(VSWShared
+PUBLIC
+    YYCC::YYCCommonplace
 )
 # Setup C++ standard
 set_target_properties(VSWShared
