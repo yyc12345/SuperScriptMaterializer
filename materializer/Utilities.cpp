@@ -29,14 +29,14 @@ namespace VSW::Materializer::Utilities {
 		// Then get its file name part
 		auto module_path = YYCC::FsPathPatch::FromUTF8Path(u8_module_path.c_str());
 		auto u8_module_name = YYCC::FsPathPatch::ToUTF8Path(module_path.filename());
-		
+
 		// Get the base address of current module
 		// HMODULE is the base address of loaded module
 		// Reference: https://stackoverflow.com/questions/4298331/exe-or-dll-image-base-address
 		uintptr_t relative_addr = reinterpret_cast<uintptr_t>(absolute_addr) - reinterpret_cast<uintptr_t>(hModule);
-		
+
 		// get final result
-		auto u8_ret = YYCC::StringHelper::Printf(YYCC_U8("%s+%" PRI_XPTR_LEFT_PADDING PRIXPTR), u8_module_name.c_str(), relative_addr);
+		auto u8_ret = YYCC::StringHelper::Printf(YYCC_U8("%s+0x%" PRI_XPTR_LEFT_PADDING PRIXPTR), u8_module_name.c_str(), relative_addr);
 		ret = YYCC::EncodingHelper::ToOrdinaryView(u8_ret);
 		return ret;
 	}
@@ -52,5 +52,19 @@ namespace VSW::Materializer::Utilities {
 		if (str == nullptr) storage = "<unamed>";
 		else storage = str;
 	}
+
+#pragma region Enhanced Reporter
+
+	EnhancedReporter::EnhancedReporter(CKContext* ctx) :
+		m_Ctx(ctx) {}
+
+	EnhancedReporter::~EnhancedReporter() {}
+
+	void EnhancedReporter::PrePrint(const YYCC::yycc_char8_t* strl) {
+		if (m_Ctx != nullptr)
+			m_Ctx->OutputToConsole(const_cast<CKSTRING>(YYCC::EncodingHelper::UTF8ToChar(strl, CP_ACP).c_str()), FALSE);
+	}
+
+#pragma endregion
 
 }

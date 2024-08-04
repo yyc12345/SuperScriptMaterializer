@@ -7,10 +7,11 @@
 namespace VSW::Materializer::ExportEnvironment {
 
 	struct ExportContext {
-		ExportContext(YYCC::yycc_u8string_view& db_path) :
-			db(db_path), cache() {}
+		ExportContext(CKContext* ctx, const YYCC::yycc_u8string_view& db_path) :
+			db(db_path), cache(), reporter(ctx) {}
 		Database::EnvironmentDatabase db;
 		DataTypes::Environment::DataCache cache;
+		Utilities::EnhancedReporter reporter;
 	};
 
 	static void IterateParameterOperation(ExportContext& expctx, CKParameterManager* param_mgr) {
@@ -155,9 +156,9 @@ namespace VSW::Materializer::ExportEnvironment {
 	}
 #endif
 
-	void Export(CKContext* ctx, YYCC::yycc_u8string_view& db_path) {
+	void Export(CKContext* ctx, const YYCC::yycc_u8string_view& db_path, UINT code_page) {
 		// create database and data cache in context
-		ExportContext expctx(db_path);
+		ExportContext expctx(ctx, db_path);
 
 		// export environment one by one
 		IterateParameterOperation(expctx, ctx->GetParameterManager());

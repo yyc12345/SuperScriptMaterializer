@@ -1,4 +1,4 @@
-LIBRARY      "SuperScriptMaterializer"
+LIBRARY      "VSWMaterializer"
 
 EXPORTS
 	GetVirtoolsPluginInfoCount

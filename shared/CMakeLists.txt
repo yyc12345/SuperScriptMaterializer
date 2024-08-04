@@ -28,8 +28,8 @@ PUBLIC
 # Setup C++ standard
 set_target_properties(VSWShared
 PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED 20
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED 17
     CXX_EXTENSION OFF
 )
 # MSVC specific correction

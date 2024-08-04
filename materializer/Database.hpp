@@ -20,18 +20,6 @@ namespace VSW::Materializer::Database {
 		bool IsValid() const;
 
 	protected:
-		/**
-		 * @brief User implemented function called after connect to the database before transition.
-		 * @return True if success, otherwise false.
-		*/
-		virtual bool PostOpen() = 0;
-		/**
-		 * @brief User implemented function called after transition before disconnect from database.
-		 * @return True if success, otherwise false.
-		*/
-		virtual bool PreClose() = 0;
-
-	protected:
 		/// @brief Subclass used for creating stmt with cache feature.
 		sqlite3_stmt* GetStmt(const char* stmt_str);
 		/// @brief Subclass used for get pointer to opened database.
@@ -50,10 +38,6 @@ namespace VSW::Materializer::Database {
 		ScriptDatabase& operator=(const ScriptDatabase&) = delete;
 		ScriptDatabase(ScriptDatabase&&) = delete;
 		ScriptDatabase& operator=(ScriptDatabase&&) = delete;
-
-	protected:
-		virtual bool PostOpen() override;
-		virtual bool PreClose() override;
 
 	public:
 		void Write(const DataTypes::Script::Table_script& data);
@@ -81,10 +65,6 @@ namespace VSW::Materializer::Database {
 		DocumentDatabase(DocumentDatabase&&) = delete;
 		DocumentDatabase& operator=(DocumentDatabase&&) = delete;
 
-	protected:
-		virtual bool PostOpen() override;
-		virtual bool PreClose() override;
-
 	public:
 		void Write(const DataTypes::Document::Table_msg& data);
 		void Write(const DataTypes::Document::Table_obj& data);
@@ -98,10 +78,6 @@ namespace VSW::Materializer::Database {
 		EnvironmentDatabase& operator=(const EnvironmentDatabase&) = delete;
 		EnvironmentDatabase(EnvironmentDatabase&&) = delete;
 		EnvironmentDatabase& operator=(EnvironmentDatabase&&) = delete;
-
-	protected:
-		virtual bool PostOpen() override;
-		virtual bool PreClose() override;
 
 	public:
 		void Write(const DataTypes::Environment::Table_op& data);
