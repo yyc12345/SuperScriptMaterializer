@@ -26,7 +26,8 @@ namespace VSW::Materializer::Utilities {
 	 * @return Module based relative address like \c xxx.dll+0x00000000.
 	*/
 	std::string RelativeAddress(const void* absolute_addr);
+	//void CopyStrGuid(std::string& dst, const CKGUID& src);
 	void CopyGuid(int64_t& dst, const CKGUID& src);
-	void CopyCKString(std::string& storage, const char* str);
+	void CopyCKString(std::string& storage, const char* str, const char* fallback = "<unamed>");
 
 }

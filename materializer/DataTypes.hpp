@@ -235,21 +235,35 @@ namespace VSW::Materializer::DataTypes {
 		};
 
 		struct Table_plugin {
-			int dll_index;
-			std::string dll_name;
-			int plugin_index;
+			// Category
 			std::string category;
-			CKBOOL active;
+			// Dll infos
+			std::string dll_name;
+			int position_in_dll;
+			// Plugin infos
 			int64_t guid;
 			std::string desc;
 			std::string author;
 			std::string summary;
 			DWORD version;
+			CK_PLUGIN_TYPE type;
 			std::string func_init;
 			std::string func_exit;
+			// Reader specific
+			std::string reader_fct;
+			int reader_opt_count;
+			CK_DATAREADER_FLAGS reader_flags;
+			int64_t reader_setting_param_guid;
+			std::string reader_file_ext;
+			// Manager and Render Engine specific
+			CKBOOL manager_active;
+			// Behavior specific
+			std::string behavior_guids;
 		};
 
 #if defined(VIRTOOLS_21)
+		// Virtools 2.1 doesn't have Variable Manager
+		// We use a normal type as a placeholder.
 		using GenericVarType_t = int;
 #else
 		using GenericVarType_t = CKVariableManager::Variable::Type;

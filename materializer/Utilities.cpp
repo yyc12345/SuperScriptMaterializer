@@ -41,6 +41,11 @@ namespace VSW::Materializer::Utilities {
 		return ret;
 	}
 
+	//void CopyStrGuid(std::string& dst, const CKGUID& src) {
+	//	auto ret = YYCC::StringHelper::Printf(YYCC_U8("<0x%08" PRIX32 ", 0x%08" PRIX32 ">"), src.d1, src.d2);
+	//	dst = YYCC::EncodingHelper::ToOrdinaryView(ret);
+	//}
+
 	void CopyGuid(int64_t& dst, const CKGUID& src) {
 		// todo: use template argument to implement this to improve performance
 		if (sizeof(dst) != sizeof(src))
@@ -48,8 +53,10 @@ namespace VSW::Materializer::Utilities {
 		std::memcpy(&dst, &src, sizeof(int64_t));
 	}
 
-	void CopyCKString(std::string& storage, const char* str) {
-		if (str == nullptr) storage = "<unamed>";
+	void CopyCKString(std::string& storage, const char* str, const char* fallback) {
+		if (fallback == nullptr)
+			throw std::invalid_argument("fallback string should not be nullptr!");
+		if (str == nullptr) storage = fallback;
 		else storage = str;
 	}
 
