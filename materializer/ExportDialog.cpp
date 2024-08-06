@@ -46,11 +46,6 @@ namespace VSW::Materializer {
 #define RADIOBTN_GETCHECK(instance) (instance.GetCheck() == BST_CHECKED)
 #define RADIOBTN_SETCHECK(instance, stmt) (instance.SetCheck((stmt) ? BST_CHECKED : BST_UNCHECKED))
 
-		static bool ValidateCodePage(UINT code_page) {
-			CPINFOEXW cpinfo;
-			return GetCPInfoExW(code_page, 0, &cpinfo);
-		}
-
 		static void SetCWndText(CWnd* ctl, const YYCC::yycc_u8string_view& val) {
 			ctl->SetWindowTextA(YYCC::EncodingHelper::UTF8ToChar(val, CP_ACP).c_str());
 		}
@@ -157,7 +152,7 @@ namespace VSW::Materializer {
 			MessageBoxW(m_hWnd, L"Exported database file should not be empty!", L"Setting Error", MB_OK + MB_ICONERROR);
 			return;
 		}
-		if (!ExportDialogHelper::ValidateCodePage(m_EncodingResult)) {
+		if (!YYCC::WinFctHelper::IsValidCodePage(m_EncodingResult)) {
 			MessageBoxW(m_hWnd, L"Invalid encoding!", L"Setting Error", MB_OK + MB_ICONERROR);
 			return;
 		}

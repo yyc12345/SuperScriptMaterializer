@@ -37,6 +37,7 @@ sqlite3_reset(stmt);
 failed: throw std::runtime_error("fail to bind value for prepared statement.");
 
 #define REVEAL_ENUM(enum_val) static_cast<std::underlying_type_t<decltype(enum_val)>>(enum_val)
+#define REVEAL_U8STR(u8_str) YYCC::EncodingHelper::ToOrdinary(u8_str.c_str())
 
 #pragma endregion
 
@@ -343,10 +344,10 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		// initialize table
 		BEGIN_CTOR;
 		CTOR_SQL_EXEC("CREATE TABLE [op] ([func_ptr] TEXT, [in1_guid] INTEGER, [in2_guid] INTEGER, [out_guid] INTEGER, [op_guid] INTEGER, [op_name] TEXT, [op_code] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [param] ([index] INTEGER, [guid] INTEGER, [derived_from] INTEGER, [type_name] TEXT, [default_size] INTEGER, [func_CreateDefault] TEXT, [func_Delete] TEXT, [func_SaveLoad] TEXT, [func_Check] TEXT, [func_Copy] TEXT, [func_String] TEXT, [func_UICreator] TEXT, [creator_dll_index] INTEGER, [creator_plugin_index] INTEGER, [dw_param] INTEGER, [dw_flags] INTEGER, [cid] INTEGER, [saver_manager] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [attr] ([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);");
-		CTOR_SQL_EXEC("CREATE TABLE [plugin] ([dll_index] INTEGER, [dll_name] TEXT, [plugin_index] INTEGER, [category] TEXT, [active] INTEGER, [guid] INTEGER, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [func_init] TEXT, [func_exit] TEXT);");
-		CTOR_SQL_EXEC("CREATE TABLE [variable] ([name] TEXT, [description] TEXT, [flags] INTEGER, [type] INTEGER, [representation] TEXT, [data] TEXT);");
+		CTOR_SQL_EXEC("CREATE TABLE [param] ([index] INTEGER, [guid] INTEGER, [derived_from] INTEGER, [name] TEXT, [default_size] INTEGER, [func_CreateDefault] TEXT, [func_Delete] TEXT, [func_SaveLoad] TEXT, [func_Check] TEXT, [func_Copy] TEXT, [func_String] TEXT, [func_UICreator] TEXT, [dll_name] TEXT, [dll_index] INTEGER, [position_in_dll] INTEGER, [flags] INTEGER, [dw_param] INTEGER, [cid] INTEGER, [saver_manager] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [attr] ([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [param_guid] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);");
+		CTOR_SQL_EXEC("CREATE TABLE [plugin] ([category_name] TEXT, [category_index] INTEGER, [dll_name] TEXT, [dll_index] INTEGER, [position_in_dll] INTEGER, [index] INTEGER, [guid] INTEGER, [desc] TEXT, [author] TEXT, [summary] TEXT, [version] INTEGER, [type] INTEGER, [func_init] TEXT, [func_exit] TEXT, [reader_fct] TEXT, [reader_opt_count] INTEGER, [reader_flags] INTEGER, [reader_setting_param_guid] INTEGER, [reader_file_ext] TEXT, [manager_active] INTEGER, [behavior_guids] TEXT);");
+		CTOR_SQL_EXEC("CREATE TABLE [variable] ([name] TEXT, [desciption] TEXT, [flags] INTEGER, [type] INTEGER, [representation] TEXT, [data] TEXT);");
 		END_CTOR;
 	}
 
@@ -356,73 +357,84 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_op& data) {
 		BEGIN_WRITER("INSERT INTO [op] VALUES (?, ?, ?, ?, ?, ?, ?);");
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_ptr.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_ptr), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.in1_guid));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.in2_guid));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.out_guid));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.op_guid));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.op_name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.op_name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.op_code));
 		END_WRITER;
 	}
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_param& data) {
-		BEGIN_WRITER("INSERT INTO [param] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [param] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.guid));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.derived_from));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.default_size));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_CreateDefault.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_Delete.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_SaveLoad.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_Check.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_Copy.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_String.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_UICreator.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.creator_dll_index));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.creator_plugin_index));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_CreateDefault), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_Delete), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_SaveLoad), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_Check), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_Copy), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_String), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_UICreator), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.dll_name), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.dll_index));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.position_in_dll));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.flags));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.dw_param));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.dw_flags));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.cid));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.saver_manager));
 		END_WRITER;
 	}
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_attr& data) {
-		BEGIN_WRITER("INSERT INTO [attr] VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [attr] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.category_index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.category_name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.category_name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.flags));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.param_index));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.param_guid));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.compatible_classid));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.default_value.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.default_value), -1, SQLITE_TRANSIENT));
 		END_WRITER;
 	}
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_plugin& data) {
-		BEGIN_WRITER("INSERT INTO [plugin] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [plugin] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.category_name), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.category_index));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.dll_name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.dll_index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.dll_name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.plugin_index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.category.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.active));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.position_in_dll));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.guid));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.desc.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.author.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.summary.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.desc), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.author), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.summary), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.version));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_init.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.func_exit.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.type));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_init), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.func_exit), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.reader_fct), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.reader_opt_count));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.reader_flags));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.reader_setting_param_guid));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.reader_file_ext), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.manager_active));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.behavior_guids), -1, SQLITE_TRANSIENT));
 		END_WRITER;
 	}
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_variable& data) {
 		BEGIN_WRITER("INSERT INTO [variable] VALUES (?, ?, ?, ?, ?, ?);");
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.desciption.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.desciption), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.flags));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.type));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.representation.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.data.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.representation), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.data), -1, SQLITE_TRANSIENT));
 		END_WRITER;
 	}
 

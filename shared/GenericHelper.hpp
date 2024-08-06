@@ -10,15 +10,15 @@ namespace VSW {
 		~Reporter();
 
 	protected:
-		virtual void PrePrint(const YYCC::yycc_char8_t* strl);
+		virtual void PrePrint(const YYCC::yycc_char8_t* strl) const;
 
 	public:
-		void Err(const YYCC::yycc_char8_t* strl);
-		void ErrF(const YYCC::yycc_char8_t* fmt, ...);
-		void Warn(const YYCC::yycc_char8_t* strl);
-		void WarnF(const YYCC::yycc_char8_t* fmt, ...);
-		void Info(const YYCC::yycc_char8_t* strl);
-		void InfoF(const YYCC::yycc_char8_t* fmt, ...);
+		void Err(const YYCC::yycc_char8_t* strl) const;
+		void ErrF(const YYCC::yycc_char8_t* fmt, ...) const;
+		void Warn(const YYCC::yycc_char8_t* strl) const;
+		void WarnF(const YYCC::yycc_char8_t* fmt, ...) const;
+		void Info(const YYCC::yycc_char8_t* strl) const;
+		void InfoF(const YYCC::yycc_char8_t* fmt, ...) const;
 	};
 
 	namespace DataTypes {

@@ -6,7 +6,7 @@ namespace VSW {
 	Reporter::Reporter() {}
 	Reporter::~Reporter() {}
 
-	void Reporter::PrePrint(const YYCC::yycc_char8_t* strl) {}
+	void Reporter::PrePrint(const YYCC::yycc_char8_t* strl) const {}
 
 #define GENERIC_REPORTER_WRITE(ty, data) YYCC::ConsoleHelper::Write(YYCC_U8("[" #ty "] ")); \
 YYCC::ConsoleHelper::WriteLine(data);
@@ -16,22 +16,22 @@ va_start(argptr, data); \
 YYCC::ConsoleHelper::WriteLine(YYCC::StringHelper::VPrintf(data, argptr).c_str()); \
 va_end(argptr);
 
-	void Reporter::Err(const YYCC::yycc_char8_t* strl) {
+	void Reporter::Err(const YYCC::yycc_char8_t* strl) const {
 		GENERIC_REPORTER_WRITE(Error, strl);
 	}
-	void Reporter::ErrF(const YYCC::yycc_char8_t* fmt, ...) {
+	void Reporter::ErrF(const YYCC::yycc_char8_t* fmt, ...) const {
 		GENERIC_REPORTER_FORMAT(Error ,fmt);
 	}
-	void Reporter::Warn(const YYCC::yycc_char8_t* strl) {
+	void Reporter::Warn(const YYCC::yycc_char8_t* strl) const {
 		GENERIC_REPORTER_WRITE(Warning, strl);
 	}
-	void Reporter::WarnF(const YYCC::yycc_char8_t* fmt, ...) {
+	void Reporter::WarnF(const YYCC::yycc_char8_t* fmt, ...) const {
 		GENERIC_REPORTER_FORMAT(Warning ,fmt);
 	}
-	void Reporter::Info(const YYCC::yycc_char8_t* strl) {
+	void Reporter::Info(const YYCC::yycc_char8_t* strl) const {
 		GENERIC_REPORTER_WRITE(Info, strl);
 	}
-	void Reporter::InfoF(const YYCC::yycc_char8_t* fmt, ...) {
+	void Reporter::InfoF(const YYCC::yycc_char8_t* fmt, ...) const {
 		GENERIC_REPORTER_FORMAT(Info ,fmt);
 	}
 

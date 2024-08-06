@@ -8,29 +8,29 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_script {
 			CK_ID thisobj;
-			std::string host_name;
+			YYCC::yycc_u8string host_name;
 			int index;
 			CK_ID behavior;
 		};
 
 		struct Table_behavior {
 			CK_ID thisobj;
-			std::string name;
+			YYCC::yycc_u8string name;
 			CK_BEHAVIOR_TYPE type;
-			std::string proto_name;
-			std::string proto_guid;
+			YYCC::yycc_u8string proto_name;
+			YYCC::yycc_u8string proto_guid;
 			CK_BEHAVIOR_FLAGS flags;
 			int priority;
 			CKDWORD version;
 			//pTarget, pIn, pOut, bIn, bOut
-			std::string pin_count;
+			YYCC::yycc_u8string pin_count;
 			CK_ID parent;
 		};
 
 		struct Table_bIO {
 			CK_ID thisobj;
 			int index;
-			std::string name;
+			YYCC::yycc_u8string name;
 			CK_ID parent;
 		};
 		struct Table_bIn : public Table_bIO {};
@@ -38,9 +38,9 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_pTarget {
 			CK_ID thisobj;
-			std::string name;
-			std::string type;
-			std::string type_guid;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string type;
+			YYCC::yycc_u8string type_guid;
 			CK_ID parent;
 			CK_ID direct_source;
 			CK_ID shared_source;
@@ -49,9 +49,9 @@ namespace VSW::Materializer::DataTypes {
 		struct Table_pIn {
 			CK_ID thisobj;
 			int index;
-			std::string name;
-			std::string type;
-			std::string type_guid;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string type;
+			YYCC::yycc_u8string type_guid;
 			CK_ID parent;
 			CK_ID direct_source;
 			CK_ID shared_source;
@@ -60,9 +60,9 @@ namespace VSW::Materializer::DataTypes {
 		struct Table_pOut {
 			CK_ID thisobj;
 			int index;
-			std::string name;
-			std::string type;
-			std::string type_guid;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string type;
+			YYCC::yycc_u8string type_guid;
 			CK_ID parent;
 		};
 
@@ -83,18 +83,18 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_pLocal {
 			CK_ID thisobj;
-			std::string name;
-			std::string type;
-			std::string type_guid;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string type;
+			YYCC::yycc_u8string type_guid;
 			BOOL is_setting;
 			CK_ID parent;
 		};
 
 		struct Table_pAttr {
 			CK_ID thisobj;
-			std::string name;
-			std::string type;
-			std::string type_guid;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string type;
+			YYCC::yycc_u8string type_guid;
 		};
 
 		struct Table_pLink {
@@ -115,8 +115,8 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_pOper {
 			CK_ID thisobj;
-			std::string op;
-			std::string op_guid;
+			YYCC::yycc_u8string op;
+			YYCC::yycc_u8string op_guid;
 			CK_ID parent;
 		};
 
@@ -129,8 +129,8 @@ namespace VSW::Materializer::DataTypes {
 		};
 
 		struct Table_data {
-			std::string field;
-			std::string data;
+			YYCC::yycc_u8string field;
+			YYCC::yycc_u8string data;
 			CK_ID parent;
 		};
 
@@ -168,14 +168,14 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_msg {
 			CKMessageType index;
-			std::string name;
+			YYCC::yycc_u8string name;
 		};
 
 		struct Table_obj {
 			CK_ID id;
-			std::string name;
+			YYCC::yycc_u8string name;
 			CK_CLASSID classid;
-			std::string classtype;
+			YYCC::yycc_u8string classtype;
 		};
 
 		class DataCache {
@@ -193,72 +193,80 @@ namespace VSW::Materializer::DataTypes {
 	namespace Environment {
 
 		struct Table_op {
-			std::string func_ptr;
+			YYCC::yycc_u8string func_ptr;
 			int64_t in1_guid;
 			int64_t in2_guid;
 			int64_t out_guid;
 			int64_t op_guid;
-			std::string op_name;
+			YYCC::yycc_u8string op_name;
 			CKOperationType op_code;
 		};
 
 		struct Table_param {
+			// Parameter infos
 			CKParameterType index;
 			int64_t guid;
 			int64_t derived_from;
-			std::string type_name;
+			YYCC::yycc_u8string name;
 			int default_size;
-			std::string func_CreateDefault;
-			std::string func_Delete;
-			std::string func_SaveLoad;
-			std::string func_Check;
-			std::string func_Copy;
-			std::string func_String;
-			std::string func_UICreator;
-			int creator_dll_index;
-			int creator_plugin_index;
+			YYCC::yycc_u8string func_CreateDefault;
+			YYCC::yycc_u8string func_Delete;
+			YYCC::yycc_u8string func_SaveLoad;
+			YYCC::yycc_u8string func_Check;
+			YYCC::yycc_u8string func_Copy;
+			YYCC::yycc_u8string func_String;
+			YYCC::yycc_u8string func_UICreator;
+			// Dll infos
+			YYCC::yycc_u8string dll_name;
+			int dll_index;
+			int position_in_dll;
+			// Misc
+			CKDWORD flags;
 			CKDWORD dw_param;
-			CKDWORD dw_flags;
 			CKDWORD cid;
 			int64_t saver_manager;
 		};
 
 		struct Table_attr {
 			CKAttributeType index;
-			std::string name;
+			YYCC::yycc_u8string name;
 			CKAttributeCategory category_index;
-			std::string category_name;
+			YYCC::yycc_u8string category_name;
 			CK_ATTRIBUT_FLAGS flags;
 			CKParameterType param_index;
+			int64_t param_guid;
 			CK_CLASSID compatible_classid;
-			std::string default_value;
+			YYCC::yycc_u8string default_value;
 		};
 
 		struct Table_plugin {
 			// Category
-			std::string category;
+			YYCC::yycc_u8string category_name;
+			int category_index;
 			// Dll infos
-			std::string dll_name;
+			YYCC::yycc_u8string dll_name;
+			int dll_index;
 			int position_in_dll;
 			// Plugin infos
+			int index;
 			int64_t guid;
-			std::string desc;
-			std::string author;
-			std::string summary;
+			YYCC::yycc_u8string desc;
+			YYCC::yycc_u8string author;
+			YYCC::yycc_u8string summary;
 			DWORD version;
 			CK_PLUGIN_TYPE type;
-			std::string func_init;
-			std::string func_exit;
+			YYCC::yycc_u8string func_init;
+			YYCC::yycc_u8string func_exit;
 			// Reader specific
-			std::string reader_fct;
+			YYCC::yycc_u8string reader_fct;
 			int reader_opt_count;
 			CK_DATAREADER_FLAGS reader_flags;
 			int64_t reader_setting_param_guid;
-			std::string reader_file_ext;
+			YYCC::yycc_u8string reader_file_ext;
 			// Manager and Render Engine specific
 			CKBOOL manager_active;
 			// Behavior specific
-			std::string behavior_guids;
+			YYCC::yycc_u8string behavior_guids;
 		};
 
 #if defined(VIRTOOLS_21)
@@ -269,12 +277,12 @@ namespace VSW::Materializer::DataTypes {
 		using GenericVarType_t = CKVariableManager::Variable::Type;
 #endif
 		struct Table_variable {
-			std::string name;
-			std::string desciption;
+			YYCC::yycc_u8string name;
+			YYCC::yycc_u8string desciption;
 			XWORD flags;
 			GenericVarType_t type;
-			std::string representation;
-			std::string data;
+			YYCC::yycc_u8string representation;
+			YYCC::yycc_u8string data;
 		};
 
 		class DataCache {

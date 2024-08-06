@@ -6,6 +6,7 @@ namespace VSW::Materializer::Utilities {
 	
 	/// @brief The value representing a invalid CK_ID.
 	constexpr CK_ID INVALID_CK_ID = static_cast<CK_ID>(-1);
+	constexpr char NULLPTR_CKSTRING[] = "<null>";
 
 	class EnhancedReporter : public VSW::Reporter {
 	public:
@@ -13,7 +14,7 @@ namespace VSW::Materializer::Utilities {
 		~EnhancedReporter();
 
 	protected:
-		virtual void PrePrint(const YYCC::yycc_char8_t* strl) override;
+		virtual void PrePrint(const YYCC::yycc_char8_t* strl) const override;
 
 	private:
 		CKContext* m_Ctx;
@@ -25,9 +26,15 @@ namespace VSW::Materializer::Utilities {
 	 * @param[in] absolute_addr The absolute address
 	 * @return Module based relative address like \c xxx.dll+0x00000000.
 	*/
-	std::string RelativeAddress(const void* absolute_addr);
-	//void CopyStrGuid(std::string& dst, const CKGUID& src);
-	void CopyGuid(int64_t& dst, const CKGUID& src);
-	void CopyCKString(std::string& storage, const char* str, const char* fallback = "<unamed>");
+	YYCC::yycc_u8string RelativeAddress(const EnhancedReporter& reporter, const void* absolute_addr);
+	void CopyStrGuid(const EnhancedReporter& reporter, YYCC::yycc_u8string& dst, const CKGUID& src);
+	void CopyGuid(const EnhancedReporter& reporter, int64_t& dst, const CKGUID& src);
+	void CopyCKString(
+		const EnhancedReporter& reporter,
+		YYCC::yycc_u8string& storage, 
+		const char* str,
+		UINT code_page,
+		const YYCC::yycc_char8_t* fallback = YYCC::EncodingHelper::ToUTF8(NULLPTR_CKSTRING)
+	);
 
 }
