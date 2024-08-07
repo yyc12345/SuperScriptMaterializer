@@ -175,7 +175,7 @@ namespace VSW::Materializer::DataTypes {
 			CK_ID id;
 			YYCC::yycc_u8string name;
 			CK_CLASSID classid;
-			YYCC::yycc_u8string classtype;
+			YYCC::yycc_u8string classid_name;
 		};
 
 		class DataCache {

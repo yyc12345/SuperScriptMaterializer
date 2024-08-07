@@ -16,14 +16,11 @@ namespace VSW::Materializer::Utilities {
 
 #pragma endregion
 
-	YYCC::yycc_u8string RelativeAddress(const EnhancedReporter& reporter, const void* absolute_addr) {
-		// prepare return value
-		YYCC::yycc_u8string ret;
-
+	void RelativeAddress(const EnhancedReporter& reporter, YYCC::yycc_u8string& relative_addr_str, const void* absolute_addr) {
 		// If address is nullptr, return directly
 		if (absolute_addr == nullptr) {
-			ret = YYCC_U8("<nullptr>");
-			return ret;
+			relative_addr_str = YYCC_U8("<nullptr>");
+			return;
 		}
 
 		// Get the module handle which given function address belongs to
@@ -35,14 +32,16 @@ namespace VSW::Materializer::Utilities {
 			&hModule);
 		if (hModule == NULL) {
 			reporter.ErrF(YYCC_U8("Fail to get module of given absolute address 0x%" PRI_XPTR_LEFT_PADDING PRIXPTR ". Some relative address may be empty."), absolute_addr);
-			return ret;
+			relative_addr_str.clear();
+			return;
 		}
 
 		// Get full path to module
 		YYCC::yycc_u8string u8_module_path;
 		if (!YYCC::WinFctHelper::GetModuleFileName(hModule, u8_module_path)) {
 			reporter.ErrF(YYCC_U8("Fail to get file name of given module 0x%" PRI_XPTR_LEFT_PADDING PRIXPTR ". Some relative address may be empty."), hModule);
-			return ret;
+			relative_addr_str.clear();
+			return;
 		}
 		// Then get its file name part
 		auto module_path = YYCC::FsPathPatch::FromUTF8Path(u8_module_path.c_str());
@@ -54,11 +53,10 @@ namespace VSW::Materializer::Utilities {
 		uintptr_t relative_addr = reinterpret_cast<uintptr_t>(absolute_addr) - reinterpret_cast<uintptr_t>(hModule);
 
 		// get final result
-		if (!YYCC::StringHelper::Printf(ret, YYCC_U8("%s+0x%" PRI_XPTR_LEFT_PADDING PRIXPTR), u8_module_name.c_str(), relative_addr)) {
+		if (!YYCC::StringHelper::Printf(relative_addr_str, YYCC_U8("%s+0x%" PRI_XPTR_LEFT_PADDING PRIXPTR), u8_module_name.c_str(), relative_addr)) {
 			reporter.Err(YYCC_U8("Fail to format relative address. Some relative address may be empty."));
-			ret.clear();
+			relative_addr_str.clear();
 		}
-		return ret;
 	}
 
 	void CopyStrGuid(const EnhancedReporter& reporter, YYCC::yycc_u8string& dst, const CKGUID& src) {

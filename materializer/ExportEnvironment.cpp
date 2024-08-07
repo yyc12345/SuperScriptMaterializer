@@ -27,8 +27,8 @@ namespace VSW::Materializer::ExportEnvironment {
 			// fill the shared data part.
 			expctx.cache.op.op_code = i;
 			guid = param_mgr->OperationCodeToGuid(i);
-			Utilities::CopyGuid(expctx.reporter, expctx.cache.op.op_guid, guid);
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.op.op_name, param_mgr->OperationCodeToName(i), expctx.cp);
+			CP_GUID(expctx.cache.op.op_guid, guid);
+			CP_CKSTR(expctx.cache.op.op_name, param_mgr->OperationCodeToName(i));
 
 			// get all sub-operation of this parameter operation.
 			// each sub-operation can have different in out parameter type
@@ -37,10 +37,10 @@ namespace VSW::Materializer::ExportEnvironment {
 			op_list.resize(static_cast<size_t>(op_list_count));
 			param_mgr->GetAvailableOperationsDesc(guid, nullptr, nullptr, nullptr, op_list.data());
 			for (const auto& op : op_list) {
-				Utilities::CopyGuid(expctx.reporter, expctx.cache.op.in1_guid, op.P1Guid);
-				Utilities::CopyGuid(expctx.reporter, expctx.cache.op.in2_guid, op.P2Guid);
-				Utilities::CopyGuid(expctx.reporter, expctx.cache.op.out_guid, op.ResGuid);
-				expctx.cache.op.func_ptr = Utilities::RelativeAddress(expctx.reporter, op.Fct);
+				CP_GUID(expctx.cache.op.in1_guid, op.P1Guid);
+				CP_GUID(expctx.cache.op.in2_guid, op.P2Guid);
+				CP_GUID(expctx.cache.op.out_guid, op.ResGuid);
+				CP_ADDR(expctx.cache.op.func_ptr, op.Fct);
 
 				expctx.db.Write(expctx.cache.op);
 			}
@@ -58,17 +58,17 @@ namespace VSW::Materializer::ExportEnvironment {
 
 			// Parameter basic infos
 			expctx.cache.param.index = desc->Index;
-			Utilities::CopyGuid(expctx.reporter, expctx.cache.param.guid, desc->Guid);
-			Utilities::CopyGuid(expctx.reporter, expctx.cache.param.derived_from, desc->DerivedFrom);
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.param.name, desc->TypeName.CStr(), expctx.cp);
+			CP_GUID(expctx.cache.param.guid, desc->Guid);
+			CP_GUID(expctx.cache.param.derived_from, desc->DerivedFrom);
+			CP_CKSTR(expctx.cache.param.name, desc->TypeName.CStr());
 			expctx.cache.param.default_size = desc->DefaultSize;
-			expctx.cache.param.func_CreateDefault = Utilities::RelativeAddress(expctx.reporter, desc->CreateDefaultFunction);
-			expctx.cache.param.func_Delete = Utilities::RelativeAddress(expctx.reporter, desc->DeleteFunction);
-			expctx.cache.param.func_SaveLoad = Utilities::RelativeAddress(expctx.reporter, desc->SaveLoadFunction);
-			expctx.cache.param.func_Check = Utilities::RelativeAddress(expctx.reporter, desc->CheckFunction);
-			expctx.cache.param.func_Copy = Utilities::RelativeAddress(expctx.reporter, desc->CopyFunction);
-			expctx.cache.param.func_String = Utilities::RelativeAddress(expctx.reporter, desc->StringFunction);
-			expctx.cache.param.func_UICreator = Utilities::RelativeAddress(expctx.reporter, desc->UICreatorFunction);
+			CP_ADDR(expctx.cache.param.func_CreateDefault, desc->CreateDefaultFunction);
+			CP_ADDR(expctx.cache.param.func_Delete, desc->DeleteFunction);
+			CP_ADDR(expctx.cache.param.func_SaveLoad, desc->SaveLoadFunction);
+			CP_ADDR(expctx.cache.param.func_Check, desc->CheckFunction);
+			CP_ADDR(expctx.cache.param.func_Copy, desc->CopyFunction);
+			CP_ADDR(expctx.cache.param.func_String, desc->StringFunction);
+			CP_ADDR(expctx.cache.param.func_UICreator, desc->UICreatorFunction);
 
 			// Creator dll infos
 			// This is different with plugin.
@@ -76,7 +76,7 @@ namespace VSW::Materializer::ExportEnvironment {
 			CKPluginEntry* plugin_entry = desc->CreatorDll;
 			CKPluginDll* plugin_dll = plugin_mgr->GetPluginDllInfo(plugin_entry->m_PluginDllIndex);
 			if (plugin_entry != nullptr) {
-				Utilities::CopyCKString(expctx.reporter, expctx.cache.param.dll_name, plugin_dll->m_DllFileName.CStr(), expctx.cp);
+				CP_CKSTR(expctx.cache.param.dll_name, plugin_dll->m_DllFileName.CStr());
 				expctx.cache.param.dll_index = plugin_entry->m_PluginDllIndex;
 				expctx.cache.param.position_in_dll = plugin_entry->m_PositionInDll;
 			} else {
@@ -89,7 +89,7 @@ namespace VSW::Materializer::ExportEnvironment {
 			expctx.cache.param.flags = desc->dwFlags;
 			expctx.cache.param.dw_param = desc->dwParam;
 			expctx.cache.param.cid = desc->Cid;
-			Utilities::CopyGuid(expctx.reporter, expctx.cache.param.saver_manager, desc->Saver_Manager);
+			CP_GUID(expctx.cache.param.saver_manager, desc->Saver_Manager);
 
 			expctx.db.Write(expctx.cache.param);
 		}
@@ -100,14 +100,14 @@ namespace VSW::Materializer::ExportEnvironment {
 		int count = attr_mgr->GetAttributeCount();
 		for (int i = 0; i < count; i++) {
 			expctx.cache.attr.index = i;
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.attr.name, attr_mgr->GetAttributeNameByType(i), expctx.cp);
+			CP_CKSTR(expctx.cache.attr.name, attr_mgr->GetAttributeNameByType(i));
 			expctx.cache.attr.category_index = attr_mgr->GetAttributeCategoryIndex(i);
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.attr.category_name, attr_mgr->GetAttributeCategory(i), expctx.cp);
+			CP_CKSTR(expctx.cache.attr.category_name, attr_mgr->GetAttributeCategory(i));
 			expctx.cache.attr.flags = attr_mgr->GetAttributeFlags(i);
 			expctx.cache.attr.param_index = attr_mgr->GetAttributeParameterType(i);
-			Utilities::CopyGuid(expctx.reporter, expctx.cache.attr.param_guid, attr_mgr->GetAttributeParameterGUID(i));
+			CP_GUID(expctx.cache.attr.param_guid, attr_mgr->GetAttributeParameterGUID(i));
 			expctx.cache.attr.compatible_classid = attr_mgr->GetAttributeCompatibleClassId(i);
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.attr.default_value, attr_mgr->GetAttributeDefaultValue(i), expctx.cp);
+			CP_CKSTR(expctx.cache.attr.default_value, attr_mgr->GetAttributeDefaultValue(i));
 
 			expctx.db.Write(expctx.cache.attr);
 		}
@@ -121,7 +121,7 @@ namespace VSW::Materializer::ExportEnvironment {
 		int category_count = plugin_mgr->GetCategoryCount();
 		for (int i = 0; i < category_count; ++i) {
 			// category name and its index
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.category_name, plugin_mgr->GetCategoryName(i), expctx.cp);
+			CP_CKSTR(expctx.cache.plugin.category_name, plugin_mgr->GetCategoryName(i));
 			expctx.cache.plugin.category_index = i;
 
 			// iterate plugin within this category
@@ -132,21 +132,21 @@ namespace VSW::Materializer::ExportEnvironment {
 				CKPluginDll* plugin_dll = plugin_mgr->GetPluginDllInfo(plugin_entry->m_PluginDllIndex);
 
 				// dll infomation (name + index + position in dll)
-				Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.dll_name, plugin_dll->m_DllFileName.CStr(), expctx.cp);
+				CP_CKSTR(expctx.cache.plugin.dll_name, plugin_dll->m_DllFileName.CStr());
 				expctx.cache.plugin.dll_index = plugin_entry->m_PluginDllIndex;
 				expctx.cache.plugin.position_in_dll = plugin_entry->m_PositionInDll;
 
 				// plugin info
 				expctx.cache.plugin.index = j;
-				Utilities::CopyGuid(expctx.reporter, expctx.cache.plugin.guid, plugin_info->m_GUID);
-				Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.desc, plugin_info->m_Description.CStr(), expctx.cp);
-				Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.author, plugin_info->m_Author.CStr(), expctx.cp);
-				Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.summary, plugin_info->m_Summary.CStr(), expctx.cp);
+				CP_GUID(expctx.cache.plugin.guid, plugin_info->m_GUID);
+				CP_CKSTR(expctx.cache.plugin.desc, plugin_info->m_Description.CStr());
+				CP_CKSTR(expctx.cache.plugin.author, plugin_info->m_Author.CStr());
+				CP_CKSTR(expctx.cache.plugin.summary, plugin_info->m_Summary.CStr());
 				expctx.cache.plugin.version = plugin_info->m_Version;
 				plugin_type = plugin_info->m_Type;
 				expctx.cache.plugin.type = plugin_type;
-				expctx.cache.plugin.func_init = Utilities::RelativeAddress(expctx.reporter, plugin_info->m_InitInstanceFct);
-				expctx.cache.plugin.func_exit = Utilities::RelativeAddress(expctx.reporter, plugin_info->m_ExitInstanceFct);
+				CP_ADDR(expctx.cache.plugin.func_init, plugin_info->m_InitInstanceFct);
+				CP_ADDR(expctx.cache.plugin.func_exit, plugin_info->m_ExitInstanceFct);
 
 				// extra fields according to plugin type
 				// first reset these specific fields
@@ -165,11 +165,11 @@ namespace VSW::Materializer::ExportEnvironment {
 					case CKPLUGIN_MOVIE_READER:
 					{
 						// Reader specific
-						expctx.cache.plugin.reader_fct = Utilities::RelativeAddress(expctx.reporter, plugin_entry->m_ReadersInfo->m_GetReaderFct);
+						CP_ADDR(expctx.cache.plugin.reader_fct, plugin_entry->m_ReadersInfo->m_GetReaderFct);
 						expctx.cache.plugin.reader_opt_count = plugin_entry->m_ReadersInfo->m_OptionCount;
 						expctx.cache.plugin.reader_flags = plugin_entry->m_ReadersInfo->m_ReaderFlags;
-						Utilities::CopyGuid(expctx.reporter, expctx.cache.plugin.reader_setting_param_guid, plugin_entry->m_ReadersInfo->m_SettingsParameterGuid);
-						Utilities::CopyCKString(expctx.reporter, expctx.cache.plugin.reader_file_ext, static_cast<const char*>(plugin_info->m_Extension), expctx.cp, YYCC_U8(""));
+						CP_GUID(expctx.cache.plugin.reader_setting_param_guid, plugin_entry->m_ReadersInfo->m_SettingsParameterGuid);
+						CP_CKSTR(expctx.cache.plugin.reader_file_ext, static_cast<const char*>(plugin_info->m_Extension), YYCC_U8(""));
 						break;
 					}
 					case CKPLUGIN_BEHAVIOR_DLL:
@@ -178,7 +178,7 @@ namespace VSW::Materializer::ExportEnvironment {
 						std::vector<YYCC::yycc_u8string> guids;
 						YYCC::yycc_u8string guid_cache;
 						for (int i = 0; i < plugin_entry->m_BehaviorsInfo->m_BehaviorsGUID.Size(); ++i) {
-							Utilities::CopyStrGuid(expctx.reporter, guid_cache, plugin_entry->m_BehaviorsInfo->m_BehaviorsGUID[i]);
+							CP_STR_GUID(guid_cache, plugin_entry->m_BehaviorsInfo->m_BehaviorsGUID[i]);
 							guids.emplace_back(guid_cache);
 						}
 						expctx.cache.plugin.behavior_guids = YYCC::StringHelper::Join(guids, YYCC_U8(", "));
@@ -215,9 +215,9 @@ namespace VSW::Materializer::ExportEnvironment {
 			varobj = it.GetVariable();
 			// variable name
 			var_name = it.GetName();
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.variable.name, var_name, expctx.cp);
+			CP_CKSTR(expctx.cache.variable.name, var_name);
 			// variable description
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.variable.desciption, varobj->GetDescription(), expctx.cp);
+			CP_CKSTR(expctx.cache.variable.desciption, varobj->GetDescription());
 			// variable flags
 			expctx.cache.variable.flags = varobj->GetFlags();
 			// variable type
@@ -228,7 +228,7 @@ namespace VSW::Materializer::ExportEnvironment {
 			// Because it is not a name.
 			// So we should record it as empty string if it is nullptr, instead of default <unamed>
 			var_representation = varobj->GetRepresentation();
-			Utilities::CopyCKString(expctx.reporter, expctx.cache.variable.representation, var_representation, expctx.cp, YYCC_U8(""));
+			CP_CKSTR(expctx.cache.variable.representation, var_representation, YYCC_U8(""));
 			// We output variable stored value in different way
 			// according to its type.
 			switch (var_type) {
@@ -242,7 +242,7 @@ namespace VSW::Materializer::ExportEnvironment {
 					break;
 				case CKVariableManager::Variable::Type::STRING:
 					var_mgr->GetValue(var_name, xstring_cache);
-					Utilities::CopyCKString(expctx.reporter, expctx.cache.variable.data, xstring_cache.CStr(), expctx.cp);
+					CP_CKSTR(expctx.cache.variable.data, xstring_cache.CStr());
 					break;
 				default:
 					throw std::runtime_error("invalid variable type!");
@@ -256,6 +256,10 @@ namespace VSW::Materializer::ExportEnvironment {
 	void Export(CKContext* ctx, const YYCC::yycc_u8string_view& db_path, UINT code_page) {
 		// create database and data cache in context
 		ExportContext expctx(ctx, db_path, code_page);
+		if (!expctx.db.IsValid()) {
+			expctx.reporter.Err(YYCC_U8("Fail to open database. Export process aborted."));
+			return;
+		}
 
 		// export environment one by one
 		IterateParameterOperation(expctx, ctx->GetParameterManager());

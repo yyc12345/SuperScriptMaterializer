@@ -48,7 +48,7 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		// connect to database (the argument of sqlite3 open function is UTF8)
 		int errcode;
 		if (file.empty()) goto failed;
-		errcode = sqlite3_open(YYCC::EncodingHelper::ToOrdinary(file.data()), &m_Db);
+		errcode = sqlite3_open_v2(YYCC::EncodingHelper::ToOrdinary(file.data()), &m_Db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
 		if (errcode != SQLITE_OK) goto failed;
 
 		// disable synchronous to accelerate speed.
@@ -312,26 +312,32 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		// initialize table
 		BEGIN_CTOR;
 		CTOR_SQL_EXEC("CREATE TABLE [msg] ([index] INTEGER, [name] TEXT);");
-		CTOR_SQL_EXEC("CREATE TABLE [obj] ([id] INTEGER, [name] TEXT, [classid] INTEGER, [classtype] TEXT);");
+		CTOR_SQL_EXEC("CREATE TABLE [obj] ([id] INTEGER, [name] TEXT, [classid] INTEGER, [classid_name] TEXT);");
 		END_CTOR;
 	}
 
 	DocumentDatabase::~DocumentDatabase() {
-		// do nothing
+		// create index for quick select in following process
+		BEGIN_DTOR;
+		DTOR_SQL_EXEC("begin;");
+		DTOR_SQL_EXEC("CREATE INDEX [quick_where1] ON [msg] ([index])");
+		DTOR_SQL_EXEC("CREATE INDEX [quick_where2] ON [obj] ([id])");
+		DTOR_SQL_EXEC("commit;");
+		END_DTOR;
 	}
 
 	void DocumentDatabase::Write(const DataTypes::Document::Table_msg& data) {
 		BEGIN_WRITER("INSERT INTO [msg] VALUES (?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name), -1, SQLITE_TRANSIENT));
 		END_WRITER;
 	}
 	void DocumentDatabase::Write(const DataTypes::Document::Table_obj& data) {
 		BEGIN_WRITER("INSERT INTO [obj] VALUES (?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.id));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name), -1, SQLITE_TRANSIENT));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.classid));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.classtype.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.classid_name), -1, SQLITE_TRANSIENT));
 		END_WRITER;
 	}
 
