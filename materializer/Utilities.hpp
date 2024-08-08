@@ -6,6 +6,7 @@ namespace VSW::Materializer::Utilities {
 	
 	/// @brief The value representing a invalid CK_ID.
 	constexpr CK_ID INVALID_CK_ID = static_cast<CK_ID>(-1);
+	constexpr int INVALID_INDEX = static_cast<int>(-1);
 	constexpr char NULLPTR_CKSTRING[] = "<null>";
 
 	class EnhancedReporter : public VSW::Reporter {

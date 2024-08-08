@@ -24,19 +24,18 @@ namespace VSW {
 	namespace DataTypes {
 
 		enum class BehaviorLinkIOType : int {
-			Input,
-			Output
+			INPUT, OUTPUT
 		};
 
 		enum class ParameterLinkIOType : int {
-			ParameterIn,
-			ParameterOut,
+			PIN,
+			POUT,
 			/// @brief When using this, ignore [index] and [input_is_bb], set [input_index] to -1
-			ParameterLocal,
+			PLOCAL,
 			/// @brief When using this, ignore [index] and [input_is_bb], set [input_index] to -1
-			ParameterTarget,
+			PTARGET,
 			/// @brief When using this, ignore [index], and [input_is_bb] will become [input_is_dataarray]
-			pParameterAttribute
+			PATTR
 		};
 
 	}

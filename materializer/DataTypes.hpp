@@ -12,9 +12,9 @@ namespace VSW::Materializer::DataTypes {
 	namespace Script {
 
 		struct Table_script {
-			CK_ID thisobj;
-			YYCC::yycc_u8string host_name;
-			int index;
+			CK_ID beobj;
+			YYCC::yycc_u8string beobj_name;
+			int behavior_index;
 			CK_ID behavior;
 		};
 
@@ -23,12 +23,15 @@ namespace VSW::Materializer::DataTypes {
 			YYCC::yycc_u8string name;
 			CK_BEHAVIOR_TYPE type;
 			YYCC::yycc_u8string proto_name;
-			YYCC::yycc_u8string proto_guid;
+			int64_t proto_guid;
 			CK_BEHAVIOR_FLAGS flags;
 			int priority;
 			CKDWORD version;
-			//pTarget, pIn, pOut, bIn, bOut
-			YYCC::yycc_u8string pin_count;
+			int pin_count_ptarget;
+			int pin_count_pin;
+			int pin_count_pout;
+			int pin_count_bin;
+			int pin_count_bout;
 			CK_ID parent;
 		};
 
@@ -44,8 +47,7 @@ namespace VSW::Materializer::DataTypes {
 		struct Table_pTarget {
 			CK_ID thisobj;
 			YYCC::yycc_u8string name;
-			YYCC::yycc_u8string type;
-			YYCC::yycc_u8string type_guid;
+			int64_t type;
 			CK_ID parent;
 			CK_ID direct_source;
 			CK_ID shared_source;
@@ -55,8 +57,7 @@ namespace VSW::Materializer::DataTypes {
 			CK_ID thisobj;
 			int index;
 			YYCC::yycc_u8string name;
-			YYCC::yycc_u8string type;
-			YYCC::yycc_u8string type_guid;
+			int64_t type;
 			CK_ID parent;
 			CK_ID direct_source;
 			CK_ID shared_source;
@@ -66,8 +67,7 @@ namespace VSW::Materializer::DataTypes {
 			CK_ID thisobj;
 			int index;
 			YYCC::yycc_u8string name;
-			YYCC::yycc_u8string type;
-			YYCC::yycc_u8string type_guid;
+			int64_t type;
 			CK_ID parent;
 		};
 
@@ -89,17 +89,16 @@ namespace VSW::Materializer::DataTypes {
 		struct Table_pLocal {
 			CK_ID thisobj;
 			YYCC::yycc_u8string name;
-			YYCC::yycc_u8string type;
-			YYCC::yycc_u8string type_guid;
-			BOOL is_setting;
+			int64_t type;
+			bool is_setting;
 			CK_ID parent;
 		};
 
 		struct Table_pAttr {
 			CK_ID thisobj;
 			YYCC::yycc_u8string name;
-			YYCC::yycc_u8string type;
-			YYCC::yycc_u8string type_guid;
+			int64_t type;
+			CK_ID owner;
 		};
 
 		struct Table_pLink {
@@ -110,25 +109,24 @@ namespace VSW::Materializer::DataTypes {
 			//additional field
 			CK_ID input_obj;
 			VSW::DataTypes::ParameterLinkIOType input_type;
-			BOOL input_is_bb;
+			bool input_is_bb;
 			int input_index;
 			CK_ID output_obj;
 			VSW::DataTypes::ParameterLinkIOType output_type;
-			BOOL output_is_bb;
+			bool output_is_bb;
 			int output_index;
 		};
 
 		struct Table_pOper {
 			CK_ID thisobj;
-			YYCC::yycc_u8string op;
-			YYCC::yycc_u8string op_guid;
+			int64_t op;
 			CK_ID parent;
 		};
 
 		struct Table_eLink {
 			CK_ID export_obj;
 			CK_ID internal_obj;
-			BOOL is_in;
+			bool is_in;
 			int index;
 			CK_ID parent;
 		};
