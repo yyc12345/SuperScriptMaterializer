@@ -2,7 +2,7 @@
 #include "Database.hpp"
 #include "DataTypes.hpp"
 #include "Utilities.hpp"
-#include <vector>
+#include <set>
 
 namespace VSW::Materializer::ExportDocument {
 

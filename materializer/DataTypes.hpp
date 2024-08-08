@@ -4,6 +4,11 @@
 
 namespace VSW::Materializer::DataTypes {
 
+	struct BlobDescriptor {
+		const void* ptr;
+		int length;
+	};
+
 	namespace Script {
 
 		struct Table_script {
@@ -130,7 +135,7 @@ namespace VSW::Materializer::DataTypes {
 
 		struct Table_data {
 			YYCC::yycc_u8string field;
-			YYCC::yycc_u8string data;
+			BlobDescriptor data;
 			CK_ID parent;
 		};
 

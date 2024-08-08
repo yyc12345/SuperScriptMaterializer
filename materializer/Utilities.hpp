@@ -20,6 +20,21 @@ namespace VSW::Materializer::Utilities {
 		CKContext* m_Ctx;
 	};
 
+	class Curve2DBuilder {
+	public:
+		Curve2DBuilder(CK2dCurve* curve_2d);
+		~Curve2DBuilder();
+
+	public:
+		const void* GetDataPtr() const;
+		size_t GetDataLength() const;
+
+	private:
+		void BuildCurve(CK2dCurve* c);
+		void BuildCurvePoint(CK2dCurvePoint* cp);
+		std::basic_string<uint8_t> m_Cache;
+	};
+
 	/**
 	 * @brief Get relative address from given absolute address
 	 * @details This function is used when exporting function pointer into database.
@@ -30,7 +45,7 @@ namespace VSW::Materializer::Utilities {
 	*/
 	void RelativeAddress(const EnhancedReporter& reporter, YYCC::yycc_u8string& relative_addr_str, const void* absolute_addr);
 	void CopyStrGuid(const EnhancedReporter& reporter, YYCC::yycc_u8string& dst, const CKGUID& src);
-	void CopyGuid(const EnhancedReporter& reporter, int64_t& dst, const CKGUID& src);
+	void CopyGuid(int64_t& dst, const CKGUID& src);
 	void CopyCKString(
 		const EnhancedReporter& reporter,
 		YYCC::yycc_u8string& storage, 
@@ -43,7 +58,7 @@ namespace VSW::Materializer::Utilities {
 
 #define CP_ADDR(dst, src) ::VSW::Materializer::Utilities::RelativeAddress(expctx.reporter, (dst), (src))
 #define CP_STR_GUID(dst, src) ::VSW::Materializer::Utilities::CopyStrGuid(expctx.reporter, (dst), (src))
-#define CP_GUID(dst, src) ::VSW::Materializer::Utilities::CopyGuid(expctx.reporter, (dst), (src))
+#define CP_GUID(dst, src) ::VSW::Materializer::Utilities::CopyGuid((dst), (src))
 #define CP_CKSTR(dst, src, ...) ::VSW::Materializer::Utilities::CopyCKString(expctx.reporter, (dst), (src), expctx.cp, ##__VA_ARGS__)
 
 #pragma endregion
