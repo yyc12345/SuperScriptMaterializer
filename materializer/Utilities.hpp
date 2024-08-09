@@ -14,11 +14,16 @@ namespace VSW::Materializer::Utilities {
 		EnhancedReporter(CKContext* ctx);
 		~EnhancedReporter();
 
+	public:
+		void EnableBeep();
+		void DisableBeep();
+
 	protected:
 		virtual void PrePrint(const YYCC::yycc_char8_t* strl) const override;
 
 	private:
 		CKContext* m_Ctx;
+		bool m_OrderBeep;
 	};
 
 	class Curve2DBuilder {

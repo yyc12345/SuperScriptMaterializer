@@ -69,6 +69,11 @@ namespace VSW::Materializer::ExportDocument {
 		// export document
 		IterateMessage(expctx, ctx->GetMessageManager());
 		IterateObject(expctx, ctx);
+
+		// report success
+		expctx.reporter.EnableBeep();
+		expctx.reporter.Info(YYCC_U8("Exporting document database done."));
+		expctx.reporter.DisableBeep();
 	}
 
 }

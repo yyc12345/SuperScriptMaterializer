@@ -39,6 +39,7 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 #define REVEAL_ENUM(enum_val) static_cast<std::underlying_type_t<decltype(enum_val)>>(enum_val)
 #define REVEAL_U8STR(u8_str) YYCC::EncodingHelper::ToOrdinary(u8_str.c_str()), -1, SQLITE_TRANSIENT
 #define REVEAL_BLOB(blob_val) (blob_val).ptr, (blob_val).length, SQLITE_TRANSIENT
+#define REVEAL_BOOL(bool_val) ((bool_val) ? 1 : 0)
 
 #pragma endregion
 
@@ -123,19 +124,19 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		AbstractDatabase(file) {
 		// initialize table
 		BEGIN_CTOR;
-		CTOR_SQL_EXEC("CREATE TABLE [script] ([thisobj] INTEGER, [name] TEXT, [index] INTEGER, [behavior] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [behavior] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] TEXT, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count] TEXT, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pTarget] ([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER, [direct_source] INTEGER, [shard_source] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER, [direct_source] INTEGER, [shared_source] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pOut] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [parent] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [script] ([beobj] INTEGER, [beobj_name] TEXT, [behavior_index] INTEGER, [behavior] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [behavior] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] INTEGER, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count_ptarget] INTEGER, [pin_count_pin] INTEGER, [pin_count_pout] INTEGER, [pin_count_bin] INTEGER, [pin_count_bout] INTEGER, [parent] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pTarget] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [parent] INTEGER, [direct_source] INTEGER, [shared_source] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] INTEGER, [parent] INTEGER, [direct_source] INTEGER, [shared_source] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pOut] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [type] INTEGER, [parent] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [bIn] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [parent] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [bOut] ([thisobj] INTEGER, [index] INTEGER, [name] TEXT, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [bLink] ([input] INTEGER, [output] INTEGER, [delay] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_index] INETEGR, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pLocal] ([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT, [is_setting] INTEGER, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pLink] ([input] INTEGER, [output] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_is_bb] INTEGER, [input_index] INETEGR, [output_obj] INTEGER, [output_type] INTEGER, [output_is_bb] INTEGER, [output_index] INETEGR, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pOper] ([thisobj] INTEGER, [op] TEXT, [op_guid] TEXT, [parent] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [bLink] ([input] INTEGER, [output] INTEGER, [delay] INTEGER, [parent] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_index] INTEGER, [output_obj] INTEGER, [output_type] INTEGER, [output_index] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pLocal] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [is_setting] INTEGER, [parent] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pLink] ([parent] INTEGER, [input] INTEGER, [input_obj] INTEGER, [input_type] INTEGER, [input_is_bb] INTEGER, [input_index] INTEGER, [output] INTEGER, [output_obj] INTEGER, [output_type] INTEGER, [output_is_bb] INTEGER, [output_index] INTEGER);");
+		CTOR_SQL_EXEC("CREATE TABLE [pOper] ([thisobj] INTEGER, [op] INTEGER, [parent] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [eLink] ([export_obj] INTEGER, [internal_obj] INTEGER, [is_in] INTEGER, [index] INTEGER, [parent] INTEGER);");
-		CTOR_SQL_EXEC("CREATE TABLE [pAttr] ([thisobj] INTEGER, [name] TEXT, [type] TEXT, [type_guid] TEXT);");
+		CTOR_SQL_EXEC("CREATE TABLE [pAttr] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [owner] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [data] ([field] TEXT, [data] BLOB, [parent] INTEGER);");
 		END_CTOR;
 	}
@@ -163,134 +164,133 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 
 	void ScriptDatabase::Write(const DataTypes::Script::Table_script& data) {
 		BEGIN_WRITER("INSERT INTO [script] VALUES (?, ?, ?, ?);");
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.host_name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.beobj));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.beobj_name)));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.behavior_index));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.behavior));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_behavior& data) {
-		BEGIN_WRITER("INSERT INTO [script_behavior] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [behavior] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.type));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.proto_name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.proto_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.proto_name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.proto_guid));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.flags));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.priority));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.version));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.pin_count.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.pin_count_ptarget));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.pin_count_pin));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.pin_count_pout));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.pin_count_bin));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.pin_count_bout));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_bIn& data) {
-		BEGIN_WRITER("INSERT INTO [script_bIn] VALUES (?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [bIn] VALUES (?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_bOut& data) {
-		BEGIN_WRITER("INSERT INTO [script_bOut] VALUES (?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [bOut] VALUES (?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pIn& data) {
-		BEGIN_WRITER("INSERT INTO [script_pIn] VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pIn] VALUES (?, ?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.type));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.direct_source));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.shared_source));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pOut& data) {
-		BEGIN_WRITER("INSERT INTO [script_pOut] VALUES (?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pOut] VALUES (?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.type));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_bLink& data) {
-		BEGIN_WRITER("INSERT INTO [script_bLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [bLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.delay));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input_obj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.input_type)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input_index));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output_obj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.output_type)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output_index));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pLocal& data) {
-		BEGIN_WRITER("INSERT INTO [script_pLocal] VALUES (?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pLocal] VALUES (?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_guid.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.is_setting));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.type));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.is_setting)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pAttr& data) {
-		BEGIN_WRITER("INSERT INTO [script_pAttr] VALUES (?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pAttr] VALUES (?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.type));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.owner));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pLink& data) {
-		BEGIN_WRITER("INSERT INTO [script_pLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pLink] VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input_obj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.input_type)));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input_is_bb));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.input_is_bb)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.input_index));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output_obj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.output_type)));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output_is_bb));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.output_is_bb)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.output_index));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pOper& data) {
-		BEGIN_WRITER("INSERT INTO [script_pOper] VALUES (?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pOper] VALUES (?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.op.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.op_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.op));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_eLink& data) {
-		BEGIN_WRITER("INSERT INTO [script_eLink] VALUES (?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [eLink] VALUES (?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.export_obj));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.internal_obj));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.is_in));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.is_in)));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.index));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_pTarget& data) {
-		BEGIN_WRITER("INSERT INTO [script_pTarget] VALUES (?, ?, ?, ?, ?, ?, ?);");
+		BEGIN_WRITER("INSERT INTO [pTarget] VALUES (?, ?, ?, ?, ?, ?);");
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.thisobj));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.name.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type.c_str(), -1, SQLITE_TRANSIENT));
-		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, data.type_guid.c_str(), -1, SQLITE_TRANSIENT));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.name)));
+		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.type));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.direct_source));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.shared_source));
@@ -298,9 +298,9 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 	}
 	void ScriptDatabase::Write(const DataTypes::Script::Table_data& data) {
 		BEGIN_WRITER("INSERT INTO [data] VALUES (?, ?, ?);");
-WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.field)));
-WRITER_BIND(sqlite3_bind_blob(WRITER_STMT, WRITER_INDEX, REVEAL_BLOB(data.data)));
-WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
+		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.field)));
+		WRITER_BIND(sqlite3_bind_blob(WRITER_STMT, WRITER_INDEX, REVEAL_BLOB(data.data)));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		END_WRITER;
 	}
 
@@ -430,7 +430,7 @@ WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.parent));
 		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.reader_flags));
 		WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.reader_setting_param_guid));
 		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.reader_file_ext)));
-		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.manager_active));
+		WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.manager_active)));
 		WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.behavior_guids)));
 		END_WRITER;
 	}

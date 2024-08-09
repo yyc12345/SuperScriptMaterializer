@@ -14,6 +14,9 @@ class FieldDecl():
         self.m_DeclType = decl_type
         self.m_DeclName = decl_name
 
+    def is_bool(self):
+        return self.m_DeclType == 'bool'
+
     def is_string(self):
         return self.m_DeclType == 'YYCC::yycc_u8string'
     
@@ -102,6 +105,8 @@ def output_result(decls: tuple[StructDecl, ...]) -> None:
             return f'WRITER_BIND(sqlite3_bind_blob(WRITER_STMT, WRITER_INDEX, REVEAL_BLOB(data.{decl_pair.m_DeclName})));'
         elif decl_pair.is_enum():
             return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.{decl_pair.m_DeclName})));'
+        elif decl_pair.is_bool():
+            return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_BOOL(data.{decl_pair.m_DeclName})));'
         else:
             return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.{decl_pair.m_DeclName}));'
 

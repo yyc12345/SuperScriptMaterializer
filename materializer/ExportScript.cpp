@@ -23,7 +23,9 @@ namespace VSW::Materializer::ExportScript {
 
 		/// @brief Variable for removing duplicated exported attributes.
 		std::set<CK_ID> attr_set;
+		/// @brief Virtools context.
 		CKContext* ctx;
+		/// @brief Virtools Parameter Manager
 		CKParameterManager* param_mgr;
 	};
 
@@ -34,6 +36,8 @@ namespace VSW::Materializer::ExportScript {
 		using db_size_t = decltype(expctx.cache.data.data.length);
 		if (data_length > static_cast<size_t>(std::numeric_limits<db_size_t>::max()))
 			throw std::runtime_error("Too long data length when exporting to data dictionary.");
+		// if length is zero, reset ptr to nullptr
+		if (data_length == 0u) data = nullptr;
 		// write data
 		expctx.cache.data.field = field;
 		expctx.cache.data.data.ptr = data;
@@ -634,6 +638,11 @@ namespace VSW::Materializer::ExportScript {
 
 		// export script
 		IterateScript(expctx);
+
+		// report success
+		expctx.reporter.EnableBeep();
+		expctx.reporter.Info(YYCC_U8("Exporting script database done."));
+		expctx.reporter.DisableBeep();
 	}
 
 }

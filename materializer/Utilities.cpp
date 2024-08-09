@@ -5,13 +5,17 @@ namespace VSW::Materializer::Utilities {
 #pragma region Enhanced Reporter
 
 	EnhancedReporter::EnhancedReporter(CKContext* ctx) :
-		m_Ctx(ctx) {}
+		m_Ctx(ctx), m_OrderBeep(false) {}
 
 	EnhancedReporter::~EnhancedReporter() {}
 
+	void EnhancedReporter::EnableBeep() { m_OrderBeep = true; }
+
+	void EnhancedReporter::DisableBeep() { m_OrderBeep = false; }
+
 	void EnhancedReporter::PrePrint(const YYCC::yycc_char8_t* strl) const {
 		if (m_Ctx != nullptr)
-			m_Ctx->OutputToConsole(const_cast<CKSTRING>(YYCC::EncodingHelper::UTF8ToChar(strl, CP_ACP).c_str()), FALSE);
+			m_Ctx->OutputToConsole(const_cast<CKSTRING>(YYCC::EncodingHelper::UTF8ToChar(strl, CP_ACP).c_str()), m_OrderBeep);
 	}
 
 #pragma endregion
@@ -33,8 +37,8 @@ namespace VSW::Materializer::Utilities {
 		// get curve control point count
 		int cp_count = c->GetControlPointCount();
 		// reserve enough space
-		// count * (x + y + is_linear + is_tcb + tcb_tuple)
-		m_Cache.reserve(static_cast<size_t>(cp_count) * (sizeof(float) * 2u + sizeof(float) * 3u + sizeof(uint32_t)  + sizeof(uint32_t)));
+		// count * (x + y + is_linear + is_tcb + (io_tangent_tuple / tcb_tuple))
+		m_Cache.reserve(static_cast<size_t>(cp_count) * (sizeof(float) * 2u + sizeof(float) * 4u + sizeof(uint32_t)  + sizeof(uint32_t)));
 
 		// iterate control point
 		for (int i = 0; i < cp_count; ++i) {
@@ -71,16 +75,16 @@ namespace VSW::Materializer::Utilities {
 			APPEND_DATA(float_cache);
 			float_cache = cp->GetBias();
 			APPEND_DATA(float_cache);
-		} else {
-			// non-TCB control point
-			float_cache = cp->GetInTangent();
-			APPEND_DATA(float_cache);
-			float_cache = cp->GetOutTangent();
-			APPEND_DATA(float_cache);
-			// To keep balance with TCB control point,
+			// To keep balance with non-TCB control point,
 			// We add a blank 0.0f in there
 			float_cache = 0.0f;
 			APPEND_DATA(float_cache);
+		} else {
+			// non-TCB control point
+			vector_cache = cp->GetInTangent();
+			APPEND_DATA(vector_cache);
+			vector_cache = cp->GetOutTangent();
+			APPEND_DATA(vector_cache);
 		}
 
 #undef APPEND_DATA

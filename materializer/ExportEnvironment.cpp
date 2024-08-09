@@ -8,11 +8,16 @@ namespace VSW::Materializer::ExportEnvironment {
 
 	struct ExportContext {
 		ExportContext(CKContext* ctx, const YYCC::yycc_u8string_view& db_path, UINT code_page) :
-			db(db_path), cache(), reporter(ctx), cp(code_page) {}
+			db(db_path), cache(), reporter(ctx), cp(code_page), ctx(ctx), plugin_mgr(CKGetPluginManager()) {}
 		Database::EnvironmentDatabase db;
 		DataTypes::Environment::DataCache cache;
 		Utilities::EnhancedReporter reporter;
 		UINT cp;
+
+		/// @brief Virtools context.
+		CKContext* ctx;
+		/// @brief Virtools Plugin Manager
+		CKPluginManager* plugin_mgr;
 	};
 
 	static void IterateParameterOperation(ExportContext& expctx, CKParameterManager* param_mgr) {
@@ -47,7 +52,7 @@ namespace VSW::Materializer::ExportEnvironment {
 		}
 	}
 
-	static void IterateParameter(ExportContext& expctx, CKParameterManager* param_mgr, CKPluginManager* plugin_mgr) {
+	static void IterateParameter(ExportContext& expctx, CKParameterManager* param_mgr) {
 		// prepare variables
 		CKParameterTypeDesc* desc = nullptr;
 
@@ -74,8 +79,8 @@ namespace VSW::Materializer::ExportEnvironment {
 			// This is different with plugin.
 			// Because some parameters are provided by Virtools self.
 			CKPluginEntry* plugin_entry = desc->CreatorDll;
-			CKPluginDll* plugin_dll = plugin_mgr->GetPluginDllInfo(plugin_entry->m_PluginDllIndex);
 			if (plugin_entry != nullptr) {
+				CKPluginDll* plugin_dll = expctx.plugin_mgr->GetPluginDllInfo(plugin_entry->m_PluginDllIndex);
 				CP_CKSTR(expctx.cache.param.dll_name, plugin_dll->m_DllFileName.CStr());
 				expctx.cache.param.dll_index = plugin_entry->m_PluginDllIndex;
 				expctx.cache.param.position_in_dll = plugin_entry->m_PositionInDll;
@@ -156,7 +161,7 @@ namespace VSW::Materializer::ExportEnvironment {
 				expctx.cache.plugin.reader_setting_param_guid = INT64_C(0);
 				expctx.cache.plugin.reader_file_ext.clear();
 				expctx.cache.plugin.behavior_guids.clear();
-				expctx.cache.plugin.manager_active = FALSE;
+				expctx.cache.plugin.manager_active = false;
 				// then try to fetch these specific fields
 				switch (plugin_type) {
 					case CKPLUGIN_BITMAP_READER:
@@ -263,12 +268,17 @@ namespace VSW::Materializer::ExportEnvironment {
 
 		// export environment one by one
 		IterateParameterOperation(expctx, ctx->GetParameterManager());
-		IterateParameter(expctx, ctx->GetParameterManager(), CKGetPluginManager());
+		IterateParameter(expctx, ctx->GetParameterManager());
 		IterateAttribute(expctx, ctx->GetAttributeManager());
 		IteratePlugin(expctx, CKGetPluginManager());
 #if !defined(VIRTOOLS_21)
 		IterateVariable(expctx, ctx->GetVariableManager());
 #endif
+
+		// report success
+		expctx.reporter.EnableBeep();
+		expctx.reporter.Info(YYCC_U8("Exporting environment database done."));
+		expctx.reporter.DisableBeep();
 	}
 
 }

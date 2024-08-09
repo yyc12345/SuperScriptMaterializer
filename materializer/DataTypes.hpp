@@ -268,7 +268,7 @@ namespace VSW::Materializer::DataTypes {
 			int64_t reader_setting_param_guid;
 			YYCC::yycc_u8string reader_file_ext;
 			// Manager and Render Engine specific
-			CKBOOL manager_active;
+			bool manager_active;
 			// Behavior specific
 			YYCC::yycc_u8string behavior_guids;
 		};
