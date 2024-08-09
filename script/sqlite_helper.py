@@ -1,5 +1,12 @@
+import typing
+import re
 
-class DeclPair():
+class FieldDecl():
+    c_EnumTuple: typing.ClassVar[tuple[str, ...]] = (
+        'VSW::DataTypes::ParameterLinkIOType',
+        'VSW::DataTypes::BehaviorLinkIOType'
+    )
+
     m_DeclType: str
     m_DeclName: str
 
@@ -10,11 +17,25 @@ class DeclPair():
     def is_string(self):
         return self.m_DeclType == 'YYCC::yycc_u8string'
     
+    def is_blob(self):
+        return self.m_DeclType == 'BlobDescriptor'
+
     def is_int64(self):
         return self.m_DeclType == 'int64_t'
+    
+    def is_enum(self):
+        return self.m_DeclType in FieldDecl.c_EnumTuple
 
-def accept_input() -> tuple[DeclPair, ...]:
-    cache: list[DeclPair] = list()
+class StructDecl():
+    m_StructName: str
+    m_StructFields: tuple[FieldDecl, ...]
+
+    def __init__(self, name: str, fields: tuple[FieldDecl, ...]):
+        self.m_StructName = name
+        self.m_StructFields = fields
+
+def accept_input() -> str:
+    cache: list[str] = list()
     blank_line: bool = False
 
     while True:
@@ -27,51 +48,93 @@ def accept_input() -> tuple[DeclPair, ...]:
         else:
             # Reset blank line flag
             blank_line = False
-            # Analyze input
-            recv = recv.strip('\t\r\n ')
+            cache.append(recv)
+
+    return '\n'.join(cache)
+
+def analyse_input(val: str) -> tuple[StructDecl, ...]:
+    # result container
+    ret: list[StructDecl] = list()
+    # regex for capturing struct declarations
+    struct_matcher: re.Pattern = re.compile('struct[ \t]+([a-zA-Z0-9_]+)[ \t]+{([^}]*)};')
+    # regex for capturing struct field declarations
+    field_matcher: re.Pattern = re.compile('([a-zA-Z0-9_:]+)[ \t]+([a-zA-Z0-9_]+)[ \t]*;')
+
+    # capture struct declaration part
+    found_match: re.Match
+    for found_match in struct_matcher.finditer(val):
+        # get struct name
+        struct_name: str = found_match.group(1)
+        # analyse struct body
+        struct_body: str = found_match.group(2)
+        struct_fields: list[FieldDecl] = []
+        for ln in struct_body.split('\n'):
             # Skip annotation
-            if recv.startswith('//'): continue
-            # Skip invalid decl
-            if not recv.endswith(';'): continue
-            recv = recv[:-1]
-            recv_parts = recv.split(' ')
-            if len(recv_parts) != 2: continue
-            # Okey, insert it
-            cache.append(DeclPair(recv_parts[0], recv_parts[1]))
+            ln = ln.strip()
+            if ln.startswith('//'): continue
+            # Check whether it is declaration
+            found_field_match: re.Match = field_matcher.match(ln)
+            if found_field_match is not None:
+                field_decl_type: str = found_field_match.group(1)
+                field_decl_name: str = found_field_match.group(2)
+                struct_fields.append(FieldDecl(field_decl_type, field_decl_name))
+        # add into result
+        ret.append(StructDecl(struct_name, tuple(struct_fields)))
 
-    return tuple(cache)
+    return tuple(ret)
 
-def generate_result(decls: tuple[DeclPair, ...]) -> tuple[str, str, str]:
-    # generate sql statement
-    def conv_sql(decl_pair: DeclPair) -> str:
+def output_result(decls: tuple[StructDecl, ...]) -> None:
+    # assistant function for sql create table statement
+    def conv_sql_create_table(decl_pair: FieldDecl) -> str:
         if decl_pair.is_string(): return f'[{decl_pair.m_DeclName}] TEXT'
+        elif decl_pair.is_blob(): return f'[{decl_pair.m_DeclName}] BLOB'
         else: return f'[{decl_pair.m_DeclName}] INTEGER'
-    table_string: str = ', '.join(map(conv_sql, decls))
-    gen_sql_create_statement: str = f'CREATE TABLE [] ({table_string});'
-
-    # generate sql insert_statement
-    table_string = ', '.join(map(lambda _: '?', decls))
-    gen_sql_insert_statement: str = f'INSERT INTO [] VALUES ({table_string});'
-
-    # generate binding c++ statement
-    def conv_cpp(decl_pair: DeclPair) -> str:
+    # assistant function for sql insert statement
+    def conv_sql_insert(decl_pair: FieldDecl) -> str:
+        return '?'
+    # assistant function for c++ bind statement
+    def conv_cpp(decl_pair: FieldDecl) -> str:
         if decl_pair.is_string():
-            return f'WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.{decl_pair.m_DeclName}), -1, SQLITE_TRANSIENT));'
+            return f'WRITER_BIND(sqlite3_bind_text(WRITER_STMT, WRITER_INDEX, REVEAL_U8STR(data.{decl_pair.m_DeclName})));'
         elif decl_pair.is_int64():
             return f'WRITER_BIND(sqlite3_bind_int64(WRITER_STMT, WRITER_INDEX, data.{decl_pair.m_DeclName}));'
+        elif decl_pair.is_blob():
+            return f'WRITER_BIND(sqlite3_bind_blob(WRITER_STMT, WRITER_INDEX, REVEAL_BLOB(data.{decl_pair.m_DeclName})));'
+        elif decl_pair.is_enum():
+            return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, REVEAL_ENUM(data.{decl_pair.m_DeclName})));'
         else:
             return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.{decl_pair.m_DeclName}));'
-    gen_bind_statement: str = '\n'.join(map(conv_cpp, decls))
 
-    return (gen_sql_create_statement, gen_sql_insert_statement, gen_bind_statement)    
+    ret_sql_create_table: list[str] = []
+    ret_sql_insert: list[str] = []
+    ret_cpp_bind: list[tuple[str, str]] = []
+    for struct_decl in decls:
+        # generate sql create table statement
+        table_string: str = ', '.join(map(conv_sql_create_table, struct_decl.m_StructFields))
+        gen_statement: str = f'CREATE TABLE [{struct_decl.m_StructName}] ({table_string});'
+        ret_sql_create_table.append(gen_statement)
+
+        # generate sql insert statement
+        table_string = ', '.join(map(conv_sql_insert, struct_decl.m_StructFields))
+        gen_statement = f'INSERT INTO [{struct_decl.m_StructName}] VALUES ({table_string});'
+        ret_sql_insert.append(gen_statement)
+
+        # generate c++ bind statement
+        bind_string: str = '\n'.join(map(conv_cpp, struct_decl.m_StructFields))
+        ret_cpp_bind.append((struct_decl.m_StructName, bind_string))
+
+    print('========== SQL Create Table ==========')
+    for item in ret_sql_create_table:
+        print(item)
+    print('========== SQL Insert ==========')
+    for item in ret_sql_insert:
+        print(item)
+    print('========== C++ Bind ==========')
+    for name, item in ret_cpp_bind:
+        print(f'===== {name} =====')
+        print(item)
     
 if __name__ == '__main__':
-    while True:
-        decls: tuple[DeclPair, ...] = accept_input()
-        (sql_create, sql_insert, cpp) = generate_result(decls)
-        print('SQL Create Table Statement:')
-        print(sql_create)
-        print('SQL Insert Statement:')
-        print(sql_insert)
-        print('C++ Bind Value Statements:')
-        print(cpp)
+    input_str: str = accept_input()
+    decls: tuple[StructDecl, ...] = analyse_input(input_str)
+    output_result(decls)

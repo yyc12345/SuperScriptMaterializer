@@ -152,7 +152,7 @@ namespace VSW::Materializer::ExportScript {
 #if defined(VIRTOOLS_50) || defined(VIRTOOLS_40) || defined(VIRTOOLS_35)
 			|| t == CKPGUID_SHADER || t == CKPGUID_TECHNIQUE || t == CKPGUID_PASS
 #endif
-			|| true // All unknown type goes there.
+			|| true // All unknown type goes here.
 			) {
 			// Raw data is similar with string,
 			// but we don't need do encoding convertion.
@@ -172,7 +172,7 @@ namespace VSW::Materializer::ExportScript {
 	 * pAttr do not have any explicit interface to get them, so they only can be find via pLink analyse.
 	 * 2 pLink analyse funcstions will call this function to record each pAttr.
 	 * Due to this mechanism, it might cause a duplication issues,
-	 * so we need check possible duplication in there.
+	 * so we need check possible duplication in here.
 	 * @param[in] expctx Reference to export context.
 	 * @param[in] ckobj Pointer to CKParameter (actually is attribute parameter) for processing.
 	*/
@@ -193,7 +193,7 @@ namespace VSW::Materializer::ExportScript {
 	/**
 	 * @brief Generate pLink and eLink from pIn
 	 * @param[in] expctx Reference to export context.
-	 * @param[in] ckobj Pointer to CKParameterIn for analysing.
+	 * @param[in] analysed Pointer to CKParameterIn for analysing.
 	 * @param[in] parent 
 	 * @param[in] grandparent 
 	 * @param[in] pin_index 
@@ -201,16 +201,12 @@ namespace VSW::Materializer::ExportScript {
 	 * @param[in] is_target True if this function is called from pTarget processor.
 	*/
 	static void Generate_pLink(ExportContext& expctx, CKParameterIn* analysed, CK_ID parent, CK_ID grandparent, int pin_index, bool executed_from_bb, bool is_target) {
-		CKParameter* direct_source = NULL;
-		CKObject* ds_Owner = NULL;
-		CKParameterIn* shared_source = NULL;
-		CKObject* ss_Owner = NULL;
-
-		// first, we analyse eLink.
-		// check whether this is export parameter and write to database.
-		// if the behavior graph where this pIn's parent locate, also include this pIn,
-		// we can simply assume there is a eLink between them
-		if ((static_cast<CKBehavior*>(expctx.ctx->GetObjectA(grandparent)))->GetInputParameterPosition(analysed) != -1) {
+		// First, we analyse eLink.
+		// Check whether this is export parameter and write to database.
+		// If the behavior graph where this pIn's parent locate, also include this pIn,
+		// we can simply assume there is an eLink between them
+		CKBehavior* ckobj_grandparent = static_cast<CKBehavior*>(expctx.ctx->GetObjectA(grandparent));
+		if (ckobj_grandparent->GetInputParameterPosition(analysed) != -1) {
 			expctx.cache.eLink.export_obj = analysed->GetID();
 			expctx.cache.eLink.internal_obj = parent;
 			expctx.cache.eLink.is_in = true;
@@ -224,109 +220,127 @@ namespace VSW::Materializer::ExportScript {
 		}
 
 		// start to analyse pLink
-		// first, analyse direct_src
-		if (direct_source = analysed->GetDirectSource()) {
+		// first, analyse \c direct_source
+		CKParameter* direct_source = analysed->GetDirectSource();
+		if (direct_source != nullptr) {
 			expctx.cache.pLink.input = direct_source->GetID();
-			// for almost pin, it is connected to a pLocal, so we use a if to test it first
-			if (direct_source->GetClassID() == CKCID_PARAMETERLOCAL || direct_source->GetClassID() == CKCID_PARAMETERVARIABLE) {
-				//pLocal
+
+			// For almost pIn, they are connected to a pLocal, so we use \c if statement to test it first
+			CK_CLASSID direct_source_cid = direct_source->GetClassID();
+			if (direct_source_cid == CKCID_PARAMETERLOCAL || direct_source_cid == CKCID_PARAMETERVARIABLE) {
+				// pLocal
 				expctx.cache.pLink.input_obj = direct_source->GetID();	// the owner of pLocal is itself.
 				expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PLOCAL;
 				expctx.cache.pLink.input_is_bb = false;
 				expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;
 			} else {
-				// according to Virtools SDK document, there are 4 possible value gotten by us:
-				// bb pOut / pOper pOut / CKObject Attribute / CKDataArray
-				// however, the last 2 returned values have NOT been tested perfectly.
-				ds_Owner = direct_source->GetOwner();
-				switch (ds_Owner->GetClassID()) {
+				// According to Virtools SDK document, there are 4 possible value gotten by us:
+				// bb pOut / pOper pOut / CKObject Attribute / CKDataArray.
+				// However, the last 2 returned values have NOT been tested perfectly.
+				CKObject* ds_owner = direct_source->GetOwner();
+				switch (ds_owner->GetClassID()) {
 					case CKCID_BEHAVIOR:
-						expctx.cache.pLink.input_obj = ds_Owner->GetID();
+					{;
+						CKBehavior* ds_owner_cast = static_cast<CKBehavior*>(ds_owner);
+						CKParameterOut* direct_source_cast = static_cast<CKParameterOut*>(direct_source);
+						expctx.cache.pLink.input_obj = ds_owner->GetID();
 						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::POUT;
 						expctx.cache.pLink.input_is_bb = true;
-						expctx.cache.pLink.input_index = ((CKBehavior*)ds_Owner)->GetOutputParameterPosition((CKParameterOut*)direct_source);
+						expctx.cache.pLink.input_index = ds_owner_cast->GetOutputParameterPosition(direct_source_cast);
 						break;
+					}
 					case CKCID_PARAMETEROPERATION:
-						expctx.cache.pLink.input_obj = ds_Owner->GetID();
+					{
+						expctx.cache.pLink.input_obj = ds_owner->GetID();
 						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::POUT;
 						expctx.cache.pLink.input_is_bb = false;
 						expctx.cache.pLink.input_index = 0;	// pOper only have 1 pOut
 						break;
+					}
 					case CKCID_DATAARRAY:
+					{
 						// CKDataArray, see as virtual bb pLocal shortcut
 						expctx.cache.pLink.input_obj = direct_source->GetID();
 						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PATTR;
-						expctx.cache.pLink.input_is_bb = false;	// omit
-						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// omit
+						expctx.cache.pLink.input_is_bb = false;	// discard
+						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// discard
 						Proc_pAttr(expctx, direct_source);
 						break;
+					}
 					default:
+					{
 						// CKObject, because CKDataArray also a CKObject, so we test it first.
 						// see as virtual bb pLocal shortcut
 						expctx.cache.pLink.input_obj = direct_source->GetID();
 						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PATTR;
-						expctx.cache.pLink.input_is_bb = false;	// omit
-						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// omit
+						expctx.cache.pLink.input_is_bb = false;	// discard
+						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// discard
 						Proc_pAttr(expctx, direct_source);
 						break;
+					}
 				}
 			}
 		}
-		// direct_src reflect the real source of current analysed pIn,
-		// however direct_src do not reflect export link
-		// so we need to analyse shared_src now.
-		// 
-		// if this pIn has established some export relation, its shared_src must be filled.
-		// so we can detect it here. once its shared_src is not NULL
-		// we should consider export link here.
-		// 
-		// we do not need to analyse any export link here, we just need to export some info 
-		// to indicate this phenomeno.
-		if (shared_source = analysed->GetSharedSource()) {
-			//pIn from BB
-			expctx.cache.pLink.input = shared_source->GetID();
-			ss_Owner = shared_source->GetOwner();
-			expctx.cache.pLink.input_obj = ss_Owner->GetID();
 
-			switch (ss_Owner->GetClassID()) {
+		// \c direct_source reflect the real source of current analysed pIn,
+		// however \c direct_source can not reflect export link.
+		// So we need to analyse \c shared_source now for export link.
+		// 
+		// If this pIn has established some export relation, its \c shared_source must be filled, so we can detect this in here. 
+		// Once its \c shared_source is not nullptr, we should consider export link in here.
+		// 
+		// We do not need to analyse any export link here, 
+		// we just need to export some infos to tell that there is an export link.
+		CKParameterIn* shared_source = analysed->GetSharedSource();
+		if (shared_source != nullptr) {
+			// pIn from BB
+			// Get the owner of shared_source
+			CKObject* ss_owner = shared_source->GetOwner();
+			// Setup fields
+			expctx.cache.pLink.input = shared_source->GetID();
+			expctx.cache.pLink.input_obj = ss_owner->GetID();
+
+			switch (ss_owner->GetClassID()) {
 				case CKCID_BEHAVIOR: // CKBehavior
 				{
-					if (((CKBehavior*)ss_Owner)->IsUsingTarget() && (((CKBehavior*)ss_Owner)->GetTargetParameter() == shared_source)) {
+					CKBehavior* ss_owner_cast = static_cast<CKBehavior*>(ss_owner);
+					if (ss_owner_cast->IsUsingTarget() && (ss_owner_cast->GetTargetParameter() == shared_source)) {
 						// pTarget
-						expctx.cache.pLink.input_type = DataStruct::pLinkInputOutputType_PTARGET;
+						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PTARGET;
 						expctx.cache.pLink.input_is_bb = true;
-						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// omit
+						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// discard
 
 					} else {
 						// pIn
-						expctx.cache.pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
+						expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PIN;
 						expctx.cache.pLink.input_is_bb = true;
-						expctx.cache.pLink.input_index = ((CKBehavior*)ss_Owner)->GetInputParameterPosition(shared_source);
+						expctx.cache.pLink.input_index = ((CKBehavior*)ss_owner)->GetInputParameterPosition(shared_source);
 					}
-
 					break;
 				}
 				case CKCID_PARAMETEROPERATION:	// CKParameterOperation
 				{
-					//pOper only have pIn.
-					expctx.cache.pLink.input_type = DataStruct::pLinkInputOutputType_PIN;
+					// pOper only can have pIn (there is no possibility to have pTarget).
+					CKParameterOperation* ss_owner_cast = static_cast<CKParameterOperation*>(ss_owner);
+					expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::PIN;
 					expctx.cache.pLink.input_is_bb = false;
-					expctx.cache.pLink.input_index = ((CKParameterOperation*)ss_Owner)->GetInParameter1() == shared_source ? 0 : 1;
+					expctx.cache.pLink.input_index = ss_owner_cast->GetInParameter1() == shared_source ? 0 : 1;
 					break;
 				}
 				default:
-					// the unexpected value. according to SDK manual,
-					// there are only 2 possible types
+					// The unexpected value. 
+					// According to SDK manual, there are only 2 possible types.
+					throw std::runtime_error("unexpected shared_source owner class id!");
 					return;
 			}
 		}
 
-		// if the header of pLink has been analysed successfully, 
+		// If the head of pLink has been analysed successfully, 
 		// we can add tail info and push into database
-		if (shared_source != NULL || direct_source != NULL) {
+		if (shared_source != nullptr || direct_source != nullptr) {
 			expctx.cache.pLink.output = analysed->GetID();
 			expctx.cache.pLink.output_obj = parent;
-			expctx.cache.pLink.output_type = is_target ? DataStruct::pLinkInputOutputType_PTARGET : DataStruct::pLinkInputOutputType_PIN;
+			expctx.cache.pLink.output_type = is_target ? VSW::DataTypes::ParameterLinkIOType::PTARGET : VSW::DataTypes::ParameterLinkIOType::PIN;
 			expctx.cache.pLink.output_is_bb = executed_from_bb;
 			expctx.cache.pLink.output_index = pin_index;
 			expctx.cache.pLink.parent = grandparent;
@@ -337,17 +351,19 @@ namespace VSW::Materializer::ExportScript {
 
 	/**
 	 * @brief Generate pLink and eLink from pOut
-	 * @param expctx 
-	 * @param analysed 
-	 * @param parent 
-	 * @param grandparent 
-	 * @param pout_index 
-	 * @param executed_from_bb 
+	 * @param[in] expctx Reference to export context.
+	 * @param[in] analysed Pointer to CKParameterIn for analysing.
+	 * @param[in] parent 
+	 * @param[in] grandparent 
+	 * @param[in] pout_index 
+	 * @param[in] executed_from_bb True if given CKParameterIn is belong to a CKBehavior, otherwise false (CKParamterOperation).
 	*/
 	static void Generate_pLink(ExportContext& expctx, CKParameterOut* analysed, CK_ID parent, CK_ID grandparent, int pout_index, bool executed_from_bb) {
-		// check eLink first
-		// check whether expoer parameter and write to database
-		if (((CKBehavior*)ctx->GetObject(grandparent))->GetOutputParameterPosition(analysed) != -1) {
+		// Check eLink first
+		// Check whether there is an export parameter and write to database
+		// Same check method as another overload
+		CKBehavior* ckobj_grandparent = static_cast<CKBehavior*>(expctx.ctx->GetObjectA(grandparent));
+		if (ckobj_grandparent->GetOutputParameterPosition(analysed) != -1) {
 			expctx.cache.eLink.export_obj = analysed->GetID();
 			expctx.cache.eLink.internal_obj = parent;
 			expctx.cache.eLink.is_in = false;
@@ -359,58 +375,65 @@ namespace VSW::Materializer::ExportScript {
 			return;
 		}
 
-		// try generate pLink
-		CKParameter* cache_Dest = NULL;
-		CKObject* cache_DestOwner = NULL;
-		for (int j = 0, jCount = analysed->GetDestinationCount(); j < jCount; j++) {
-			cache_Dest = analysed->GetDestination(j);
+		// Try to generate pLink
+		for (int j = 0, j_count = analysed->GetDestinationCount(); j < j_count; j++) {
+			CKParameter* dest = analysed->GetDestination(j);
 
 			expctx.cache.pLink.input = analysed->GetID();
 			expctx.cache.pLink.input_obj = parent;
-			expctx.cache.pLink.input_type = DataStruct::pLinkInputOutputType_POUT;
+			expctx.cache.pLink.input_type = VSW::DataTypes::ParameterLinkIOType::POUT;
 			expctx.cache.pLink.input_is_bb = executed_from_bb;
 			expctx.cache.pLink.input_index = pout_index;
 
-			expctx.cache.pLink.output = cache_Dest->GetID();
-			if (cache_Dest->GetClassID() == CKCID_PARAMETERLOCAL) {
-				//pLocal
-				expctx.cache.pLink.output_obj = cache_Dest->GetID();
-				expctx.cache.pLink.output_type = DataStruct::pLinkInputOutputType_PLOCAL;
-				expctx.cache.pLink.output_is_bb = false;	// omit
-				expctx.cache.pLink.output_index = -1;		// omit
+			expctx.cache.pLink.output = dest->GetID();
+			if (dest->GetClassID() == CKCID_PARAMETERLOCAL) {
+				// pLocal
+				expctx.cache.pLink.output_obj = dest->GetID();
+				expctx.cache.pLink.output_type = VSW::DataTypes::ParameterLinkIOType::PLOCAL;
+				expctx.cache.pLink.output_is_bb = false;	// discard
+				expctx.cache.pLink.output_index = Utilities::INVALID_INDEX;		// discard
 
 			} else {
-				//pOut, it must belong to a graph BB (pOut can not be shared, and prototype bb or pOper do not have link-able pOut).
-				cache_DestOwner = cache_Dest->GetOwner();
-				switch (cache_DestOwner->GetClassID()) {
+				// pOut. It must belong to a graph BB 
+				// (pOut can not be shared, and prototype bb or pOper do not have linkable pOut).
+				CKObject* dest_owner = dest->GetOwner();
+				switch (dest_owner->GetClassID()) {
 					case CKCID_BEHAVIOR:
-						expctx.cache.pLink.output_obj = cache_DestOwner->GetID();
-						expctx.cache.pLink.output_type = DataStruct::pLinkInputOutputType_POUT;
+					{
+						CKBehavior* dest_owner_cast = static_cast<CKBehavior*>(dest_owner);
+						CKParameterOut* dest_cast = static_cast<CKParameterOut*>(dest);
+						expctx.cache.pLink.output_obj = dest_owner->GetID();
+						expctx.cache.pLink.output_type = VSW::DataTypes::ParameterLinkIOType::POUT;
 						expctx.cache.pLink.output_is_bb = true;
-						expctx.cache.pLink.output_index = ((CKBehavior*)cache_DestOwner)->GetOutputParameterPosition((CKParameterOut*)cache_Dest);
+						expctx.cache.pLink.output_index = dest_owner_cast->GetOutputParameterPosition(dest_cast);
 						break;
+					}
 					case CKCID_DATAARRAY:
-						// CKDataArray, see as virtual bb pLocal shortcut
-						expctx.cache.pLink.output_obj = cache_Dest->GetID();
-						expctx.cache.pLink.output_type = DataStruct::pLinkInputOutputType_PATTR;
-						expctx.cache.pLink.input_is_bb = false;	// omit
-						expctx.cache.pLink.input_index = -1;	// omit
-						Proc_pAttr(ctx, mDb, cache_Dest);
+					{
+						// CKDataArray, see as virtual BB pLocal shortcut
+						expctx.cache.pLink.output_obj = dest->GetID();
+						expctx.cache.pLink.output_type = VSW::DataTypes::ParameterLinkIOType::PATTR;
+						expctx.cache.pLink.input_is_bb = false;	// discard
+						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// discard
+						Proc_pAttr(expctx, dest);
 						break;
+					}
 					default:
-						// CKObject, because CKDataArray also a CKObject, so we test it first.
-						// see as virtual bb pLocal shortcut
-						expctx.cache.pLink.output_obj = cache_Dest->GetID();
-						expctx.cache.pLink.output_type = DataStruct::pLinkInputOutputType_PATTR;
-						expctx.cache.pLink.input_is_bb = false;	// omit
-						expctx.cache.pLink.input_index = -1;	// omit
-						Proc_pAttr(ctx, mDb, cache_Dest);
+					{
+						// CKObject. Because CKDataArray also a CKObject, so we test it above this case statement.
+						// See this as virtual BB pLocal shortcut
+						expctx.cache.pLink.output_obj = dest->GetID();
+						expctx.cache.pLink.output_type = VSW::DataTypes::ParameterLinkIOType::PATTR;
+						expctx.cache.pLink.input_is_bb = false;	// discard
+						expctx.cache.pLink.input_index = Utilities::INVALID_INDEX;	// discard
+						Proc_pAttr(expctx, dest);
 						break;
+					}
 				}
 			}
 
+			// setup parent and write into database
 			expctx.cache.pLink.parent = grandparent;
-
 			expctx.db.Write(expctx.cache.pLink);
 		}
 	}
@@ -450,7 +473,7 @@ namespace VSW::Materializer::ExportScript {
 		expctx.cache.pOut.parent = parent;
 		expctx.db.Write(expctx.cache.pOut);
 
-		// try generate pLink and eLink
+		// try to generate pLink and eLink
 		Generate_pLink(expctx, ckobj, parent, grandparent, index, executed_from_bb);
 	}
 

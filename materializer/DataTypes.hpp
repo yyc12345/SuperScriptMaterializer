@@ -102,15 +102,16 @@ namespace VSW::Materializer::DataTypes {
 		};
 
 		struct Table_pLink {
-			CK_ID input;
-			CK_ID output;
+			// Basic infos
 			CK_ID parent;
-
-			//additional field
+			// Input infos
+			CK_ID input;
 			CK_ID input_obj;
 			VSW::DataTypes::ParameterLinkIOType input_type;
 			bool input_is_bb;
 			int input_index;
+			// Output infos
+			CK_ID output;
 			CK_ID output_obj;
 			VSW::DataTypes::ParameterLinkIOType output_type;
 			bool output_is_bb;
