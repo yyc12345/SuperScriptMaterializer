@@ -1,45 +1,10 @@
 #if defined(MATERIALIZER_PLUGIN)
 
 #include "ExportDialog.hpp"
+#include "PluginMain.hpp"
 #include <stdexcept>
 
 namespace VSW::Materializer {
-
-	class ExportDialogSetting {
-	public:
-		static ExportDialogSetting& GetSingleton();
-	private:
-		static YYCC::yycc_u8string GetConfigFilePath();
-		ExportDialogSetting() :
-			m_LastFilePath(YYCC_U8("last-file-path"), YYCC_U8("")),
-			m_Encoding(YYCC_U8("encoding"), CP_ACP),
-			m_Mgr(ExportDialogSetting::GetConfigFilePath(), UINT64_C(0), {
-				&m_LastFilePath, &m_Encoding
-			}) {
-			m_Mgr.Load();
-		}
-		~ExportDialogSetting() {
-			m_Mgr.Save();
-		}
-
-	public:
-		YYCC::ConfigManager::StringSetting m_LastFilePath;
-		YYCC::ConfigManager::NumberSetting<UINT> m_Encoding;
-		YYCC::ConfigManager::CoreManager m_Mgr;
-	};
-	ExportDialogSetting& ExportDialogSetting::GetSingleton() {
-		static ExportDialogSetting g_Singleton;
-		return g_Singleton;
-	}
-	YYCC::yycc_u8string ExportDialogSetting::GetConfigFilePath() {
-		// get path to executable virtools
-		YYCC::yycc_u8string u8_virtools_path;
-		if (!YYCC::WinFctHelper::GetModuleFileName(NULL, u8_virtools_path))
-			u8_virtools_path.clear();
-		// get its parent folder and append with cfg file name
-		std::filesystem::path virtools_path(YYCC::FsPathPatch::FromUTF8Path(u8_virtools_path.c_str()));
-		return YYCC::FsPathPatch::ToUTF8Path(virtools_path.parent_path() / YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("vsw_materializer.cfg")));
-	}
 
 	namespace ExportDialogHelper {
 
@@ -118,7 +83,7 @@ namespace VSW::Materializer {
 		CDialogEx::OnInitDialog();
 
 		// Read settings from config manager
-		auto& config_manager = ExportDialogSetting::GetSingleton();
+		auto& config_manager = PluginMain::ConfigManager::GetSingleton();
 		auto u8_last_path = config_manager.m_LastFilePath.Get();
 		if (!u8_last_path.empty()) {
 			auto last_path = YYCC::FsPathPatch::FromUTF8Path(u8_last_path.c_str());
@@ -158,7 +123,7 @@ namespace VSW::Materializer {
 		}
 
 		// check done. sync settings to config manager
-		auto& config_manager = ExportDialogSetting::GetSingleton();
+		auto& config_manager = PluginMain::ConfigManager::GetSingleton();
 		config_manager.m_LastFilePath.Set(m_DatabaseFileResult);
 		config_manager.m_Encoding.Set(m_EncodingResult);
 

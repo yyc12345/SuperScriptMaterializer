@@ -25,12 +25,19 @@ public:
 		YYCC::ExceptionHelper::Register(vtobjplugin::VirtoolsMenu::UnhandledExceptionCallback);
 #endif
 
+		// load config from file
+		auto& config_manager = VSW::Materializer::PluginMain::ConfigManager::GetSingleton();
+		config_manager.m_Mgr.Load();
+
 		// init plugin info
 		VSW::Materializer::PluginMain::InitializePluginInfo();
 
 		return CWinApp::InitInstance();
 	}
 	virtual int ExitInstance() override {
+		// save config to file
+		auto& config_manager = VSW::Materializer::PluginMain::ConfigManager::GetSingleton();
+		config_manager.m_Mgr.Save();
 
 		// unregister unhandler exception handler
 #ifdef MATERIALIZER_RELEASE
@@ -45,7 +52,19 @@ CMaterializer theApp;
 #else
 
 int main(int argc, char* argv[]) {
+	// register unhandler exception handler
+#ifdef MATERIALIZER_RELEASE
+	YYCC::ExceptionHelper::Register(vtobjplugin::VirtoolsMenu::UnhandledExceptionCallback);
+#endif
+
+	// Run core code.
 	VSW::Materializer::StandaloneMain::PlayerMain(argc, argv);
+
+	// unregister unhandler exception handler
+#ifdef MATERIALIZER_RELEASE
+	YYCC::ExceptionHelper::Unregister();
+#endif
+
 	return 0;
 }
 

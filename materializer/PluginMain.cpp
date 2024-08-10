@@ -3,9 +3,38 @@
 #include "ExportDialog.hpp"
 
 namespace VSW::Materializer::PluginMain {
-	
+
 #ifdef MATERIALIZER_PLUGIN
-	
+
+#pragma region Export Dialog Setting
+
+	ConfigManager::ConfigManager() :
+		m_LastFilePath(YYCC_U8("last-file-path"), YYCC_U8("")),
+		m_Encoding(YYCC_U8("encoding"), CP_ACP),
+		m_Mgr(ConfigManager::GetConfigFilePath(), UINT64_C(0), {
+			&m_LastFilePath, &m_Encoding
+		}) {}
+
+	ConfigManager::~ConfigManager() {}
+
+	ConfigManager& ConfigManager::GetSingleton() {
+		static ConfigManager g_Singleton;
+		return g_Singleton;
+	}
+
+	YYCC::yycc_u8string ConfigManager::GetConfigFilePath() {
+		// get path to executable virtools
+		YYCC::yycc_u8string u8_virtools_path;
+		if (!YYCC::WinFctHelper::GetModuleFileName(NULL, u8_virtools_path))
+			u8_virtools_path.clear();
+		// get its parent folder and append with cfg file name
+		std::filesystem::path virtools_path(YYCC::FsPathPatch::FromUTF8Path(u8_virtools_path.c_str()));
+		return YYCC::FsPathPatch::ToUTF8Path(virtools_path.parent_path() / YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("vsw_materializer.cfg")));
+	}
+
+#pragma endregion
+
+
 	PluginInterface* g_Plugininterface = nullptr;
 	PluginInfo g_PluginInfo;
 	CMenu* g_MainMenu = nullptr;
@@ -49,7 +78,7 @@ namespace VSW::Materializer::PluginMain {
 			}
 			case 4:
 			{
-				const wchar_t* body = 
+				const wchar_t* body =
 					L"VSW Materializer v2.0.0 - Virtools Schematic Weaver Materializer.\n"
 					L"The exporter of universal Virtools scripts analyser.\n"
 					L"Under GPL v3 License.\n"

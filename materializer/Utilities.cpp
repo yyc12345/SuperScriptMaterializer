@@ -14,7 +14,8 @@ namespace VSW::Materializer::Utilities {
 	void EnhancedReporter::DisableBeep() { m_OrderBeep = false; }
 
 	void EnhancedReporter::PrePrint(const YYCC::yycc_char8_t* strl) const {
-		if (m_Ctx != nullptr)
+		// only write when CKContext is not nullptr and we are in Interface Mode (Dev mode).
+		if (m_Ctx != nullptr && m_Ctx->IsInInterfaceMode())
 			m_Ctx->OutputToConsole(const_cast<CKSTRING>(YYCC::EncodingHelper::UTF8ToChar(strl, CP_ACP).c_str()), m_OrderBeep);
 	}
 
