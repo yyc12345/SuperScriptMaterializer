@@ -1,6 +1,7 @@
 #include "StandaloneMain.hpp"
 #include "ExportCore.hpp"
 #include "GenericHelper.hpp"
+#include <optional>
 
 namespace VSW::Materializer::StandaloneMain {
 
@@ -35,6 +36,7 @@ namespace VSW::Materializer::StandaloneMain {
 			m_Version(YYCC_U8("version"), YYCC_U8_CHAR('v'), YYCC_U8("Print version infomation about this program and exit.")),
 			m_Help(YYCC_U8("help"), YYCC_U8_CHAR('h'), YYCC_U8("Print this help page and exit.")),
 			m_OptionContext(YYCC_U8("Virtools Schematic Weaver - Materializer"), YYCC_U8("The exporter of Virtools Schematic Weaver"), {
+				&m_InputFilePath,
 				&m_ScriptDbPath, &m_DocumentDbPath, &m_EnvironmentDbPath, &m_CodePage,
 				&m_Version, &m_Help
 			}) {}
@@ -109,6 +111,67 @@ namespace VSW::Materializer::StandaloneMain {
 
 #pragma region Assistant Functions
 
+	class TemporaryFile {
+	public:
+		TemporaryFile(CKContext* ctx, const YYCC::yycc_u8string_view& u8_vt_file) :
+			m_IsSuccess(false), m_TempFile() {
+			if (ctx == nullptr) throw std::invalid_argument("Invalid CKContext");
+			if (u8_vt_file.empty()) throw std::invalid_argument("Invalid Virtools file path");
+
+			// build source virtools file
+			auto vt_file = YYCC::FsPathPatch::FromUTF8Path(u8_vt_file.data());
+
+			// build cache path located in Windows temp path and keep its extension
+			YYCC::yycc_u8string u8_temp_dir;
+			if (!YYCC::WinFctHelper::GetTempDirectory(u8_temp_dir))
+				throw std::runtime_error("Fail to fetch Windows Temp directory");
+			auto temp_dir = YYCC::FsPathPatch::FromUTF8Path(u8_temp_dir.c_str());
+			temp_dir /= YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("07159749-81e5-4ec2-b649-87b8eb9c1f5a"));
+			temp_dir.replace_extension(vt_file.extension());
+			m_TempFile = YYCC::FsPathPatch::ToUTF8Path(temp_dir);
+
+			// copy it to temp directory
+			std::wstring w_temp_file, w_vt_file;
+			if (!YYCC::EncodingHelper::UTF8ToWchar(u8_vt_file, w_vt_file))
+				throw std::runtime_error("Fail to fetch source file.");
+			if (!YYCC::EncodingHelper::UTF8ToWchar(m_TempFile, w_temp_file))
+				throw std::runtime_error("Fail to fetch temporary file.");
+			if (!::CopyFileW(w_vt_file.c_str(), w_temp_file.c_str(), FALSE))
+				throw std::runtime_error("Fail to copy file.");
+
+			// okey
+			m_IsSuccess = true;
+		}
+		~TemporaryFile() {
+			if (m_IsSuccess) {
+				std::wstring w_temp_file;
+				if (!YYCC::EncodingHelper::UTF8ToWchar(m_TempFile, w_temp_file)) return;
+				::DeleteFileW(w_temp_file.c_str());
+			}
+		}
+		TemporaryFile(TemporaryFile&& rhs) :
+			m_IsSuccess(rhs.m_IsSuccess), m_TempFile(rhs.m_TempFile) {
+			rhs.m_IsSuccess = false;
+			rhs.m_TempFile.clear();
+		}
+		TemporaryFile& operator=(TemporaryFile&& rhs) {
+			this->m_IsSuccess = rhs.m_IsSuccess;
+			this->m_TempFile = rhs.m_TempFile;
+			rhs.m_IsSuccess = false;
+			rhs.m_TempFile.clear();
+			return *this;
+		}
+		YYCC_DEL_CLS_COPY(TemporaryFile);
+
+	public:
+		bool IsSuccess() const { return m_IsSuccess; }
+		const YYCC::yycc_u8string& GetPath() const { return m_TempFile; }
+
+	private:
+		bool m_IsSuccess;
+		YYCC::yycc_u8string m_TempFile;
+	};
+
 	static void CustomAssert(VSW::Reporter& reporter, bool condition, const YYCC::yycc_char8_t* msg) {
 		if (!condition) {
 			if (msg != nullptr)
@@ -143,8 +206,8 @@ namespace VSW::Materializer::StandaloneMain {
 		CUSTOM_ASSERT(plugin_mgr->ParsePlugins("Managers") > 0, "Error loading Managers");
 		CUSTOM_ASSERT(plugin_mgr->ParsePlugins("BuildingBlocks") > 0, "Error loading BuildingBlocks");
 		CUSTOM_ASSERT(plugin_mgr->ParsePlugins("Plugins") > 0, "Error loading Plugins");
-		
-		// ========== Create CKContext and Load File ==========
+
+		// ========== Create CKContext ==========
 		CKContext* ctx = nullptr;
 #if defined(VIRTOOLS_21)
 		CUSTOM_ASSERT(CKCreateContext(&ctx, NULL, 0, 0) == CK_OK, "CKCreateContext Error");
@@ -152,11 +215,22 @@ namespace VSW::Materializer::StandaloneMain {
 		CUSTOM_ASSERT(CKCreateContext(&ctx, NULL) == CK_OK, "CKCreateContext Error");
 #endif
 
-		CKObjectArray* array = CreateCKObjectArray();
-		CUSTOM_ASSERT(!ctx->Load((char*)virtools_composition, array), "CKContext::Load() Error");
+		// ========== Load File ==========
+		std::optional<TemporaryFile> loaded_file;
+		CKObjectArray* loaded_file_objs = CreateCKObjectArray();
+		if (!captured.m_InputFilePath.empty()) {
+			TemporaryFile cache(ctx, captured.m_InputFilePath);
+			if (cache.IsSuccess()) {
+				std::string temp_file;
+				if (YYCC::EncodingHelper::UTF8ToChar(cache.GetPath(), temp_file, CP_ACP)) {
+					if (ctx->Load(const_cast<CKSTRING>(temp_file.c_str()), loaded_file_objs) == CK_OK) {
+						loaded_file = std::move(cache);
+					}
+				}
+			}
+			CUSTOM_ASSERT(loaded_file.has_value(), "Fail to open specified file.");
+		}
 
-		printf("Parsing %s...\n", virtools_composition);
-		
 		// ========== Export Data ==========
 		if (!captured.m_ScriptDbPath.empty()) {
 			reporter.Info(YYCC_U8("Exporting script database..."));
@@ -171,18 +245,19 @@ namespace VSW::Materializer::StandaloneMain {
 			ExportEnvironment::Export(ctx, captured.m_EnvironmentDbPath, captured.m_CodePage);
 		}
 
-		// ====================== free resources and shutdown engine
-		DeleteCKObjectArray(array);
+		// ========== Unload File and Clear CKContext ==========
+		DeleteCKObjectArray(loaded_file_objs);
+		loaded_file.reset();
 		ctx->Reset();
 		ctx->ClearAll();
-		
+
 		// ========== Destroy CKContext ==========
 		// todo: Virtools 4.0 standalone version throw exception in there, but i don't know why
 		// but it doesn't affect SSMaterializerDatabase export, perhaps
-		CUSTOM_ASSERT(CKCloseContext(ctx) == CK_OK, "CKCloseContext Error.");
+		CKCloseContext(ctx);
 
 		// ========== Shutdown CK2 Engine ==========
-		CUSTOM_ASSERT(CKShutdown() == CK_OK, "CKShutdown() Error.");
+		CKShutdown();
 
 		// todo: Virtools 2.5 standalone version throw exception in there, but i don't know why
 		// but it doesn't affect SSMaterializerDatabase export, perhaps

@@ -124,6 +124,20 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		AbstractDatabase(file) {
 		// initialize table
 		BEGIN_CTOR;
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [script];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [behavior];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [bIO];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pTarget];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pIn];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pOut];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [bLink];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pLocal];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pAttr];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pLink];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [pOper];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [eLink];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [data];");
+
 		CTOR_SQL_EXEC("CREATE TABLE [script] ([beobj] INTEGER, [beobj_name] TEXT, [behavior_index] INTEGER, [behavior] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [behavior] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [proto_name] TEXT, [proto_guid] INTEGER, [flags] INTEGER, [priority] INTEGER, [version] INTEGER, [pin_count_ptarget] INTEGER, [pin_count_pin] INTEGER, [pin_count_pout] INTEGER, [pin_count_bin] INTEGER, [pin_count_bout] INTEGER, [parent] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [pTarget] ([thisobj] INTEGER, [name] TEXT, [type] INTEGER, [parent] INTEGER, [direct_source] INTEGER, [shared_source] INTEGER);");
@@ -144,7 +158,6 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 	ScriptDatabase::~ScriptDatabase() {
 		// create index for quick select in following process
 		BEGIN_DTOR;
-		DTOR_SQL_EXEC("begin;");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where1] ON [behavior] ([parent])");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where2] ON [pOper] ([parent], [thisobj])");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where3] ON [pTarget] ([parent])");
@@ -158,7 +171,6 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where11] ON [elink] ([parent])");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where12] ON [pAttr] ([thisobj])");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where13] ON [data] ([parent])");
-		DTOR_SQL_EXEC("commit;");
 		END_DTOR;
 	}
 
@@ -312,6 +324,9 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		AbstractDatabase(file) {
 		// initialize table
 		BEGIN_CTOR;
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [msg];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [obj];");
+
 		CTOR_SQL_EXEC("CREATE TABLE [msg] ([index] INTEGER, [name] TEXT);");
 		CTOR_SQL_EXEC("CREATE TABLE [obj] ([id] INTEGER, [name] TEXT, [classid] INTEGER, [classid_name] TEXT);");
 		END_CTOR;
@@ -320,10 +335,8 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 	DocumentDatabase::~DocumentDatabase() {
 		// create index for quick select in following process
 		BEGIN_DTOR;
-		DTOR_SQL_EXEC("begin;");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where1] ON [msg] ([index])");
 		DTOR_SQL_EXEC("CREATE INDEX [quick_where2] ON [obj] ([id])");
-		DTOR_SQL_EXEC("commit;");
 		END_DTOR;
 	}
 
@@ -350,6 +363,12 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 		AbstractDatabase(file) {
 		// initialize table
 		BEGIN_CTOR;
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [op];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [param];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [attr];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [plugin];");
+		CTOR_SQL_EXEC("DROP TABLE IF EXISTS [variable];");
+
 		CTOR_SQL_EXEC("CREATE TABLE [op] ([func_ptr] TEXT, [in1_guid] INTEGER, [in2_guid] INTEGER, [out_guid] INTEGER, [op_guid] INTEGER, [op_name] TEXT, [op_code] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [param] ([index] INTEGER, [guid] INTEGER, [derived_from] INTEGER, [name] TEXT, [default_size] INTEGER, [func_CreateDefault] TEXT, [func_Delete] TEXT, [func_SaveLoad] TEXT, [func_Check] TEXT, [func_Copy] TEXT, [func_String] TEXT, [func_UICreator] TEXT, [dll_name] TEXT, [dll_index] INTEGER, [position_in_dll] INTEGER, [flags] INTEGER, [dw_param] INTEGER, [cid] INTEGER, [saver_manager] INTEGER);");
 		CTOR_SQL_EXEC("CREATE TABLE [attr] ([index] INTEGER, [name] TEXT, [category_index] INTEGER, [category_name] TEXT, [flags] INTEGER, [param_index] INTEGER, [param_guid] INTEGER, [compatible_classid] INTEGER, [default_value] TEXT);");
@@ -359,7 +378,9 @@ failed: throw std::runtime_error("fail to bind value for prepared statement.");
 	}
 
 	EnvironmentDatabase::~EnvironmentDatabase() {
-		// do nothing
+		// create index for quick select in following process
+		BEGIN_DTOR;
+		END_DTOR;
 	}
 
 	void EnvironmentDatabase::Write(const DataTypes::Environment::Table_op& data) {

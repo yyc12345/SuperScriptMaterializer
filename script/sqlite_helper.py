@@ -110,13 +110,18 @@ def output_result(decls: tuple[StructDecl, ...]) -> None:
         else:
             return f'WRITER_BIND(sqlite3_bind_int(WRITER_STMT, WRITER_INDEX, data.{decl_pair.m_DeclName}));'
 
+    ret_sql_drop_table: list[str] = []
     ret_sql_create_table: list[str] = []
     ret_sql_insert: list[str] = []
     ret_cpp_bind: list[tuple[str, str]] = []
     for struct_decl in decls:
+        # generate drop table statement
+        gen_statement: str = f'DROP TABLE IF EXISTS [{struct_decl.m_StructName}];'
+        ret_sql_drop_table.append(gen_statement)
+
         # generate sql create table statement
         table_string: str = ', '.join(map(conv_sql_create_table, struct_decl.m_StructFields))
-        gen_statement: str = f'CREATE TABLE [{struct_decl.m_StructName}] ({table_string});'
+        gen_statement = f'CREATE TABLE [{struct_decl.m_StructName}] ({table_string});'
         ret_sql_create_table.append(gen_statement)
 
         # generate sql insert statement
@@ -128,6 +133,9 @@ def output_result(decls: tuple[StructDecl, ...]) -> None:
         bind_string: str = '\n'.join(map(conv_cpp, struct_decl.m_StructFields))
         ret_cpp_bind.append((struct_decl.m_StructName, bind_string))
 
+    print('========== SQL Drop Table ==========')
+    for item in ret_sql_drop_table:
+        print(item)
     print('========== SQL Create Table ==========')
     for item in ret_sql_create_table:
         print(item)
