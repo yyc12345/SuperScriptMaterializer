@@ -119,24 +119,19 @@ namespace VSW::Materializer::StandaloneMain {
 			if (u8_vt_file.empty()) throw std::invalid_argument("Invalid Virtools file path");
 
 			// build source virtools file
-			auto vt_file = YYCC::FsPathPatch::FromUTF8Path(u8_vt_file.data());
+			auto vt_file = YYCC::StdPatch::ToStdPath(u8_vt_file);
 
 			// build cache path located in Windows temp path and keep its extension
 			YYCC::yycc_u8string u8_temp_dir;
 			if (!YYCC::WinFctHelper::GetTempDirectory(u8_temp_dir))
 				throw std::runtime_error("Fail to fetch Windows Temp directory");
-			auto temp_dir = YYCC::FsPathPatch::FromUTF8Path(u8_temp_dir.c_str());
-			temp_dir /= YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("07159749-81e5-4ec2-b649-87b8eb9c1f5a"));
+			auto temp_dir = YYCC::StdPatch::ToStdPath(u8_temp_dir);
+			temp_dir /= YYCC::StdPatch::ToStdPath(YYCC_U8("07159749-81e5-4ec2-b649-87b8eb9c1f5a"));
 			temp_dir.replace_extension(vt_file.extension());
-			m_TempFile = YYCC::FsPathPatch::ToUTF8Path(temp_dir);
+			m_TempFile = YYCC::StdPatch::ToUTF8Path(temp_dir);
 
 			// copy it to temp directory
-			std::wstring w_temp_file, w_vt_file;
-			if (!YYCC::EncodingHelper::UTF8ToWchar(u8_vt_file, w_vt_file))
-				throw std::runtime_error("Fail to fetch source file.");
-			if (!YYCC::EncodingHelper::UTF8ToWchar(m_TempFile, w_temp_file))
-				throw std::runtime_error("Fail to fetch temporary file.");
-			if (!::CopyFileW(w_vt_file.c_str(), w_temp_file.c_str(), FALSE))
+			if (!YYCC::WinFctHelper::CopyFile(u8_vt_file, m_TempFile, FALSE))
 				throw std::runtime_error("Fail to copy file.");
 
 			// okey

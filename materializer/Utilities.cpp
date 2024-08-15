@@ -122,8 +122,8 @@ namespace VSW::Materializer::Utilities {
 			return;
 		}
 		// Then get its file name part
-		auto module_path = YYCC::FsPathPatch::FromUTF8Path(u8_module_path.c_str());
-		auto u8_module_name = YYCC::FsPathPatch::ToUTF8Path(module_path.filename());
+		auto module_path = YYCC::StdPatch::ToStdPath(u8_module_path);
+		auto u8_module_name = YYCC::StdPatch::ToUTF8Path(module_path.filename());
 
 		// Get the base address of current module
 		// HMODULE is the base address of loaded module

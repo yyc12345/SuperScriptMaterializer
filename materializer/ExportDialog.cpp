@@ -86,21 +86,21 @@ namespace VSW::Materializer {
 		auto& config_manager = PluginMain::ConfigManager::GetSingleton();
 		auto u8_last_path = config_manager.m_LastFilePath.Get();
 		if (!u8_last_path.empty()) {
-			auto last_path = YYCC::FsPathPatch::FromUTF8Path(u8_last_path.c_str());
+			auto last_path = YYCC::StdPatch::ToStdPath(u8_last_path);
 			switch (m_InitialDatabaseType) {
 				case InitialDatabaseType::Script:
-					last_path.replace_filename(YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("script.db")));
+					last_path.replace_filename(YYCC::StdPatch::ToStdPath(YYCC_U8("script.db")));
 					break;
 				case InitialDatabaseType::Document:
-					last_path.replace_filename(YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("doc.db")));
+					last_path.replace_filename(YYCC::StdPatch::ToStdPath(YYCC_U8("doc.db")));
 					break;
 				case InitialDatabaseType::Environment:
-					last_path.replace_filename(YYCC::FsPathPatch::FromUTF8Path(YYCC_U8("env.db")));
+					last_path.replace_filename(YYCC::StdPatch::ToStdPath(YYCC_U8("env.db")));
 					break;
 				default:
 					throw std::runtime_error("invalid initial database type");
 			}
-			u8_last_path = YYCC::FsPathPatch::ToUTF8Path(last_path);
+			u8_last_path = YYCC::StdPatch::ToUTF8Path(last_path);
 		}
 		PushDatabaseFile(u8_last_path);
 		PushEncoding(config_manager.m_Encoding.Get());
