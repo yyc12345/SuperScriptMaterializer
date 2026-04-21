@@ -37,7 +37,7 @@ sqlite3_reset(stmt);
 failed: throw std::runtime_error("fail to bind value for prepared statement.");
 
 #define REVEAL_ENUM(enum_val) static_cast<std::underlying_type_t<decltype(enum_val)>>(enum_val)
-#define REVEAL_U8STR(u8_str) YYCC::EncodingHelper::ToOrdinary(u8_str.c_str()), -1, SQLITE_TRANSIENT
+#define REVEAL_U8STR(u8_str) YYCC::EncodingHelper::ToOrdinary((u8_str).c_str()), -1, SQLITE_TRANSIENT
 #define REVEAL_BLOB(blob_val) (blob_val).ptr, (blob_val).length, SQLITE_TRANSIENT
 #define REVEAL_BOOL(bool_val) ((bool_val) ? 1 : 0)
 

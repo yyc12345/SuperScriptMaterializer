@@ -18,7 +18,6 @@ FILES
 target_include_directories(VSWShared
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
-    YYCC::YYCCommonplace
 )
 # Setup linked library
 target_link_libraries(VSWShared

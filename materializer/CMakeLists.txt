@@ -54,10 +54,6 @@ FILES
 target_include_directories(VSWMaterializer
 PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
-    YYCC::YYCCommonplace
-    SQLite3::SQLite3
-    VirtoolsSDK
-    VSWShared
 )
 # Setup linked library
 target_link_libraries(VSWMaterializer
